@@ -1,0 +1,362 @@
+*** Settings ***
+Documentation     Shared keywords and layout constants for every suite. Every
+...               *** Test Cases *** suite file that uses this resource must
+...               declare its own Suite/Test Setup and Teardown (Robot
+...               doesn't allow those settings in a .resource file, and an
+...               __init__.robot's settings only apply when Robot is pointed
+...               at its *parent* directory -- not when a single suite
+...               subdirectory is run on its own, which run.sh supports
+...               and this project relies on during development). Copy this
+...               block into every new suite file:
+...
+...               Suite Setup       Start Test Display
+...               Suite Teardown    Stop Test Display
+...               Test Setup        Launch Jsonquery App
+...               Test Teardown     Close Jsonquery App
+Library           AppLibrary.py
+
+*** Variables ***
+# All regions are (x, y, width, height) relative to the app window's
+# client-area origin, calibrated against the default 1200x800 window in the
+# Dark theme (the app's fixed launch state -- see 01_launch_and_window.md).
+#
+# Since 2026-10-04 the pane titles ("Source", "Results") are 14px, not 18px
+# headings, and there is no line under a pane's header: the header row is 18px
+# high (y 134-152) and what is under it starts at y=155 -- 12px higher than it
+# did. Everything under the headers below was recalibrated for that.
+# Recalibrate these if the layout changes; see docs/00_test_strategy.md
+# for how (OCR a screenshot at each candidate region, cross-check positions).
+# The toolbar is one row: the "Source:" label, the source field (x 60-811),
+# the "...", Load and Clear buttons, then what is loaded ("(pasted JSON)", the
+# byte size, an "(N NDJSON records)" note) and the icon buttons at the far
+# right. While the NDJSON note is showing the field is 150px narrower, so
+# everything after it sits 150px further left; the fixed points below are for
+# every other state.
+@{TOOLBAR_ROW}            0      0      1000    20
+@{SOURCE_FIELD}           60     0      750     20
+@{STATUS_AREA}            780    0      330     20
+@{QUERY_ROW}              0      22     260     24
+@{ENGINE_PICKER_ROW}      946    22     230     24
+# Height deliberately tight to one text line (not the query box's full,
+# resizable height): confirmed during implementation that Tesseract
+# reliably misreads short query text (e.g. "/does/not/exist" came back as
+# "ae") when the crop is much taller than the single line of text it
+# contains -- the same "sparse region" OCR failure mode documented
+# elsewhere in this file, just triggered by excess height here rather than
+# width.
+@{QUERY_TEXTBOX}          0      46     1200    22
+@{SOURCE_HEADER}          0      135    300     20
+@{SOURCE_HINT_ROW}        0      153    592     20
+@{RESULTS_HEADER}         600    135    300     20
+@{RESULTS_SAVE_BUTTON}    1116   135    60      20
+# The two panels' *content*: everything under the header row (the header's own
+# regions are above). They start at y=156, just below the header's buttons (which
+# end at y=152) and not at the header: each header has a pop-out icon (a small
+# arrow in its far right corner, right of "Save..."), and with it inside the crop
+# Tesseract's page layout analysis changed for some content -- a Results tree of
+# Alice/Bob/Carol read back with its third row as garbage ('yes ©) of + Oe') at
+# the default --psm 6, while the very same screenshot read cleanly with the icon
+# erased, or the header cut off (confirmed offline against saved screenshots).
+# And no lower than 156: the first tree row's text starts at y=159, and a crop
+# that cuts its top reads "(3 items)" as noise. Same bottom edge as ever.
+@{SOURCE_PANEL}           0      156    592     579
+@{RESULTS_PANEL}          600    156    600     579
+# Tall enough to hold jsonpath-rust's own multi-line syntax-error messages
+# (confirmed during implementation: a JSONPath parse error can render as 5-6
+# lines -- "Query error: ..." plus the underlying crate's own "-->" pointer
+# and "= expected ..." lines -- which a plain single-line-sized crop would
+# clip, hiding the very text a query-outcome wait is polling for). A single
+# short status line still reads fine inside the extra headroom.
+@{STATUS_BAR}             0      705    1200    95
+# Icon-only controls OCR can't read -- fixed click points, not regions.
+${THEME_TOGGLE_X}         1183
+${THEME_TOGGLE_Y}         10
+# The toolbar's source field and its Load / Clear buttons (see TOOLBAR_ROW
+# above for the row's layout). LOAD_BUTTON_X / CLEAR_BUTTON_X are glyph pixels
+# of the button labels, confirmed to shift by 30+ grayscale levels between the
+# enabled and disabled states -- the same way TC-WIN-002 reads the theme
+# toggle -- so they double as the probe for "is this button enabled?".
+${TOOLBAR_Y}              11
+${SOURCE_FIELD_X}         300
+${LOAD_BUTTON_X}          866
+${CLEAR_BUTTON_X}         914
+# The "Search --- Source/Results" popup renders as a small floating window
+# anchored near the toolbar's top-left corner.
+@{POPUP_DIALOG_AREA}      15     15     345    130
+${SEARCH_FIND_FIELD_X}    183
+${SEARCH_FIND_FIELD_Y}    84
+${SEARCH_REGEX_CHECKBOX_X}    30
+${SEARCH_REGEX_CHECKBOX_Y}    106
+${SEARCH_FIND_X}          39
+${SEARCH_FIND_Y}          127
+${SEARCH_FIND_ALL_X}      89
+${SEARCH_FIND_ALL_Y}      127
+${SEARCH_CANCEL_X}        146
+${SEARCH_CANCEL_Y}        127
+# The dialog's status line, directly under the buttons: "N of M" (plus " --
+# wrapped around to the top" after the last match), "N matches" after a Find
+# All, "No matches found.", or "Search error: ...". Cropped to that first line
+# and no more -- an error message runs to several lines and grows the dialog
+# downward, and anything further down would OCR the tree rows behind it -- and
+# no taller: a
+# crop reaching the dialog's bottom border read "1 of 4" as "oF 4 |", while
+# this one reads it as "10f 4", which the library's 0/O and whitespace
+# fallbacks still match against "1 of 4".
+@{SEARCH_STATUS_AREA}     20     136    330    22
+# The bottom panel -- a "Find All" hit list or a "Find in Source" candidate
+# list -- sizes itself to its content rather than staying a fixed height
+# (confirmed during implementation: a 0-match "No matches found." panel and a
+# 1-hit panel render their header at visibly different y-positions, ~739 vs
+# ~609) -- so header and hit-list share one region wide enough to catch
+# either, rather than two fixed-position crops that only work for one
+# particular content size. Also tall enough on its own for reliable OCR: a
+# too-short crop (the original 26px-tall header-only region) was confirmed to
+# make Tesseract's layout analysis fail outright, producing pure noise rather
+# than a bad-but-legible read.
+@{SEARCH_RESULTS_AREA}    0      595    1200    205
+# Engine-picker buttons, left to right (calibrated at the default 1200x800
+# window size -- see ENGINE_PICKER_ROW above for the row they sit in).
+${ENGINE_JQ_X}            1002
+${ENGINE_POINTER_X}       1036
+${ENGINE_JSONPATH_X}      1087
+${ENGINE_JMESPATH_X}      1144
+${ENGINE_ROW_Y}           38
+# Query-box autocomplete popup (see suggest.rs / query_suggest.rs) -- the
+# feature's own on/off toggle sits immediately left of the theme toggle
+# (THEME_TOGGLE_X/Y above), same icon-only-so-fixed-click-point reasoning.
+# AUTOCOMPLETE_ICON_PROBE is a pixel inside the 💡 glyph itself confirmed
+# (during implementation) to shift by ~60 grayscale levels between the
+# enabled/disabled icon-color states -- used the same relative-pixel-color
+# way as THEME_TOGGLE's own background-color check in TC-WIN-002.
+${AUTOCOMPLETE_TOGGLE_X}       1151
+${AUTOCOMPLETE_TOGGLE_Y}       10
+${AUTOCOMPLETE_ICON_PROBE_X}   1147
+${AUTOCOMPLETE_ICON_PROBE_Y}   10
+# The popup renders as a floating Area anchored just under the query box
+# (left_bottom of its rect), sized to content up to a 320px-tall scroll
+# area -- wide/tall enough here to catch it regardless of the query box's
+# own (resizable) height.
+@{SUGGEST_POPUP_AREA}         0      100    480    400
+
+# Fixtures served over HTTP for the source field's URL tests -- avoids depending on the
+# public internet, and lets load-failure/non-JSON/empty/oversized cases be
+# constructed on demand rather than relying on a real remote server's
+# behavior. See AppLibrary's Start/Stop Fixture Server.
+${HTTP_FIXTURES_DIR}      ${CURDIR}/fixtures/http
+
+*** Keywords ***
+Load Fixture Via Paste
+    [Documentation]    Loads a JSON fixture by pasting its text -- avoids the
+    ...    native file dialog behind the toolbar's "..." button entirely
+    ...    (confirmed blocked, see the strategy doc's "Native OS dialogs"
+    ...    section). Exercises the same load/parse code path as a typed
+    ...    path or URL. Retries the click+paste up to 3
+    ...    times: synthetic input to a freshly-focused window is occasionally
+    ...    dropped by the X server (confirmed during implementation -- not
+    ...    fully root-caused, structurally defended against here rather than
+    ...    chased further; see 00_test_strategy.md's flakiness note).
+    ...
+    ...    Only works while the empty-state "Paste JSON here..." box is
+    ...    showing -- confirmed during implementation that once a document is
+    ...    loaded, that box no longer exists to paste into, and Ctrl+V simply
+    ...    does nothing (the app has no global paste-to-replace shortcut).
+    ...    To load a *second* document over one that's already showing, use
+    ...    Load Via Url instead, which works regardless of current state.
+    [Arguments]    ${json_text}
+    Set Clipboard    ${json_text}
+    Wait Until Keyword Succeeds    3x    0.5s
+    ...    Paste And Verify Loaded
+
+Paste And Verify Loaded
+    Click At    200    300
+    Sleep    0.2s
+    Press Keys    ctrl    v
+    Wait Until Region Contains Text    @{STATUS_AREA}    pasted    timeout=3
+
+Run Query
+    [Documentation]    Types the given query text and runs it, waiting for
+    ...    the run to finish. Retries the whole click+type+run sequence up
+    ...    to 5 times for the same reason as Load Fixture Via Paste above --
+    ...    confirmed under implementation to occasionally need more than 3
+    ...    attempts on a loaded/busy machine.
+    [Arguments]    ${query_text}
+    Wait Until Keyword Succeeds    5x    0.5s
+    ...    Type And Run Query    ${query_text}
+
+Type And Run Query
+    [Arguments]    ${query_text}
+    Click At    100    58
+    Sleep    0.3s
+    Press Keys    ctrl    a
+    Type Text    ${query_text}
+    Sleep    0.3s
+    Press Keys    ctrl    enter
+    Wait Until Region Matches    @{STATUS_BAR}    result\\(s\\)|error    timeout=5
+
+Query Box Should Contain Text
+    [Documentation]    OCR check of the text in the query box. Use this, not a
+    ...    bare `Region Should Contain Text @{QUERY_TEXTBOX}`: the box tints
+    ...    each step of the query (query_highlight.robot), and Tesseract reads
+    ...    light text on a tinted chip as nothing at all. The tints are
+    ...    flattened to the box's black first (AppLibrary._flatten_tints).
+    [Arguments]    ${expected}
+    Region Should Contain Text    @{QUERY_TEXTBOX}    ${expected}    flatten_tints=${True}
+
+Select Engine
+    [Documentation]    Clicks the named engine picker button (jq / Pointer /
+    ...    JSONPath / JMESPath). Clicking an already-selected engine
+    ...    deselects it back to auto-detect (app's own toggle behavior).
+    ...    Retried: confirmed during implementation that Tesseract
+    ...    occasionally misreads the short "jq" label (seen read back as
+    ...    both "iq" and "ja" at this size), the same class of OCR
+    ...    flakiness documented throughout this resource.
+    [Arguments]    ${engine_label}
+    Wait Until Keyword Succeeds    3x    0.3s
+    ...    Click Text In Region    @{ENGINE_PICKER_ROW}    ${engine_label}
+
+Clear Query Box
+    [Documentation]    Empties the query box without typing a replacement --
+    ...    needed for the handful of auto-detect cases keyed off an *empty*
+    ...    query, which `Type And Run Query`'s ctrl+a-then-type approach can't
+    ...    produce on its own (typing "" is a no-op, leaving the old text
+    ...    selected rather than gone).
+    Click At    100    58
+    Sleep    0.2s
+    Press Keys    ctrl    a
+    Press Key    delete
+
+Open Row Context Menu
+    [Documentation]    Right-clicks an app-relative point and waits for its
+    ...    row context menu to actually appear before returning, retrying the
+    ...    right-click itself if needed -- confirmed during implementation
+    ...    that a right-click occasionally doesn't register the first time,
+    ...    the same class of synthetic-input flakiness documented elsewhere
+    ...    in this suite (see keywords.resource's own module doc / the
+    ...    strategy doc). Every row's menu starts with "Save...", so that's
+    ...    what confirms the menu opened, regardless of which row kind it is.
+    [Arguments]    ${x}    ${y}
+    Wait Until Keyword Succeeds    3x    0.3s
+    ...    Right Click And Verify Menu Open    ${x}    ${y}
+
+Right Click And Verify Menu Open
+    [Arguments]    ${x}    ${y}
+    Right Click At    ${x}    ${y}
+    Sleep    0.3s
+    ${menu_x}=    Evaluate    ${x} + 5
+    ${menu_y}=    Evaluate    ${y} + 10
+    Region Should Contain Text    ${menu_x}    ${menu_y}    280    120    Save
+
+Row Context Menu Region
+    [Documentation]    The (x, y, width, height) region a row's context menu
+    ...    renders in, given the app-relative point it was opened from --
+    ...    same offsets `Right Click And Verify Menu Open` uses to confirm
+    ...    the menu opened, exposed here so a test can then OCR specific
+    ...    items out of that same region.
+    [Arguments]    ${x}    ${y}
+    ${menu_x}=    Evaluate    ${x} + 5
+    ${menu_y}=    Evaluate    ${y} + 10
+    RETURN    ${menu_x}    ${menu_y}    280    120
+
+Close Search Results Panel
+    [Documentation]    Located by OCR rather than a fixed point: the panel's
+    ...    height (and so its "Close" button's y-position) varies with how
+    ...    many hits it's showing, confirmed during implementation (~y=609
+    ...    for a panel with a hit line, ~y=739 for a bare "No matches
+    ...    found." panel).
+    Click Text In Region    @{SEARCH_RESULTS_AREA}    Close
+
+Load Via Url
+    [Documentation]    Types `${url}` into the toolbar's source field and
+    ...    loads it with Enter -- retrying the whole click+type if the text
+    ...    doesn't visibly land in the field. Enter rather than the Load
+    ...    button: the button only enables a frame after the first
+    ...    keystroke, and a click right behind fast typing can land before
+    ...    it has (the same class of input-timing flakiness documented for
+    ...    Ctrl+Enter elsewhere in this suite), whereas Enter needs nothing
+    ...    but the focused field. The Load button has its own test
+    ...    (TC-OPEN-018). Works whether or not a document is already loaded
+    ...    -- the field is always there, unlike the paste box.
+    ...
+    ...    Returns as soon as Enter is pressed: the source field keeps the
+    ...    typed text whether the load worked or not, so it is no evidence of
+    ...    a load. Wait on the status bar or the Source panel for that.
+    [Arguments]    ${url}
+    Wait Until Keyword Succeeds    3x    0.5s
+    ...    Type And Submit Source    ${url}
+
+Type And Submit Source
+    [Arguments]    ${source}
+    Click At    ${SOURCE_FIELD_X}    ${TOOLBAR_Y}
+    Sleep    0.2s
+    Press Keys    ctrl    a
+    Type Text    ${source}
+    Sleep    0.3s
+    # Just the file name's stem ("valid" of ".../valid.json"), not all of the
+    # text: the blinking caret sits right after the last character and
+    # clips it in the OCR read (confirmed: "missing.json" read back as
+    # "missing.jso"), and a whole URL can run past what one word-box gets
+    # right anyway. Enough to show the typing landed in the field.
+    ${stem}=    Evaluate    """${source}""".rsplit('/', 1)[-1].split('.')[0]
+    Region Should Contain Text    @{SOURCE_FIELD}    ${stem}
+    Press Key    enter
+    Sleep    0.3s
+    # Off the field: a pointer left hovering it draws a bright outline box
+    # around the field, and Tesseract's layout analysis then reads the crop
+    # as a frame and returns nothing at all (confirmed: TC-OPEN-020's
+    # "/no/such/dir/missing.json" read back as '' with the pointer on it,
+    # cleanly with it elsewhere -- same text, same crop).
+    Move Mouse To    600    400
+
+Wait Until Pasted Source Is Replaced
+    [Documentation]    Waits for the "(pasted JSON)" note to leave the
+    ...    toolbar -- the proof that a URL or file load *replaced* a pasted
+    ...    document. The source field is no evidence of that: it keeps
+    ...    whatever was typed into it whether or not the load worked.
+    Wait Until Keyword Succeeds    10x    0.5s
+    ...    Region Should Not Contain Text    @{STATUS_AREA}    pasted JSON
+
+Run Current Query
+    [Documentation]    Runs whatever text is already in the query box, with
+    ...    no typing step first -- for the handful of cases keyed off an
+    ...    already-empty box (see Clear Query Box) or text left over from a
+    ...    previous step. Retries for the same reason as Run Query.
+    Wait Until Keyword Succeeds    5x    0.5s
+    ...    Press Ctrl Enter And Wait
+
+Press Ctrl Enter And Wait
+    Press Keys    ctrl    enter
+    Wait Until Region Matches    @{STATUS_BAR}    result\\(s\\)|error    timeout=5
+
+Toggle Autocomplete
+    [Documentation]    Clicks the query box's 💡 autocomplete toggle and
+    ...    confirms the icon's own color actually changed (retried -- same
+    ...    occasionally-dropped-synthetic-click flakiness documented
+    ...    elsewhere in this resource). Flips whichever direction it's
+    ...    currently NOT in; call it once from a fresh launch to turn
+    ...    autocomplete on, again to turn it back off.
+    ${before}=    Get Pixel Color    ${AUTOCOMPLETE_ICON_PROBE_X}    ${AUTOCOMPLETE_ICON_PROBE_Y}
+    Wait Until Keyword Succeeds    5x    0.3s
+    ...    Click Autocomplete Toggle And Verify Changed    ${before}
+
+Click Autocomplete Toggle And Verify Changed
+    [Arguments]    ${baseline}
+    Click At    ${AUTOCOMPLETE_TOGGLE_X}    ${AUTOCOMPLETE_TOGGLE_Y}
+    Sleep    0.3s
+    ${after}=    Get Pixel Color    ${AUTOCOMPLETE_ICON_PROBE_X}    ${AUTOCOMPLETE_ICON_PROBE_Y}
+    Colors Should Not Match    ${baseline}    ${after}
+    ...    msg=Expected the 💡 icon's color to change after clicking the autocomplete toggle
+
+Query Text Should Be
+    [Documentation]    The query box holds exactly `expected`: selects all of it,
+    ...    copies it and compares the clipboard. For short queries, which OCR
+    ...    reads badly under the box's tints (`.name` came back as `.-hame`).
+    ...    Leaves the clipboard changed and the focus in the box.
+    [Arguments]    ${expected}
+    Set Clipboard    nothing was copied
+    Click At    100    58
+    Sleep    0.3s
+    Press Keys    ctrl    a
+    Press Keys    ctrl    c
+    Sleep    0.4s
+    ${text}=    Get Clipboard
+    Should Be Equal    ${text}    ${expected}

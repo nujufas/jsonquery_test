@@ -190,6 +190,29 @@ would have tested GTK's dialog instead of the app's.)
   needs an explicit wait/retry on the expected UI state, not a fixed sleep sized
   by guesswork. Standard Robot Framework `Wait Until Keyword Succeeds` pattern.
 
+## Isolation: what the app keeps, and where the display needs room
+
+**The app's settings.** Since the Settings window the app keeps `settings.json` in a folder `.jsonquery`
+of the home of whoever runs it (the limits on file sizes, the theme, whether autocomplete is on, the size
+of the window and of the panes). A suite that left that file where the next case, or the person who
+runs the suite, would find it would test the order of the cases and change the person's own
+settings. So `Launch Jsonquery App` points the app at a folder of its own, a new one for each launch
+(the environment variable `JSONQUERY_HOME`, which names the folder itself and is only taken if
+it is an absolute path), empty — the first start of a new user, in the app's defaults — and removes it
+when the app is closed. A case that needs the app to start as it was left says so (`keep_home=${TRUE}`),
+and one that needs a file in it gives its text (`settings=<text>`); see [21_settings.md](21_settings.md).
+The folder is made under `TMPDIR`.
+
+**Room in `/tmp`.** The X server needs a little room in `/tmp` to start: the compiler of its keyboard
+map writes `/tmp/server-<n>.xkm`, and when that fails ("Cannot close … (not enough space?)" in its
+output) the server exits. `run.sh` then goes on without a display and the first thing that fails is
+the import of `AppLibrary.py` ("Can't connect to display"), which leaves Robot saying "No keyword
+with name 'Start Test Display' found" for every case. On a machine where `/tmp` is a small or shared
+filesystem with a quota (this dev machine's is a RAM-backed one every session of the user shares, and
+it is sometimes full), free it, or run the suite where `/tmp` is on disk — a mount namespace in which a
+folder on disk is bound over `/tmp` is enough, and nothing in the suite needs the real one. The
+files the suite itself makes go to `TMPDIR` (`run_parallel.sh` gives each lane its own).
+
 ## Tooling
 
 | Concern | Choice | Why |

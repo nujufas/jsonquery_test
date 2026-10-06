@@ -97,6 +97,28 @@ the other `… Suggested In` keywords are the save ones. A few rules, all learne
   a few hundred lines a second) instead of a fixed budget.
 - The dialogs themselves — their look, the folder they open in — belong to the desktop and are not tested.
 
+## Writing a case about what the app keeps (settings)
+
+The app keeps `settings.json` in a folder of its own, and every `Launch Jsonquery App` gives it a new
+one (`JSONQUERY_HOME`, empty, removed when the app is closed), so a case starts as the first start of a
+new user and never sees what an earlier case left, nor the `~/.jsonquery` of whoever runs the suite.
+A case reads the file rather than OCR: the app writes it a moment after the change, so wait for it.
+
+| Keyword | What it does |
+|---|---|
+| `Launch Jsonquery App  settings=<text>` | starts with that text as the `settings.json` (valid, wrong or not JSON at all) |
+| `Quit Jsonquery App` | closes the window as a person does and waits for the app to end; true if it did (what the app writes as it ends is only written then) |
+| `Close Jsonquery App  keep_home=${TRUE}` then `Launch Jsonquery App  keep_home=${TRUE}` | the next start, as the same user: the folder of the last launch is used again |
+| `Settings Value  path` | what the file has at a dotted path (`limits.copy`, `window.width`), or `None` for no file or nothing there |
+| `Settings Value Should Be  path  expected` | the same as an assertion: text as it is, a number as a number, `None` for nothing |
+| `Settings File Exists` | whether there is a file (a start that changes nothing writes none) |
+| `App Home` | the settings folder of the running app, to read the file as it is |
+| `Resize Window  title  w  h`, `Maximize Window  title` | what dragging the edge, or the maximize button, does (through the window manager) |
+
+Wrap the read in `Wait Until Keyword Succeeds` (the suite does, as `Setting Should Be`). The first case,
+[TC-SET-001](21_settings.md), shows opening the window; the regions and rows of the Settings window are
+variables at the top of `suites/settings/settings.robot`.
+
 ## Gotchas
 
 The OCR- and coordinate-based interaction technique that works, and a growing list of sharp,
@@ -202,3 +224,25 @@ non-obvious findings, worth reading before extending any suite:
   goes on and fails in ways that look like app bugs. Give every lane a fresh display.
 - A Robot cell splits at two spaces; a backslash is written doubled (`\\"`, `\\n`); `Evaluate` cannot see
   `$variables` inside a generator expression (use a keyword); `--test` globs know only `*` and `?`.
+
+### Found while writing the settings suite
+
+- **Do not OCR across icons.** An icon-only button reads as noise (`©`, `2`, `0)`), and noise at the end of a
+  line changes how Tesseract reads the text before it: with the ⚙ beside the ⓘ it read `[JSONPath` as
+  `SSONPath` (TC-QRY-012), while either icon alone was harmless. `@{STATUS_BAR}` therefore stops short of them.
+  To find out which part of a region does it, replay the saved screenshot of the failure through the same
+  call (`resize` ×5, `pytesseract.image_to_data --psm 6`) with parts painted over; the result is the same on every run.
+- **A check that something was *not* written has to wait.** The app writes a moment after a change (the layout
+  has to hold still for a quarter of a second, then be unchanged for half), so "nothing is in the file" looked
+  at once passes against an app that writes late — a mutant did exactly that to TC-SET-023. Wait as long as a
+  wrong write would take (1.5 s) and then look.
+- **Read what the app kept from the file, not from the screen.** A long path in small type loses its dot
+  (`settings json`), and a warning in amber is read differently on every run; the file is exact and the
+  warning is found by its colour (`Region Should Contain Color`, TC-SET-012).
+- **"The next start" is the same folder, a new process.** `Quit Jsonquery App` (close as a person does, and wait),
+  then `Close Jsonquery App keep_home=${TRUE}` and `Launch Jsonquery App keep_home=${TRUE}`. Killing the app
+  would test what it writes when it is killed, which is nothing.
+- **fluxbox does not honour a window's request to start maximized**, so a case about a window that starts
+  maximized only passes if the app asks again once it exists (TC-SET-024: without it the window is 1000 wide).
+- **Xvfb needs room in `/tmp`** even when everything else is on disk — see "Isolation" in
+  [00_test_strategy.md](00_test_strategy.md).

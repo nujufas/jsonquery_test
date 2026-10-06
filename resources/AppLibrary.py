@@ -99,6 +99,10 @@ class AppLibrary:
         self._bus = None
         self._portal = None
         self._temp_dirs = []
+        # The folder the app keeps its settings in (JSONQUERY_HOME), one for each
+        # launch -- the person running the tests keeps their own, and so does each
+        # case -- unless a case asks to start again from the same one.
+        self._app_home = None
 
     # -- display lifecycle (once per suite run) -----------------------------
 
@@ -178,6 +182,7 @@ class AppLibrary:
     def stop_test_display(self):
         """Stops the window manager and, if this run started it, Xvfb too."""
         self._stop_portal()
+        self._forget_app_home()
         for path in self._temp_dirs:
             shutil.rmtree(path, ignore_errors=True)
         self._temp_dirs = []
@@ -194,14 +199,28 @@ class AppLibrary:
     # -- app lifecycle (once per test) ---------------------------------------
 
     @keyword("Launch Jsonquery App")
-    def launch_jsonquery_app(self, timeout=10):
-        """Starts a fresh jsonquery_gui process and waits for its window."""
+    def launch_jsonquery_app(self, timeout=10, settings=None, keep_home=False):
+        """Starts a fresh jsonquery_gui process and waits for its window.
+
+        The app keeps its settings in a folder of its own for this launch
+        (JSONQUERY_HOME), empty -- the first run of a new user -- so that what a
+        case changes is not seen by the next, nor by the settings of whoever runs
+        the suite. `settings`: the text of the settings.json it starts with. With
+        `keep_home` the folder of the last launch is used again (see
+        `Close Jsonquery App`), as for the next run of the same user."""
         if not os.path.exists(BINARY_PATH):
             raise AssertionError(
                 f"{BINARY_PATH} not found -- run `cargo build -p jsonquery_gui` first."
             )
+        if not (keep_home and self._app_home and os.path.isdir(self._app_home)):
+            self._forget_app_home()
+            self._app_home = tempfile.mkdtemp(prefix="jq-home-")
+        if settings is not None:
+            with open(os.path.join(self._app_home, "settings.json"), "w") as f:
+                f.write(settings)
         env = dict(os.environ)
         env["DISPLAY"] = XVFB_DISPLAY
+        env["JSONQUERY_HOME"] = self._app_home
         env.pop("WAYLAND_DISPLAY", None)
         # The app talks to the private bus, whose portal answers its file dialogs;
         # with no bus it gets none at all. It must never see the session bus of the
@@ -245,9 +264,94 @@ class AppLibrary:
         )
         time.sleep(0.5)
 
+    def _forget_app_home(self):
+        if self._app_home:
+            shutil.rmtree(self._app_home, ignore_errors=True)
+        self._app_home = None
+
+    @keyword("App Home")
+    def app_home(self):
+        """The folder the running app keeps its settings in (JSONQUERY_HOME)."""
+        return self._app_home
+
+    @keyword("Settings Value")
+    def settings_value(self, dotted):
+        """What the app's settings.json has at the dotted path (`window.width`,
+        `limits.keep_on_disk_from`), or None where there is no file or nothing
+        there. A path of nothing is the whole of it."""
+        try:
+            with open(os.path.join(self._app_home, "settings.json")) as f:
+                found = json.load(f)
+        except (OSError, ValueError, TypeError):
+            return None
+        for part in [p for p in dotted.split(".") if p]:
+            if not isinstance(found, dict) or part not in found:
+                return None
+            found = found[part]
+        return found
+
+    @keyword("Settings Value Should Be")
+    def settings_value_should_be(self, dotted, expected):
+        """Fails unless the settings file has `expected` at the path: text as it
+        is, a number as a number, and `None` for nothing there."""
+        actual = self.settings_value(dotted)
+        if str(expected) == "None":
+            ok = actual is None
+        elif isinstance(actual, bool):
+            ok = str(actual).lower() == str(expected).lower()
+        elif isinstance(actual, (int, float)):
+            try:
+                ok = abs(float(actual) - float(expected)) < 0.01
+            except ValueError:
+                ok = False
+        else:
+            ok = actual == expected
+        if not ok:
+            raise AssertionError(
+                f"settings.json has {actual!r} at {dotted!r}, not {expected!r}"
+            )
+
+    @keyword("Settings File Exists")
+    def settings_file_exists(self):
+        return os.path.exists(os.path.join(self._app_home or "", "settings.json"))
+
+    @keyword("Quit Jsonquery App")
+    def quit_jsonquery_app(self, timeout=10):
+        """Asks the window manager to close the main window, as the close button
+        of a title bar would, and waits for the app to end by itself -- which is
+        when it writes what it was asked to keep until then. True if it did."""
+        if self._app_proc is None or self._main_window_id is None:
+            return False
+        _run(
+            ["wmctrl", "-i", "-c", self._main_window_id],
+            env={**os.environ, "DISPLAY": XVFB_DISPLAY},
+        )
+        try:
+            self._app_proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return False
+        # Nothing of it is left to look at, or to take a last screenshot of.
+        self._window_id = None
+        self._main_window_id = None
+        return True
+
+    @keyword("Resize Window")
+    def resize_window(self, title, width, height):
+        """Gives the window this size (what dragging its edge does)."""
+        ids = self._search_windows(title)
+        if not ids:
+            raise AssertionError(f"No window titled {title!r}")
+        _run(
+            ["xdotool", "windowsize", ids[0], str(int(width)), str(int(height))],
+            env={**os.environ, "DISPLAY": XVFB_DISPLAY},
+        )
+        time.sleep(0.4)
+
     @keyword("Close Jsonquery App")
-    def close_jsonquery_app(self):
-        """Kills the current jsonquery_gui process, if any.
+    def close_jsonquery_app(self, keep_home=False):
+        """Kills the current jsonquery_gui process, if any, and (unless
+        `keep_home`, for a case that starts the app again as the same user) throws
+        away the folder it kept its settings in.
 
         First captures one full-window screenshot tagged with the test's
         final status, so every test -- not just ones that happen to make
@@ -293,6 +397,8 @@ class AppLibrary:
         self._app_proc = None
         self._window_id = None
         self._main_window_id = None
+        if not keep_home:
+            self._forget_app_home()
 
     def _find_window_id(self):
         result = _run(

@@ -16,7 +16,23 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
-**Status as of 2026-10-06: 22 suites, 593 test cases** — the 369 of the evening
+**Status as of 2026-10-06, late: 23 suites, 612 test cases** — the 593 below plus the 19 of the new
+suite `settings` (the ⚙ Settings window and what the app keeps between runs, in
+[21_settings.md](21_settings.md)); each case starts the app with a settings folder of its own, so none
+sees what another left, nor the settings of whoever runs the suite (`JSONQUERY_HOME`, see "Isolation"
+in [00_test_strategy.md](00_test_strategy.md)). The new suite was mutation-checked with 16 source
+mutants, every one killed by the cases meant for it, which also showed a check that was too early
+(TC-SET-023) and a half of the behaviour no case covered (the panes coming back, now TC-SET-026).
+The last full run (`run_parallel.sh`, four lanes, 22 minutes, the debug build of the app with the
+Settings): **611 of 612 passed**; the one failure was an OCR misread of the URL typed into the source
+field (TC-OPEN-003, `vaLlid. json`), which passed five times in a row when run on its own. The run
+before it, on the same build, passed 610: TC-DIF-007 (a torn repaint under load; passed twice on its
+own) and TC-QRY-012, which was the app's doing — the ⚙ added beside the ⓘ in the status bar made
+Tesseract read `[JSONPath` as `SSONPath` in the full-width status region (either icon alone was
+harmless, found by replaying the saved screenshot), so `@{STATUS_BAR}` now stops short of the icons;
+TC-QRY-012 then passed five of five.
+
+**Status as of 2026-10-06, before that: 22 suites, 593 test cases** — the 369 of the evening
 before plus 224: the new suites `jq_functions` (49), `output_formats` (55), `tutorial_pages`
 (50) and `workflows` (10), and cases added to `opening_sources` (+9 for the file dialogs, +14 for heavy files, pipes, downloads and files kept on disk, in `heavy_files.robot`), `saving` (+21), `tools`
 (+9, `tools_dialogs`, +1 for Format on a file kept on disk) and `autocomplete` (+6). The last full run (`run_parallel.sh`, four lanes, 21 minutes, a fresh build of the app) passed: 593 of 593. (The one before that, 588 of 588, was before the sorting, the guard against a file cut short, JSONPath and JMESPath, repeated keys and Format on disk; the one before the cases for the files that are kept on disk, five lanes and 18 minutes, had passed 578 of 578; the run before that had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard.) Nothing is **Blocked** any more:
@@ -823,6 +839,30 @@ engine edge) are covered by `cargo test`.
 | TC-WF-008 | Saved JSON Can Be Opened Again | P1 | **Passing** | `suites/workflows/` |
 | TC-WF-009 | Every Window Open And A Save Still Works | P2 | **Passing** | `suites/workflows/` |
 | TC-WF-010 | Rows Copied As CSV Are Not A JSON Document | P3 | **Passing** | `suites/workflows/` |
+
+## Settings — [21_settings.md](21_settings.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-SET-001 | The Gear Opens The Settings Window | P1 | **Passing** | `suites/settings/` |
+| TC-SET-002 | Every Limit Is There With Its Default | P1 | **Passing** | `suites/settings/` |
+| TC-SET-003 | Nothing Is Written Until Something Is Changed | P1 | **Passing** | `suites/settings/` |
+| TC-SET-004 | A Limit Typed And Confirmed Is Kept In The File | P1 | **Passing** | `suites/settings/` |
+| TC-SET-005 | What Is Not A Size Is Said So And Not Kept | P1 | **Passing** | `suites/settings/` |
+| TC-SET-006 | Reset Puts One Limit Back | P1 | **Passing** | `suites/settings/` |
+| TC-SET-007 | Restore Defaults Puts Every Limit Back | P1 | **Passing** | `suites/settings/` |
+| TC-SET-008 | A Limit Is Kept For The Next Start | P1 | **Passing** | `suites/settings/` |
+| TC-SET-009 | A Limit That Was Typed But Not Confirmed Is Kept When The Window Is Closed | P2 | **Passing** | `suites/settings/` |
+| TC-SET-010 | The Limit On Keeping A File On Disk Decides How A File Opens | P1 | **Passing** | `suites/settings/` |
+| TC-SET-011 | A Settings File With Something Wrong In It Does Not Stop The App | P1 | **Passing** | `suites/settings/` |
+| TC-SET-012 | A File That Is Not JSON Does Not Stop The App Either | P2 | **Passing** (the warning is read by its colour, not its words — see the note in the doc) | `suites/settings/` |
+| TC-SET-020 | The Theme Is Kept For The Next Start | P1 | **Passing** | `suites/settings/` |
+| TC-SET-021 | The Theme Is Kept Though The App Ends At Once | P2 | **Passing** | `suites/settings/` |
+| TC-SET-022 | Autocomplete On Is Kept For The Next Start | P2 | **Passing** | `suites/settings/` |
+| TC-SET-023 | The Size Of The Window Is Kept For The Next Start | P1 | **Passing** | `suites/settings/` |
+| TC-SET-024 | A Maximized Window Is Maximized The Next Time | P2 | **Passing** | `suites/settings/` |
+| TC-SET-025 | The Size Of The Panes Is Kept | P2 | **Passing** | `suites/settings/` |
+| TC-SET-026 | The Panes Are As They Were Left | P2 | **Passing** | `suites/settings/` |
 
 ## Coverage summary
 

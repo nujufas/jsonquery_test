@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (October 2026): **593 test cases in 22 suites**.
+touches your desktop. Status (October 2026): **612 test cases in 23 suites**.
 
 ## Quick start
 
@@ -143,6 +143,11 @@ All optional; unset, nothing changes.
   the cases save, the app's own) go to `/tmp`, which is often a small tmpfs, and a quota there is shared with
   everything else you run. Point `TMPDIR` at a disk, for example `TMPDIR=$HOME/tmp ./run.sh ...`;
   `run_parallel.sh` does it for every lane itself.
+- **Robot stops at once with "Can't connect to display" while importing `AppLibrary.py`, or every case fails with
+  "No keyword with name 'Start Test Display' found"**: the X server did not come up. When `/tmp` has no room
+  Xvfb dies after printing `Cannot close "/tmp/server-<n>.xkm" properly (not enough space?)` (it compiles its
+  keyboard map there, and `TMPDIR` does not move that). Free room in `/tmp`, or run the suite in a mount namespace
+  with a folder on disk bound over `/tmp`; nothing in the suite needs the real one.
 - **A file-dialog case fails with "The app opened 0 file dialog(s)"**: the app did not reach the stand-in portal.
   Check that `dbus-daemon` is installed and that the venv has `jeepney` (`run.sh` installs it when it is missing),
   and read the dialog log that a failed dialog case prints.
@@ -175,6 +180,8 @@ All optional; unset, nothing changes.
 - **What it changes outside this directory.** It adds one rule to `~/.fluxbox/apps` (the app's window gets no
   title bar, which the click coordinates rely on), creates an empty `~/.Xauthority` if there is none, and keeps
   a temporary directory per run for the D-Bus configuration and the files the cases save (removed at the end).
+  The app itself is given a settings folder of its own for each launch (`JSONQUERY_HOME`, see
+  [docs/21_settings.md](docs/21_settings.md)), so the `~/.jsonquery` of whoever runs the suite is neither read nor written.
 
 ## Test suites
 
@@ -204,6 +211,7 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `output_formats` | a query ending in `@csv` or `@tsv`: the CSV/TSV note, the Text view, Copy to Clipboard and Save... write rows, not JSON | [18](docs/18_output_formats.md) |
 | `tutorial_pages` | the eight tutorial pages for those functions: every example run, the buttons, the cheat sheet | [19](docs/19_tutorial_pages.md) |
 | `workflows` | whole journeys: a file chosen in the dialog, a lesson, a query, rows or JSON saved to disk | [20](docs/20_workflows.md) |
+| `settings` | the ⚙ Settings window (the nine limits on the size of files) and what the app keeps for the next start: the theme, 💡, the size of the window and of the panes | [21](docs/21_settings.md) |
 
 [11_error_and_edge_cases.md](docs/11_error_and_edge_cases.md) cross-references every error string in the app.
 

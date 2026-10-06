@@ -257,17 +257,16 @@ Priority: P3
 Steps: Click `…` twice, each time closing the dialog.
 Expected: the first press opens one dialog (not two), the second opens the next. **Passing.**
 
-### TC-OPEN-029 — A file past the mapping size opens like any other
+### TC-OPEN-029 — A file past the indexing size opens like any other
 Priority: P2
-Steps: Type the path of an 80 MiB file — `{"heavy": ["a", "b", "c"], "n": 1}` and then blanks, so that
-parsing costs nothing — into the source field and press Enter.
-Expected: the document loads: the toolbar says `80.0 MB` and the Source pane shows the object
-(`2 keys`); no load error. The app maps a file of 64 MiB or more while it parses it
-(`jsonquery_core::MAP_THRESHOLD`) and reads a smaller one, so this is the mapped way in, end to end.
-Automation notes: `Make Heavy File` writes the file into a temp directory that goes with the display.
-The case does not tell the mapped way from the read one by itself — the unit tests of
-`crates/core` do (`Document::mapped`) — it is what keeps the heavy path working in the real window.
-**Passing.**
+Steps: Type the path of a 270 MiB file — `{"heavy": ["a", "b", "c"], "n": 1}` and then blanks, so that
+checking it costs nothing — into the source field and press Enter.
+Expected: the document loads: the toolbar says `270.0 MB`, the Source pane shows the object (`2 keys`),
+the status bar says `Indexed in …` (not `Parsed in`) and there is no load error. The app keeps a file of
+256 MiB or more on disk, memory-mapped and indexed (`jsonquery_core::LAZY_THRESHOLD`), and parses a
+smaller one.
+Automation notes: `Make Heavy File` writes the file once for the suite, into a temp directory that goes
+with the display. **Passing.**
 
 ### TC-OPEN-030 — A named pipe opens with what is written to it
 Priority: P2
@@ -294,12 +293,69 @@ download function returns, before the worker reports the document. **Passing.**
 
 ### TC-OPEN-032 — A large download leaves nothing in the temp folder
 Priority: P2
-Steps: Serve a 70 MiB file over HTTP, load its URL, then look in the temp folder.
-Expected: the document is loaded and the temp folder holds nothing new. A response of 64 MiB or more is
-streamed into a temporary file (readable by its owner only), mapped for the parse, and deleted
-afterwards, whether the parse worked or not; before, the file — 70 MiB here — stayed there for good and
-the app still held it mapped.
+Steps: Serve the 270 MiB file over HTTP, load its URL, then look in the temp folder.
+Expected: the document is loaded (`2 keys`, `Indexed in …`) and the temp folder holds nothing new. A
+response of 256 MiB or more is streamed into a temporary file that has no name from the moment it is made
+(it is unlinked on Unix, made to be deleted when it is closed on Windows), readable by its owner only,
+and mapped from there for as long as the document is open: so there is nothing to find, while the
+document is open or after. Before, the file — 70 MiB when this case was first written — stayed in the
+temp folder for good and the app still held it mapped.
 Automation notes: as TC-OPEN-031; the fixture server serves the temp directory `Make Heavy File` made.
+**Passing.**
+
+### TC-OPEN-033 — A file past the indexing size is not held in memory
+Priority: P1
+Steps: Start watching the app's memory (`Start Watching App Memory`: the `RssAnon` of
+`/proc/<pid>/status` every 20 ms, which is what the system cannot take back, as it can the pages of a
+mapped file), load a file of 1500 strings of 190,000 characters (272 MiB), wait for the Source pane to say
+`1500 items`, stop watching.
+Expected: the most the app held was under 160 MiB (a debug build holds about 40 MiB with nothing open).
+Parsed, it would hold the bytes it read and the strings made of them, more than 500 MiB.
+Automation notes: `Make File Of Long Strings`, made once for the suite. **Passing.**
+
+### TC-OPEN-034 — A long list of a file kept on disk is shown in runs
+Priority: P1
+Steps: Load that file. Look at the Source tree. Click the arrow of the first run; click it again.
+Expected: the root says `1500 items` and has two rows, `[0 … 999] (1000 items)` and
+`[1000 … 1499] (500 items)`, not a row for each of the 1500; none of the strings is shown. Opening the
+first run shows the strings (their first characters, and the numbers of the rows); closing it hides them.
+A container with more than 1000 children is shown in runs of a thousand (and, past a million, in runs of
+a thousand runs), so that no list is more than a thousand rows however long it is.
+Automation notes: OCR reads the `i` and the zeros of `item-00000` as `.` and `@`, so the case looks for
+the long run of `x` and the row number `20:` instead. **Passing.**
+
+### TC-OPEN-035 — A query reads a file kept on disk as it goes
+Priority: P1
+Steps: Load that file, start watching the memory, and run in turn: `length`; `.[1234] | length`;
+`[.[1490:][] | .[0:10]]`; `first(.[] | select(startswith("item-00007"))) | .[0:10]`; and
+`[.[] | length] | add`.
+Expected: the results are `[1500]`; `[190011]`; the ten names `item-01490` to `item-01499` in one list;
+`["item-00007"]`; and `[285016500]` — the last one reads every one of the 1500 strings in turn, 285
+million characters — and the most the app held, throughout, was under 200 MiB. The stages that only look
+for something in the file (a path, a slice, `length`, `first`, `map`, `[…]`) are walked against it, and
+what they hand on, an element at a time, is given to jaq with the rest of the program.
+Automation notes: `Query Should Give` compares the copied results as JSON. **Passing.**
+
+### TC-OPEN-036 — A query that needs all of a long list says so
+Priority: P1
+Steps: Load that file and run `sort_by(.)`.
+Expected: no result; the status bar says `` `sort_by(.)` needs all of an array of 1500 items (… MB) in
+memory, which is too much for this `` and what to do instead. A program that needs the whole of a list at
+once (`sort_by`, `group_by`, `add` on the document, `..`) cannot be run against a file that is not in
+memory; it is refused, not attempted. **Passing.**
+
+### TC-OPEN-037 — JSONPath is not run on a file kept on disk
+Priority: P2
+Steps: Load that file, pick the JSONPath engine and run `$[0]`.
+Expected: no result; the status bar says that JSONPath works on a document held in memory, which this is
+too big to be, and to use jq. JSONPath and JMESPath take a value in memory; jq and JSON Pointer are walked
+against the file. **Passing.**
+
+### TC-OPEN-038 — A file below the indexing size is parsed
+Priority: P2
+Steps: Type the path of a 100 MiB file of the same kind as TC-OPEN-029.
+Expected: it loads (`2 keys`, `100.0 MB`) and the status bar says `Parsed in …`. Below 256 MiB a file is
+read and parsed into a tree, as it always was; this is the other side of the line TC-OPEN-029 is on.
 **Passing.**
 
 ## Mutation checks
@@ -307,8 +363,16 @@ Automation notes: as TC-OPEN-031; the fixture server serves the temp directory `
 TC-OPEN-029 to 032 were run against the build from before the change that made them
 (2026-10-06): TC-OPEN-030 fails (`(0 items)` for a pipe that was written to), TC-OPEN-031 and 032 fail
 (the `jsonquery_gui-*` files a download left are named in the message), and TC-OPEN-029 passes — that
-build mapped every file as well, so it is a guard for the mapped way in and not a difference between
-the builds. The unit tests of `crates/core` and of the worker's download tell the ways in apart.
+build mapped every file as well, so it was a guard for the mapped way in and not a difference between
+the builds.
+
+TC-OPEN-029 to 038 were then run against a build in which `LAZY_THRESHOLD` is out of reach, so that
+every file is parsed (2026-10-06): TC-OPEN-029 and 032 fail (`Parsed in` where `Indexed in` is wanted),
+033 fails (the app held 553.9 MiB), 034 fails (no runs: the tree shows the rows), 035 fails on the memory
+(595.8 MiB; its queries give the same results parsed or not), 036 and 037 fail (nothing is refused when
+the document is in memory), and TC-OPEN-038 passes, as it should. That run also found that a parsed
+document with a string of 190,000 characters in a row closed the whole window (the graphics card was asked
+for a vertex buffer of more than it gives); a row now shows the first kilobyte of a string, parsed or not.
 
 Leaving `.jsonl` out of the `…` button's file filter fails TC-OPEN-002 and nothing else (the case
 compares the whole list of extensions the app asks the dialog for).

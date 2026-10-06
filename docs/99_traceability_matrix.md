@@ -16,10 +16,10 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
-**Status as of 2026-10-06: 22 suites, 582 test cases** — the 369 of the evening
-before plus 213: the new suites `jq_functions` (49), `output_formats` (55), `tutorial_pages`
-(50) and `workflows` (10), and cases added to `opening_sources` (+9 for the file dialogs, +4 for heavy files, pipes and downloads, in `heavy_files.robot`), `saving` (+21), `tools`
-(+9, `tools_dialogs`) and `autocomplete` (+6). The last full run (`run_parallel.sh`, five lanes, about 18 minutes, a fresh build of the app) passed: 578 of 578, and the four cases added after it (TC-OPEN-029 to 032) passed with the whole `opening_sources` area on the final build, 29 of 29; the run before it had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard. Nothing is **Blocked** any more:
+**Status as of 2026-10-06: 22 suites, 588 test cases** — the 369 of the evening
+before plus 219: the new suites `jq_functions` (49), `output_formats` (55), `tutorial_pages`
+(50) and `workflows` (10), and cases added to `opening_sources` (+9 for the file dialogs, +10 for heavy files, pipes, downloads and files kept on disk, in `heavy_files.robot`), `saving` (+21), `tools`
+(+9, `tools_dialogs`) and `autocomplete` (+6). The last full run (`run_parallel.sh`, four lanes, 21 minutes, a fresh build of the app) passed: 588 of 588. (The one before the cases for the files that are kept on disk, five lanes and 18 minutes, had passed 578 of 578; the run before that had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard.) Nothing is **Blocked** any more:
 the file dialogs are answered by a stand-in for the desktop's file-chooser portal
 (`resources/fake_portal.py`, see "Native OS dialogs" in
 [00_test_strategy.md](00_test_strategy.md)), which turned the 13 rows that were Blocked into
@@ -91,10 +91,16 @@ during implementation; see 00_test_strategy.md's OCR limitations note).
 | TC-OPEN-026 | A File Chosen Can Be Queried At Once | P1 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-027 | Choosing A File Twice Loads The Second | P2 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-028 | Each Press Asks The Dialog Once | P3 | **Passing** | `suites/opening_sources/` |
-| TC-OPEN-029 | A File Past The Mapping Size Opens Like Any Other | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-029 | A File Past The Indexing Size Opens Like Any Other | P2 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-030 | A Named Pipe Opens With What Is Written To It | P2 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-031 | A Small Download Leaves Nothing In The Temp Folder | P2 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-032 | A Large Download Leaves Nothing In The Temp Folder | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-033 | A File Past The Indexing Size Is Not Held In Memory | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-034 | A Long List Of A File Kept On Disk Is Shown In Runs | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-035 | A Query Reads A File Kept On Disk As It Goes | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-036 | A Query That Needs All Of A Long List Says So | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-037 | JSONPath Is Not Run On A File Kept On Disk | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-038 | A File Below The Indexing Size Is Parsed | P2 | **Passing** | `suites/opening_sources/` |
 
 **Confirmed during implementation, worth flagging for anyone extending this
 suite**: pasting only loads anything while the empty-state "Paste JSON
@@ -815,12 +821,16 @@ engine edge) are covered by `cargo test`.
 
 ## Coverage summary
 
-**2026-10-06, heavy files** (a file is memory-mapped only from 64 MiB, a pipe is read, a download leaves
-nothing behind): 578 → 582 cases in 22 suites, TC-OPEN-029 to 032 in `suites/opening_sources/heavy_files.robot`.
-Run against the build from before the change, TC-OPEN-030, 031 and 032 fail (the pipe loads as `(0 items)`;
-the temp files the download left are named in the message) and TC-OPEN-029 passes: that build mapped every file
-too, so the case guards the mapped way in and does not tell the two builds apart. Unit tests do that
-(`Document::mapped`, `crates/core`).
+**2026-10-06, heavy files, in two steps.** The first (a file is memory-mapped only from 64 MiB, a pipe is read,
+a download leaves nothing behind): 578 → 582 cases, TC-OPEN-029 to 032 in `suites/opening_sources/heavy_files.robot`;
+run against the build from before it, TC-OPEN-030, 031 and 032 fail (the pipe loads as `(0 items)`; the temp
+files the download left are named in the message) and TC-OPEN-029 passed. The second (a file of 256 MiB or more
+is not parsed but kept on disk, mapped and indexed; long lists are shown in runs; queries read the file as they
+go): 582 → 588 cases, TC-OPEN-033 to 038 added and TC-OPEN-029 and 032 moved to files of 270 MiB. Run against a
+build in which no file is ever indexed, TC-OPEN-029 and 032 fail on `Parsed in`, 033 on the memory (553.9 MiB),
+034 on the missing runs, 035 on the memory (595.8 MiB), and 036 and 037 because nothing is refused; TC-OPEN-038
+passes there, as it should. That run also showed that a parsed document with a string of 190,000 characters in a
+row closed the window, which the preview of a row (its first kilobyte) now prevents.
 
 **2026-10-06 pass** (the jq functions the app adds, CSV and TSV output, the tutorial pages
 for them, and the file dialogs): 369 → 578 cases in 22 suites. The last full run (`run_parallel.sh`, six lanes, about 15 minutes, a fresh build of the app) passed: 578 of 578; the run before it had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard. The suite now answers the

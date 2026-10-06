@@ -11,7 +11,10 @@ rather than as a source of new implementation work.
 | Malformed JSON (file/URL/paste) | `Load error: parsing JSON: {details}` | TC-OPEN-014, TC-OPEN-006, TC-TXT-008 |
 | File can't be opened or read | `Load error: opening {path}: ...`, `reading metadata for {path}: ...` or `reading {path}: ...` (a directory: `reading {path}: Is a directory`). A file that can't be *mapped* is not an error: it is read | *(not yet assigned — needs a fixture that's e.g. permission-denied or a broken symlink; add during implementation)* |
 | Named pipe, `/dev/stdin` or `/proc` file (says it is 0 bytes) | *(no error — read to the end, loads what it hands over)* | TC-OPEN-030 |
-| Download of 64 MiB or more | *(no error — written to a temporary file, mapped, deleted afterwards)* | TC-OPEN-032 |
+| Download of 256 MiB or more | *(no error — written to a file that has no name, mapped and indexed)* | TC-OPEN-032 |
+| File of 256 MiB or more, a program that needs the whole of a list (`sort_by`, `group_by`, `..`) | an item error: `` `{program}` needs all of an array of {n} items ({size}) in memory, which is too much for this: look at a part of it with a slice such as .[0:100], or work on one element at a time with .[] \| …, map(…), […] or first(…) `` | TC-OPEN-036 |
+| File of 256 MiB or more, JSONPath or JMESPath | `query error: JSONPath works on a document held in memory, and this one is too big for that: use jq, or JSON Pointer` | TC-OPEN-037 |
+| File of 256 MiB or more, a result over 16 MiB | an item error: `{an array of n items (size)} is too big to show (over 16.0 MB): narrow it with a slice such as .[0:100], or look at it in the Source tree` | *(unit tests: `crates/query/src/lazy`)* |
 | URL request fails | `Load error: requesting {url}: ...` | TC-OPEN-005 |
 | URL body exceeds 4 GiB / download I/O error | `Load error: downloading {url}: ...` | TC-OPEN-007 |
 | Downloaded body isn't valid JSON | `Load error: parsing data from {url}: parsing JSON: ...` | TC-OPEN-006 |

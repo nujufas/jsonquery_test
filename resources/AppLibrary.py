@@ -1154,11 +1154,11 @@ class AppLibrary:
         return path
 
     @keyword("Make Heavy File")
-    def make_heavy_file(self, mebibytes=80):
+    def make_heavy_file(self, mebibytes=270):
         """A file of `mebibytes` MiB named heavy.json in a new temp directory (which goes
-        when the display stops); returns its path. The app memory-maps a file of 64 MiB or
-        more while it parses it and reads a smaller one. This one costs nothing to parse:
-        `{"heavy": ["a", "b", "c"], "n": 1}` and then blanks, which JSON allows."""
+        when the display stops); returns its path. The app parses a file of under 256 MiB
+        and, from 256 MiB, keeps it on disk and indexes it. This one costs nothing to
+        check: `{"heavy": ["a", "b", "c"], "n": 1}` and then blanks, which JSON allows."""
         path = os.path.join(self.make_temp_directory(), "heavy.json")
         head = b'{"heavy": ["a", "b", "c"], "n": 1}'
         size = int(mebibytes) * 1024 * 1024
@@ -1170,6 +1170,57 @@ class AppLibrary:
                 out.write(blanks[:left])
                 left -= len(blanks)
         return path
+
+    @keyword("Make File Of Long Strings")
+    def make_file_of_long_strings(self, count=1500, characters=190000):
+        """strings.json in a new temp directory: an array of `count` strings, each
+        `item-00000-` (its number) and `characters` letters x, so one of 1500 and 190000 is
+        about 272 MiB, past the 256 MiB from which a file is kept on disk. Parsed, the
+        file would be held twice over (the bytes that were read, the strings made of
+        them); more than a thousand children are shown in runs."""
+        path = os.path.join(self.make_temp_directory(), "strings.json")
+        body = "x" * int(characters)
+        with open(path, "w", encoding="ascii") as out:
+            out.write("[")
+            for number in range(int(count)):
+                if number:
+                    out.write(",")
+                out.write('"item-%05d-%s"' % (number, body))
+            out.write("]")
+        return path
+
+    @keyword("Start Watching App Memory")
+    def start_watching_app_memory(self):
+        """Samples the memory of the running app that the system cannot take back (the
+        `RssAnon` of /proc/<pid>/status: the pages of a file that is mapped are not in it,
+        as they can be read again) every 20 ms, until `Stop Watching App Memory`, which
+        says the most it saw."""
+        pid = self._app_proc.pid
+        self._memory_peak_kib = 0
+        self._memory_stop = threading.Event()
+
+        def watch():
+            while not self._memory_stop.is_set():
+                try:
+                    with open(f"/proc/{pid}/status", encoding="ascii") as status:
+                        for line in status:
+                            if line.startswith("RssAnon:"):
+                                self._memory_peak_kib = max(
+                                    self._memory_peak_kib, int(line.split()[1])
+                                )
+                except OSError:
+                    return
+                self._memory_stop.wait(0.02)
+
+        self._memory_watcher = threading.Thread(target=watch, daemon=True)
+        self._memory_watcher.start()
+
+    @keyword("Stop Watching App Memory")
+    def stop_watching_app_memory(self):
+        """The most memory, in MiB, that `Start Watching App Memory` saw the app hold."""
+        self._memory_stop.set()
+        self._memory_watcher.join(timeout=2)
+        return self._memory_peak_kib / 1024.0
 
     @keyword("Make Named Pipe That Says")
     def make_named_pipe_that_says(self, text):

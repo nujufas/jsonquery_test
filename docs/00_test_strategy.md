@@ -1,7 +1,7 @@
 # jsonquery GUI test strategy (Robot Framework)
 
 Status: **10 suites, 74 test cases implemented and passing** (as of
-2026-09-05, second implementation pass; by 2026-10-06 it is 22 suites and 582 cases, see
+2026-09-05, second implementation pass; by 2026-10-06 it is 22 suites and 588 cases, see
 `README.md` and [99_traceability_matrix.md](99_traceability_matrix.md), and the
 file dialogs are no longer blocked, see "Native OS dialogs" below). The sections below through
 "Tooling" are the original requirements pass. Everything from "Confirmed

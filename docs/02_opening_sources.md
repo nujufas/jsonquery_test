@@ -257,7 +257,58 @@ Priority: P3
 Steps: Click `…` twice, each time closing the dialog.
 Expected: the first press opens one dialog (not two), the second opens the next. **Passing.**
 
+### TC-OPEN-029 — A file past the mapping size opens like any other
+Priority: P2
+Steps: Type the path of an 80 MiB file — `{"heavy": ["a", "b", "c"], "n": 1}` and then blanks, so that
+parsing costs nothing — into the source field and press Enter.
+Expected: the document loads: the toolbar says `80.0 MB` and the Source pane shows the object
+(`2 keys`); no load error. The app maps a file of 64 MiB or more while it parses it
+(`jsonquery_core::MAP_THRESHOLD`) and reads a smaller one, so this is the mapped way in, end to end.
+Automation notes: `Make Heavy File` writes the file into a temp directory that goes with the display.
+The case does not tell the mapped way from the read one by itself — the unit tests of
+`crates/core` do (`Document::mapped`) — it is what keeps the heavy path working in the real window.
+**Passing.**
+
+### TC-OPEN-030 — A named pipe opens with what is written to it
+Priority: P2
+Steps: Make a named pipe (`mkfifo`) and have something write a JSON document into it as soon as it is
+opened; type its path into the source field and press Enter.
+Expected: the document that was written is loaded (`from` and `items` in the Source pane). A pipe says
+it is 0 bytes long however much it will hand over; the app used to believe it and load an empty array,
+`0 B`, whatever was written, and the same for `/dev/stdin` of an app started at the end of a pipe and
+for the files of `/proc`.
+Automation notes: `Make Named Pipe That Says` starts the writer in a thread, which waits (opening a
+pipe for writing does) until the app opens it. **Passing.**
+
+### TC-OPEN-031 — A small download leaves nothing in the temp folder
+Priority: P2
+Steps: Load a URL (the fixture server's `valid.json`), then look in the temp folder for
+`jsonquery_gui-*` files.
+Expected: the document is loaded and the temp folder holds nothing it did not hold before. A response
+of under 64 MiB is parsed from memory; before, every download was written to a file there, which
+nothing deleted.
+Automation notes: `App Temp Files` lists the folder (`TMPDIR`, which the app inherits, or `/tmp`) before
+and after, and the case compares the two lists rather than expect none, as a shared `/tmp` may hold
+what older builds left. The file would be gone by the time the document shows: it is deleted when the
+download function returns, before the worker reports the document. **Passing.**
+
+### TC-OPEN-032 — A large download leaves nothing in the temp folder
+Priority: P2
+Steps: Serve a 70 MiB file over HTTP, load its URL, then look in the temp folder.
+Expected: the document is loaded and the temp folder holds nothing new. A response of 64 MiB or more is
+streamed into a temporary file (readable by its owner only), mapped for the parse, and deleted
+afterwards, whether the parse worked or not; before, the file — 70 MiB here — stayed there for good and
+the app still held it mapped.
+Automation notes: as TC-OPEN-031; the fixture server serves the temp directory `Make Heavy File` made.
+**Passing.**
+
 ## Mutation checks
+
+TC-OPEN-029 to 032 were run against the build from before the change that made them
+(2026-10-06): TC-OPEN-030 fails (`(0 items)` for a pipe that was written to), TC-OPEN-031 and 032 fail
+(the `jsonquery_gui-*` files a download left are named in the message), and TC-OPEN-029 passes — that
+build mapped every file as well, so it is a guard for the mapped way in and not a difference between
+the builds. The unit tests of `crates/core` and of the worker's download tell the ways in apart.
 
 Leaving `.jsonl` out of the `…` button's file filter fails TC-OPEN-002 and nothing else (the case
 compares the whole list of extensions the app asks the dialog for).

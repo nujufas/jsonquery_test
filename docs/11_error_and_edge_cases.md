@@ -9,7 +9,9 @@ rather than as a source of new implementation work.
 | Situation | Exact text pattern | Owning test case |
 |---|---|---|
 | Malformed JSON (file/URL/paste) | `Load error: parsing JSON: {details}` | TC-OPEN-014, TC-OPEN-006, TC-TXT-008 |
-| File can't be opened/mmap'd | `Load error: opening/memory-mapping/reading metadata for {path}: ...` | *(not yet assigned — needs a fixture that's e.g. permission-denied or a broken symlink; add during implementation)* |
+| File can't be opened or read | `Load error: opening {path}: ...`, `reading metadata for {path}: ...` or `reading {path}: ...` (a directory: `reading {path}: Is a directory`). A file that can't be *mapped* is not an error: it is read | *(not yet assigned — needs a fixture that's e.g. permission-denied or a broken symlink; add during implementation)* |
+| Named pipe, `/dev/stdin` or `/proc` file (says it is 0 bytes) | *(no error — read to the end, loads what it hands over)* | TC-OPEN-030 |
+| Download of 64 MiB or more | *(no error — written to a temporary file, mapped, deleted afterwards)* | TC-OPEN-032 |
 | URL request fails | `Load error: requesting {url}: ...` | TC-OPEN-005 |
 | URL body exceeds 4 GiB / download I/O error | `Load error: downloading {url}: ...` | TC-OPEN-007 |
 | Downloaded body isn't valid JSON | `Load error: parsing data from {url}: parsing JSON: ...` | TC-OPEN-006 |

@@ -28,6 +28,7 @@ confirmed environment findings that shaped this):
 
 import collections
 import functools
+import glob
 import http.server
 import json
 import os
@@ -1151,6 +1152,53 @@ class AppLibrary:
         path = tempfile.mkdtemp(prefix="jq-test-")
         self._temp_dirs.append(path)
         return path
+
+    @keyword("Make Heavy File")
+    def make_heavy_file(self, mebibytes=80):
+        """A file of `mebibytes` MiB named heavy.json in a new temp directory (which goes
+        when the display stops); returns its path. The app memory-maps a file of 64 MiB or
+        more while it parses it and reads a smaller one. This one costs nothing to parse:
+        `{"heavy": ["a", "b", "c"], "n": 1}` and then blanks, which JSON allows."""
+        path = os.path.join(self.make_temp_directory(), "heavy.json")
+        head = b'{"heavy": ["a", "b", "c"], "n": 1}'
+        size = int(mebibytes) * 1024 * 1024
+        with open(path, "wb") as out:
+            out.write(head)
+            blanks = b" " * (1024 * 1024)
+            left = size - len(head)
+            while left > 0:
+                out.write(blanks[:left])
+                left -= len(blanks)
+        return path
+
+    @keyword("Make Named Pipe That Says")
+    def make_named_pipe_that_says(self, text):
+        """A named pipe, pipe.json in a new temp directory; returns its path. A thread
+        writes `text` into it as soon as the app opens it to read (opening a pipe for
+        writing waits for a reader), and closes it, which is the end of the file for the
+        app. A pipe says it is 0 bytes long however much it will hand over."""
+        path = os.path.join(self.make_temp_directory(), "pipe.json")
+        os.mkfifo(path)
+
+        def write():
+            try:
+                with open(path, "w", encoding="utf-8") as pipe:
+                    pipe.write(text)
+            except BrokenPipeError:
+                # The app opened the pipe and let go of it without reading: the case
+                # says so by what the window shows, not through this thread.
+                pass
+
+        threading.Thread(target=write, daemon=True).start()
+        return path
+
+    @keyword("App Temp Files")
+    def app_temp_files(self):
+        """The files in the temp folder that a download of the app's makes
+        (jsonquery_gui-*), sorted. The app is started with this process's environment, so
+        its temp folder is this one: TMPDIR, or /tmp. Compare before and after a load
+        rather than expect none, since a folder like /tmp may hold what older builds left."""
+        return sorted(glob.glob(os.path.join(tempfile.gettempdir(), "jsonquery_gui-*")))
 
     @keyword("Wait Until File Has Lines")
     def wait_until_file_has_lines(self, path, count, timeout=120, stall=15):

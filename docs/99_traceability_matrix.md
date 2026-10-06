@@ -16,10 +16,10 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
-**Status as of 2026-10-06: 22 suites, 578 test cases** — the 369 of the evening
-before plus 209: the new suites `jq_functions` (49), `output_formats` (55), `tutorial_pages`
-(50) and `workflows` (10), and cases added to `opening_sources` (+9), `saving` (+21), `tools`
-(+9, `tools_dialogs`) and `autocomplete` (+6). The last full run (`run_parallel.sh`, six lanes, about 15 minutes, a fresh build of the app) passed: 578 of 578; the run before it had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard. Nothing is **Blocked** any more:
+**Status as of 2026-10-06: 22 suites, 582 test cases** — the 369 of the evening
+before plus 213: the new suites `jq_functions` (49), `output_formats` (55), `tutorial_pages`
+(50) and `workflows` (10), and cases added to `opening_sources` (+9 for the file dialogs, +4 for heavy files, pipes and downloads, in `heavy_files.robot`), `saving` (+21), `tools`
+(+9, `tools_dialogs`) and `autocomplete` (+6). The last full run (`run_parallel.sh`, five lanes, about 18 minutes, a fresh build of the app) passed: 578 of 578, and the four cases added after it (TC-OPEN-029 to 032) passed with the whole `opening_sources` area on the final build, 29 of 29; the run before it had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard. Nothing is **Blocked** any more:
 the file dialogs are answered by a stand-in for the desktop's file-chooser portal
 (`resources/fake_portal.py`, see "Native OS dialogs" in
 [00_test_strategy.md](00_test_strategy.md)), which turned the 13 rows that were Blocked into
@@ -91,6 +91,10 @@ during implementation; see 00_test_strategy.md's OCR limitations note).
 | TC-OPEN-026 | A File Chosen Can Be Queried At Once | P1 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-027 | Choosing A File Twice Loads The Second | P2 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-028 | Each Press Asks The Dialog Once | P3 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-029 | A File Past The Mapping Size Opens Like Any Other | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-030 | A Named Pipe Opens With What Is Written To It | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-031 | A Small Download Leaves Nothing In The Temp Folder | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-032 | A Large Download Leaves Nothing In The Temp Folder | P2 | **Passing** | `suites/opening_sources/` |
 
 **Confirmed during implementation, worth flagging for anyone extending this
 suite**: pasting only loads anything while the empty-state "Paste JSON
@@ -810,6 +814,13 @@ engine edge) are covered by `cargo test`.
 | TC-WF-010 | Rows Copied As CSV Are Not A JSON Document | P3 | **Passing** | `suites/workflows/` |
 
 ## Coverage summary
+
+**2026-10-06, heavy files** (a file is memory-mapped only from 64 MiB, a pipe is read, a download leaves
+nothing behind): 578 → 582 cases in 22 suites, TC-OPEN-029 to 032 in `suites/opening_sources/heavy_files.robot`.
+Run against the build from before the change, TC-OPEN-030, 031 and 032 fail (the pipe loads as `(0 items)`;
+the temp files the download left are named in the message) and TC-OPEN-029 passes: that build mapped every file
+too, so the case guards the mapped way in and does not tell the two builds apart. Unit tests do that
+(`Document::mapped`, `crates/core`).
 
 **2026-10-06 pass** (the jq functions the app adds, CSV and TSV output, the tutorial pages
 for them, and the file dialogs): 369 → 578 cases in 22 suites. The last full run (`run_parallel.sh`, six lanes, about 15 minutes, a fresh build of the app) passed: 578 of 578; the run before it had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard. The suite now answers the

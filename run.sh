@@ -69,15 +69,20 @@ if [ ! -x "$VENV_DIR/bin/robot" ]; then
     "$VENV_DIR/bin/pip" install --upgrade pip -q
     "$VENV_DIR/bin/pip" install -r "$TEST_DIR/requirements.txt"
 fi
+# A venv made before the file dialogs could be answered lacks jeepney (resources/fake_portal.py).
+if ! "$VENV_DIR/bin/python" -c "import jeepney" >/dev/null 2>&1; then
+    log "Installing the Python packages added since this venv was made..."
+    "$VENV_DIR/bin/pip" install -q -r "$TEST_DIR/requirements.txt"
+fi
 
 # -- 3. system prerequisites (fail fast with a clear message) ---------------
 missing=()
-for bin in Xvfb fluxbox xdotool wmctrl tesseract gnome-screenshot xclip; do
+for bin in Xvfb fluxbox xdotool wmctrl tesseract gnome-screenshot xclip dbus-daemon; do
     command -v "$bin" >/dev/null 2>&1 || missing+=("$bin")
 done
 if [ ${#missing[@]} -gt 0 ]; then
     log "Missing required system packages: ${missing[*]}"
-    log "Install with: sudo apt install tesseract-ocr wmctrl xclip xvfb fluxbox gnome-screenshot xdotool"
+    log "Install with: sudo apt install tesseract-ocr wmctrl xclip xvfb fluxbox gnome-screenshot xdotool dbus-daemon"
     exit 1
 fi
 

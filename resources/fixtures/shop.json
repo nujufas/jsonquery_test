@@ -1,0 +1,13 @@
+{
+  "customers": [
+    {"code": "ADA", "name": "Ada", "city": "London"},
+    {"code": "LIN", "name": "Linus", "city": "Helsinki"},
+    {"code": "GRA", "name": "Grace", "city": "New York"}
+  ],
+  "orders": [
+    {"no": 101, "customer": "ADA", "item": "keyboard", "qty": 2},
+    {"no": 102, "customer": "GRA", "item": "monitor", "qty": 1},
+    {"no": 103, "customer": "ADA", "item": "mouse", "qty": 3},
+    {"no": 104, "customer": "LIN", "item": "cable", "qty": 10}
+  ]
+}

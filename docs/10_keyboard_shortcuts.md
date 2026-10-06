@@ -58,6 +58,10 @@ Expected: (a) equivalent to clicking Source's `Save…` header button; (b)
 equivalent to clicking Results' `Save…` header button; (c) no dialog opens
 (mirrors that button's disabled state — cross-reference
 [09_saving.md](09_saving.md) TC-SAVE-005).
+Automation notes: **Passing** as TC-KEY-003a/b/c (`suites/saving/saving_dialogs.robot`): the
+dialog is answered by the stand-in portal, the name it offered (`data.json`, `results.json`) and the
+file written are checked. For a query that ends in `@csv`, Ctrl+S in Results writes the rows
+(TC-FMT-060, [18_output_formats.md](18_output_formats.md)).
 
 ### TC-KEY-004 — Ctrl+Enter loads pasted JSON while the paste textarea has
 focus

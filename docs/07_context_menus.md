@@ -35,7 +35,9 @@ Priority: P1
 Covered jointly with [09_saving.md](09_saving.md) TC-SAVE-003/004; this entry
 exists to confirm the menu item itself opens the native Save dialog
 correctly scoped to the row (not the whole document) — see the saving doc
-for the file-content and default-filename assertions.
+for the file-content and default-filename assertions. **Passing** through
+TC-SAVE-003a/b/c and TC-SAVE-004a/b/c, which choose the menu item, answer the dialog
+with the stand-in portal and read the file.
 
 ### TC-CTX-005 — "Find in Source", Results row only, success case
 Priority: P1

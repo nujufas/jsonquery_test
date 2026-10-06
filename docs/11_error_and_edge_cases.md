@@ -14,11 +14,16 @@ rather than as a source of new implementation work.
 | URL body exceeds 4 GiB / download I/O error | `Load error: downloading {url}: ...` | TC-OPEN-007 |
 | Downloaded body isn't valid JSON | `Load error: parsing data from {url}: parsing JSON: ...` | TC-OPEN-006 |
 | Empty file (0 bytes) | *(no error — loads as empty array)* | TC-OPEN-013 |
-| Save destination unwritable | `Save error: creating/writing {path}: ...` | TC-SAVE-007 |
+| Save destination unwritable | `Save error: creating/writing {path}: ...` | TC-SAVE-007a/b, TC-FMT-062 |
 | Saved row no longer exists (race) | `Save error: that value is no longer part of the document` | TC-SAVE-008 (flagged as possibly unautomatable) |
 | jq syntax error | `Query error: query syntax error: ...` | TC-QRY-021 |
 | jq compile/runtime error | `Query error: query error: ...` | TC-QRY-021 |
 | jq per-item error (non-fatal) | `{N} item error(s) (last: {msg})` | TC-QRY-020, TC-TOOL-008 |
+| jq `error("boom")` | `{N} item error(s) (last: boom)` — the text, not the JSON string `"boom"` | TC-JQX-080 |
+| `@csv`/`@tsv` of a value that is not an array | `{kind} ({value}) cannot be csv-formatted, ...` (the wording after the comma differs from jq 1.8.1's, so the cases check only the part before it) | TC-JQX-067, TC-JQX-069 |
+| `@csv`/`@tsv` of an array holding an array | `array ([1]) is not valid in a csv row` | TC-JQX-068 |
+| A row of an `@csv` query that cannot be made | an item error; the other rows are still the results | TC-FMT-044 |
+| `$ENV`, `input` (not defined by the engine) | `Query error: ...`, no results | TC-JQX-082 |
 | JSON Pointer malformed | `Query error: query syntax error: a JSON pointer must be empty (whole document) or start with '/'` | TC-QRY-031 |
 | JSON Pointer not found | `Query error: query error: no value at pointer '{p}'` | TC-QRY-032 |
 | JSONPath syntax error | `Query error: query syntax error: ...` | TC-QRY-041 |

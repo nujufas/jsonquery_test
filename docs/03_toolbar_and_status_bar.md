@@ -59,6 +59,9 @@ attempt a save that fails (e.g. point at an unwritable destination during
 implementation, or simulate via a read-only fixture directory); observe.
 Expected: (a) weak `Saved to {path}`. (b) red `Save error: {details}`
 **replaces** the prior success text — the two never show together.
+Automation notes: **Passing** (`suites/saving/saving_dialogs.robot`, which answers the Save dialog
+with the stand-in portal): the second save is aimed at a folder that is not there; the dim
+"Saved to" line is read from a one-line crop with `psm=7`. Blocked until 2026-10-06.
 
 ### TC-TOOL-007 — Status bar: query-outcome line format, with and without
 truncation/cancellation, with engine suffix

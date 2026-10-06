@@ -5,8 +5,9 @@ Source: `crates/app/src/app.rs` (§the toolbar's source field / paste / drag-dro
 
 Covers every way a document gets loaded, plus the load-time edge cases
 (NDJSON, empty file, malformed JSON, oversized URL download). See
-[00_test_strategy.md](00_test_strategy.md) for the native file-dialog
-automation approach the `…` (browse) button's cases depend on.
+[00_test_strategy.md](00_test_strategy.md) ("Native OS dialogs") for how the
+`…` (browse) button's dialog is answered by a stand-in for the desktop's file-chooser
+portal, which the cases of that button depend on.
 
 ## Preconditions common to this area
 
@@ -31,17 +32,20 @@ Expected:
 - Source panel's Tree view shows the parsed content, root expanded.
 - Window title is still exactly `jsonquery` (unchanged by loading — confirms
   the "title never changes" fact from TC-WIN-001 under a loaded-doc state).
-Automation notes: dialog interaction per the strategy doc's path-typing
-approach; byte-size and duration text via OCR, "contains/matches pattern"
-not exact equality (duration is nondeterministic).
+Automation notes: the stand-in portal answers the dialog with the fixture's path
+(`Browse And Choose`); byte-size and duration text via OCR, "contains/matches pattern"
+not exact equality (duration is nondeterministic). **Passing**
+(`suites/opening_sources/opening_dialog.robot`; it was Blocked until 2026-10-06).
 
 ### TC-OPEN-002 — File dialog filters to JSON-ish extensions
 Priority: P2
 Steps: Open the `…` button's dialog and inspect the file-type filter.
 Expected: exactly one filter group, labeled `JSON`, matching extensions
 `json, ndjson, jsonl, log, txt`.
-Automation notes: this is dialog-chrome, not app UI — OCR/image-match the
-filter dropdown text.
+Automation notes: what the app *asks for* is read back from the stand-in portal (the
+request's `filters`, `multiple` and `directory`), not from the dialog's own dropdown, which
+belongs to the desktop. **Passing**; it also checks that one file is chosen, not several,
+and no folder.
 
 ### TC-OPEN-003 — Open a JSON source via URL
 Priority: P1
@@ -198,8 +202,8 @@ JSON)` note is not shown. Anything that isn't an `http://` / `https://`
 address is a local path; a leading `~` expands to the home directory, and one
 pair of surrounding quotes (as a file manager's "Copy as path" adds) is
 ignored — both covered by unit tests in `app.rs`, not here.
-Automation notes: stands in for the `…` button's success path, which needs the
-blocked native dialog (that button hands its path to the same loader).
+Automation notes: the `…` button hands its path to the same loader; its own journey, through
+the dialog, is TC-OPEN-001.
 
 ### TC-OPEN-020 — A path that doesn't exist shows a load error and keeps the text
 Priority: P2
@@ -213,3 +217,47 @@ Priority: P3
 Steps: With nothing loaded, type text into the source field, click `Clear`.
 Expected: `Clear` is enabled as soon as the field has text; clicking it empties
 the field (and, with nothing loaded, touches nothing else).
+
+### TC-OPEN-022 — Closing the dialog loads nothing
+Priority: P1
+Steps: Click `…` and close the dialog without choosing a file.
+Expected: nothing changes — the paste box is still waiting ("Paste JSON here…"), the status bar
+shows no `Parsed` and no `Load error`.
+Automation notes: `Portal Will Cancel`. **Passing.**
+
+### TC-OPEN-023 — A file chosen replaces the document on show
+Priority: P1
+Steps: Paste a document, then choose another file with `…`.
+Expected: the `(pasted JSON)` note goes and the file's content is on show.
+**Passing.**
+
+### TC-OPEN-024 — A line-delimited file becomes one array
+Priority: P2
+Steps: Choose `records.ndjson` (three JSON values, one to a line).
+Expected: the Source pane shows an array of three items and the toolbar says `3 NDJSON records`.
+**Passing.**
+
+### TC-OPEN-025 — A file that is not JSON shows a load error
+Priority: P1
+Steps: Choose a file that is not JSON.
+Expected: red `Load error` in the status bar; the field shows the file's name. **Passing.**
+
+### TC-OPEN-026 — A file chosen can be queried at once
+Priority: P1
+Steps: Choose `people.json`, run `.[] | [.name, .role] | @csv`, read the rows.
+Expected: the three rows, exactly (through Copy to Clipboard). **Passing.**
+
+### TC-OPEN-027 — Choosing a file twice loads the second
+Priority: P2
+Steps: Choose one file, then another.
+Expected: the second is loaded and named in the field. **Passing.**
+
+### TC-OPEN-028 — Each press asks the dialog once
+Priority: P3
+Steps: Click `…` twice, each time closing the dialog.
+Expected: the first press opens one dialog (not two), the second opens the next. **Passing.**
+
+## Mutation checks
+
+Leaving `.jsonl` out of the `…` button's file filter fails TC-OPEN-002 and nothing else (the case
+compares the whole list of extensions the app asks the dialog for).

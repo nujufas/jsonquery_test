@@ -17,19 +17,26 @@ confirmed environment findings that shaped this):
   Text assertions and text-based clicking use Tesseract OCR over a cropped,
   upscaled region -- confirmed far more reliable than whole-window OCR, which
   misses most of this UI's small toolbar text.
-- Native Open File / Save dialogs are a confirmed dead end in this environment
-  (rfd's default xdg-portal backend hangs or errors before showing anything
-  usable -- see the strategy doc). Keywords here do not attempt to drive them.
+- The native Open File / Save dialogs can not be driven (rfd's xdg-portal
+  backend shows nothing a test can reach -- see the strategy doc), so the
+  library does not try: it runs a private session bus with a stand-in for the
+  file-chooser portal on it (`fake_portal.py`), starts every app on that bus,
+  and lets a test say what the next dialog returns (`Portal Will Save To`,
+  `Portal Will Cancel`, ...) and read what the app asked for
+  (`Get Portal Requests`). The app's side of the dialog is the real thing.
 """
 
 import collections
 import functools
 import http.server
+import json
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 
@@ -40,6 +47,8 @@ from PIL import Image, ImageChops
 from robot.api import logger
 from robot.api.deco import keyword, library
 from robot.libraries.BuiltIn import BuiltIn
+
+from fake_portal import FakePortal, PrivateBus
 
 pyautogui.FAILSAFE = False
 
@@ -84,6 +93,11 @@ class AppLibrary:
         self._shot_test_name = None
         self._shot_seq = 0
         self._hover_proc = None
+        # The private session bus the apps run on, the portal answering their file
+        # dialogs on it, and the directories `Make Temp Directory` handed out.
+        self._bus = None
+        self._portal = None
+        self._temp_dirs = []
 
     # -- display lifecycle (once per suite run) -----------------------------
 
@@ -131,10 +145,41 @@ class AppLibrary:
             stderr=subprocess.DEVNULL,
         )
         time.sleep(1)
+        self._start_portal()
+
+    def _start_portal(self):
+        """Starts the private session bus and the file-chooser portal on it (see
+        `fake_portal.py`). If that can not be done the apps get no session bus
+        at all -- never the real one -- and the keywords that need the portal
+        say so."""
+        self._stop_portal()
+        try:
+            self._bus = PrivateBus()
+            self._bus.start()
+            self._portal = FakePortal(self._bus.address)
+            self._portal.start()
+        except Exception as exc:
+            logger.warn(
+                f"No file-dialog portal for this run ({exc}): the cases that open a "
+                "file dialog will fail. Is dbus-daemon installed?"
+            )
+            self._stop_portal()
+
+    def _stop_portal(self):
+        if self._portal is not None:
+            self._portal.stop()
+        if self._bus is not None:
+            self._bus.stop()
+        self._portal = None
+        self._bus = None
 
     @keyword("Stop Test Display")
     def stop_test_display(self):
         """Stops the window manager and, if this run started it, Xvfb too."""
+        self._stop_portal()
+        for path in self._temp_dirs:
+            shutil.rmtree(path, ignore_errors=True)
+        self._temp_dirs = []
         for proc in (self._wm_proc, self._xvfb_proc):
             if proc is not None:
                 proc.terminate()
@@ -157,6 +202,15 @@ class AppLibrary:
         env = dict(os.environ)
         env["DISPLAY"] = XVFB_DISPLAY
         env.pop("WAYLAND_DISPLAY", None)
+        # The app talks to the private bus, whose portal answers its file dialogs;
+        # with no bus it gets none at all. It must never see the session bus of the
+        # person running the tests (a Save... would ask their own desktop).
+        if self._bus is not None:
+            env["DBUS_SESSION_BUS_ADDRESS"] = self._bus.address
+        else:
+            env.pop("DBUS_SESSION_BUS_ADDRESS", None)
+        if self._portal is not None:
+            self._portal.reset()
         # JQ_TEST_APP_LOG=<file>: the app's stderr (a debug build's tracing) goes
         # there instead of nowhere.
         app_log = os.environ.get("JQ_TEST_APP_LOG")
@@ -214,6 +268,13 @@ class AppLibrary:
             self.stop_hovering_files()
         except Exception:
             pass
+        if self._portal is not None:
+            if self._portal.failure:
+                logger.warn(self._portal.failure)
+            # A failed test that went near a file dialog says what the portal did.
+            status = BuiltIn().get_variable_value("${TEST STATUS}")
+            if status == "FAIL" and self._portal.requests:
+                logger.info("file dialogs: " + "; ".join(self._portal.log))
         if self._app_proc is not None:
             try:
                 # A window nobody gave a title ("egui window", eframe's default)
@@ -831,6 +892,61 @@ class AppLibrary:
         cx, cy = self.find_text_in_region(x, y, width, height, target, psm=psm)
         self.click_at(cx, cy)
 
+    @keyword("Find All Text In Region")
+    def find_all_text_in_region(self, x, y, width, height, target, psm=6):
+        """The center (app-relative) of every place `target` is read in the region,
+        top to bottom: each single OCR word that contains it and, for a label of
+        several words ("Try it"), each run of words on one line that spells it. For a
+        label that appears more than once on screen (a button on every example of a
+        tutorial page), where `Find Text In Region` only answers for the first."""
+        img = self.screenshot_region(x, y, width, height, label=f"find-all-{target}")
+        words = self._ocr_words(img, psm=int(psm))
+        target_l = target.lower()
+        hits = []
+        for w in words:
+            if target_l in w["text"].lower():
+                hits.append(
+                    (int(x) + w["left"] + w["width"] / 2, int(y) + w["top"] + w["height"] / 2)
+                )
+        lines = {}
+        for w in words:
+            lines.setdefault(w["line"], []).append(w)
+        for line_words in lines.values():
+            line_words = sorted(line_words, key=lambda w: w["left"])
+            for i in range(len(line_words)):
+                joined = ""
+                for j in range(i, len(line_words)):
+                    joined = (joined + " " + line_words[j]["text"]).strip().lower()
+                    run = line_words[i : j + 1]
+                    if target_l in joined:
+                        # A run that a single word already accounts for is not another place.
+                        if not any(target_l in w["text"].lower() for w in run):
+                            left = min(w["left"] for w in run)
+                            right = max(w["left"] + w["width"] for w in run)
+                            top = min(w["top"] for w in run)
+                            bottom = max(w["top"] + w["height"] for w in run)
+                            hits.append(
+                                (int(x) + (left + right) / 2, int(y) + (top + bottom) / 2)
+                            )
+                        break
+                    if len(joined) > len(target_l) + 12:
+                        break
+        hits.sort(key=lambda p: (round(p[1] / 6), p[0]))
+        return hits
+
+    @keyword("Click Nth Text In Region")
+    def click_nth_text_in_region(self, x, y, width, height, target, n=1, psm=6):
+        """Clicks the n-th (1 is the first, counted top to bottom) place `target` is
+        read in the region."""
+        hits = self.find_all_text_in_region(x, y, width, height, target, psm=psm)
+        if len(hits) < int(n):
+            raise AssertionError(
+                f"Found {target!r} {len(hits)} time(s) in region ({x},{y},{width},{height}), "
+                f"wanted number {n}: {hits}"
+            )
+        cx, cy = hits[int(n) - 1]
+        self.click_at(cx, cy)
+
     @keyword("Get Pixel Color")
     def get_pixel_color(self, x, y):
         """Returns an (r, g, b) tuple for the app-relative pixel."""
@@ -937,6 +1053,55 @@ class AppLibrary:
                     break
         return rows
 
+    @keyword("Find Color Blocks")
+    def find_color_blocks(self, x, y, width, height, r, g, b, tolerance=2, min_height=8):
+        """The center (app-relative) of every solid block of the colour in the region,
+        top to bottom: a button's fill, a selected row. A block is a run of pixel rows
+        that all have the colour somewhere; runs closer than 3 rows are one block, and
+        a run shorter than `min_height` (a stray glyph edge) is not a block. For
+        controls that move about but keep their colour, and that OCR reads badly
+        (white text on a blue button)."""
+        img = self.screenshot_region(x, y, width, height, label="color-blocks")
+        target = (int(r), int(g), int(b))
+        tol = int(tolerance)
+        w, h = img.size
+        px = img.convert("RGB").load()
+        per_row = []
+        for yy in range(h):
+            xs = [xx for xx in range(w) if max(abs(a - c) for a, c in zip(px[xx, yy], target)) <= tol]
+            per_row.append(xs)
+        blocks = []
+        start = None
+        last = None
+        for yy in range(h):
+            if per_row[yy]:
+                if start is None:
+                    start = yy
+                last = yy
+            elif start is not None and yy - last > 3:
+                blocks.append((start, last))
+                start = None
+        if start is not None:
+            blocks.append((start, last))
+        found = []
+        for top, bottom in blocks:
+            if bottom - top + 1 < int(min_height):
+                continue
+            xs = [xx for yy in range(top, bottom + 1) for xx in per_row[yy]]
+            found.append(
+                (int(x) + (min(xs) + max(xs)) / 2, int(y) + (top + bottom) / 2)
+            )
+        return found
+
+    @keyword("First Block Below")
+    def first_block_below(self, blocks, y):
+        """The first of the (x, y) centres of `Find Color Blocks` that lies under `y`:
+        the button under a caption."""
+        for bx, by in blocks:
+            if by > float(y):
+                return bx, by
+        raise AssertionError(f"No block below y={y} among {blocks}")
+
     @keyword("Get Ink Bounds")
     def get_ink_bounds(self, x, y, width, height, threshold=110):
         """(left, top, right, bottom) of the bright pixels (any channel at
@@ -968,6 +1133,144 @@ class AppLibrary:
     @keyword("Set Clipboard")
     def set_clipboard(self, text):
         pyperclip.copy(text)
+
+    # -- file dialogs: the stand-in portal (see fake_portal.py) ------------------
+
+    def _require_portal(self):
+        if self._portal is None:
+            raise AssertionError(
+                "There is no file-dialog portal in this run (see the warning when the "
+                "display started: is dbus-daemon installed?)."
+            )
+        return self._portal
+
+    @keyword("Make Temp Directory")
+    def make_temp_directory(self):
+        """A new empty directory for files the app saves, removed when the display
+        stops. Returns its path."""
+        path = tempfile.mkdtemp(prefix="jq-test-")
+        self._temp_dirs.append(path)
+        return path
+
+    @keyword("Wait Until File Has Lines")
+    def wait_until_file_has_lines(self, path, count, timeout=120, stall=15):
+        """Waits until the file at `path` holds exactly `count` lines. A big save is
+        written while a busy machine may give the app only a little time (one run under
+        nine parallel lanes saw a 25,000-line file grow by about 600 lines a second), so
+        what is waited for is *progress*: it fails when the file has not grown for `stall`
+        seconds, or when `timeout` seconds have gone by in all; a file that has too many
+        lines fails at once."""
+        count = int(count)
+        deadline = time.time() + float(timeout)
+        last_progress = time.time()
+        seen = -1
+        while True:
+            try:
+                with open(path, "rb") as handle:
+                    lines = handle.read().count(b"\n")
+            except FileNotFoundError:
+                lines = 0
+            if lines == count:
+                return
+            if lines > count:
+                raise AssertionError(f"{path} has {lines} lines, more than the {count} wanted")
+            if lines > seen:
+                seen, last_progress = lines, time.time()
+            now = time.time()
+            if now - last_progress > float(stall) or now > deadline:
+                raise AssertionError(
+                    f"{path} has {lines} of {count} lines after {now - deadline + float(timeout):.0f}s "
+                    f"(no growth for {now - last_progress:.0f}s)"
+                )
+            time.sleep(0.25)
+
+    @keyword("Wait Until File Holds Json")
+    def wait_until_file_holds_json(self, path, timeout=120, stall=15):
+        """Waits until the file at `path` is complete, valid JSON, and returns it parsed.
+        Like `Wait Until File Has Lines` it waits for progress: a file that has not grown
+        for `stall` seconds, and still does not parse, fails with the parser's complaint."""
+        deadline = time.time() + float(timeout)
+        last_progress = time.time()
+        seen = -1
+        error = "no such file"
+        while True:
+            size = 0
+            try:
+                with open(path, "rb") as handle:
+                    data = handle.read()
+                size = len(data)
+                try:
+                    return json.loads(data)
+                except ValueError as exc:
+                    error = str(exc)
+            except FileNotFoundError:
+                error = "no such file"
+            if size > seen:
+                seen, last_progress = size, time.time()
+            now = time.time()
+            if now - last_progress > float(stall) or now > deadline:
+                raise AssertionError(
+                    f"{path} is not complete JSON ({size} bytes, no growth for "
+                    f"{now - last_progress:.0f}s): {error}"
+                )
+            time.sleep(0.25)
+
+    @keyword("Portal Will Save To")
+    def portal_will_save_to(self, path):
+        """The next file dialog the app opens returns `path`: the person typed that
+        name and pressed Save. Answers come in the order they are queued; a dialog with
+        none queued is cancelled."""
+        self._require_portal().answer(path)
+
+    @keyword("Portal Will Pick")
+    def portal_will_pick(self, *paths):
+        """The next file dialog returns these files (an Open dialog: the person
+        chose them)."""
+        self._require_portal().answer(*paths)
+
+    @keyword("Portal Will Accept Suggested Name In")
+    def portal_will_accept_suggested_name_in(self, folder):
+        """The next Save dialog is accepted as it opened: the file name the app
+        suggested, in `folder`. The file the app then writes shows what the name was."""
+        self._require_portal().answer_suggested(folder)
+
+    @keyword("Portal Will Cancel")
+    def portal_will_cancel(self):
+        """The next file dialog is closed without choosing anything."""
+        self._require_portal().cancel()
+
+    @keyword("Get Portal Requests")
+    def get_portal_requests(self):
+        """What the app asked its file dialogs for since it started, oldest first: a
+        list of dicts with `method` (OpenFile or SaveFile), `title`, `current_name` (the
+        suggested file name), `current_folder`, `filters` (a list of `name` and `globs`),
+        `multiple` and `directory`."""
+        return self._require_portal().requests
+
+    @keyword("Get Portal Log")
+    def get_portal_log(self):
+        """What the stand-in portal saw and did since the app started, one line each, with
+        the time: the answers queued, every call and how it was answered."""
+        return self._require_portal().log
+
+    @keyword("Wait Until Portal Is Asked")
+    def wait_until_portal_is_asked(self, count=1, timeout=5):
+        """Waits until the app has opened `count` file dialogs and they have been answered
+        (the app is stuck in a dialog until its answer comes, and a click sent meanwhile is
+        lost), then a moment more for the app to carry on. Returns the requests (see
+        `Get Portal Requests`)."""
+        portal = self._require_portal()
+        deadline = time.time() + float(timeout)
+        while time.time() < deadline:
+            requests = portal.requests
+            if len(requests) >= int(count) and portal.answered >= int(count):
+                time.sleep(0.4)
+                return requests
+            time.sleep(0.1)
+        raise AssertionError(
+            f"The app opened {len(portal.requests)} file dialog(s), {portal.answered} answered, "
+            f"within {timeout}s, not {count}: {portal.requests}"
+        )
 
     # -- local HTTP fixture server (for Open URL... tests) ---------------------
 

@@ -345,13 +345,44 @@ function. Ten headless tests failed for it and so would the Robot cases
 edit) pins the second form of it, where there *is* a patch but nothing pressed.
 Mutation check: putting the early return back fails every comparing case.
 
-## Not reachable from the Robot suite
+## The file dialogs
 
-The native file dialogs (**Add files…**, **Open file…**, **Save…**, **Save patch…**),
-which are blocked here (see [00_test_strategy.md](00_test_strategy.md)); files go in
-by dropping them instead, which the harness now does for real. So the saving of a
-result to a file, and the dialogs' own behaviour, are covered only headlessly
-(`jobs.rs`, `worker.rs`: a save writes the text and reports it).
+The native file dialogs — **Add files…**, **Open file…**, **Save…**, **Save patch…** — were out of
+reach until 2026-10-06 (see "Native OS dialogs" in [00_test_strategy.md](00_test_strategy.md)).
+They are answered now by a stand-in for the desktop's file-chooser portal, which says what the
+person chooses and records what the app asked for (suggested name and file type), and the nine
+cases of `suites/tools/tools_dialogs.robot` use it:
+
+| ID | What it checks |
+|---|---|
+| TC-TDLG-001 | Format's Save offers `formatted.json` and writes the formatted text |
+| TC-TDLG-002 | Minified, it offers `min.json` |
+| TC-TDLG-003 | Open file… asks for the JSON-like file types; the file chosen, formatted, is offered on Save as `people.formatted.json` (its own name with `.formatted` before the extension) |
+| TC-TDLG-004 | Patch's Save offers `patched.json` |
+| TC-TDLG-005 | Merge's Save offers `merged.json` |
+| TC-TDLG-006 | Diff's Save offers `patch.json` and writes the patch |
+| TC-TDLG-007 | Merge's Add files… takes several files from one dialog |
+| TC-TDLG-008 | Closing a Save dialog writes nothing |
+| TC-TDLG-009 | Closing an Open dialog leaves the box as it was |
+
+Files still also go in by dropping them, which the harness does for real
+([16_drag_and_drop.md](16_drag_and_drop.md)). What stays headless (`jobs.rs`, `worker.rs`) is the
+detail of what a save writes for each tool.
+
+### Mutation checks of the dialog cases
+
+One suggested name or file filter broken at a time in a build of the app; each is killed by the
+case for that button and by no other:
+
+| Mutant | What is broken | Killed by |
+|---|---|---|
+| M15 | Format's save is called `format.json` | TC-TDLG-001, 003 (002, the minified name, is not affected) |
+| M20 | Patch's save is called `patch_result.json` | TC-TDLG-004 |
+| M21 | Merge's save is called `merge.json` | TC-TDLG-005 |
+| M22 | Diff's save is called `diff.json` | TC-TDLG-006 |
+| M18 | Add files… offers only `*.json` | TC-TDLG-007 |
+
+## What stays headless
 
 What a person sees of the merge itself, the presets run against real files, the
 reordering and sorting, opening the result in the main window and the multi-file

@@ -346,6 +346,22 @@ Click Autocomplete Toggle And Verify Changed
     Colors Should Not Match    ${baseline}    ${after}
     ...    msg=Expected the 💡 icon's color to change after clicking the autocomplete toggle
 
+Source Field Should Be
+    [Documentation]    The source field holds exactly `expected`: selects all of it, copies
+    ...    it and compares the clipboard. For text OCR can misread (a URL with a port
+    ...    number: "valid.json" came back as "vaLlid. json" once). Leaves the clipboard
+    ...    changed and the focus in the field.
+    [Arguments]    ${expected}
+    Set Clipboard    nothing was copied
+    Click At    ${SOURCE_FIELD_X}    ${TOOLBAR_Y}
+    Sleep    0.3s
+    Press Keys    ctrl    a
+    Press Keys    ctrl    c
+    Sleep    0.4s
+    ${text}=    Get Clipboard
+    Should Be Equal    ${text}    ${expected}
+    Move Mouse To    600    400
+
 Query Text Should Be
     [Documentation]    The query box holds exactly `expected`: selects all of it,
     ...    copies it and compares the clipboard. For short queries, which OCR

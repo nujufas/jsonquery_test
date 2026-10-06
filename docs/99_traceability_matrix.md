@@ -16,6 +16,18 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-06: 22 suites, 578 test cases** — the 369 of the evening
+before plus 209: the new suites `jq_functions` (49), `output_formats` (55), `tutorial_pages`
+(50) and `workflows` (10), and cases added to `opening_sources` (+9), `saving` (+21), `tools`
+(+9, `tools_dialogs`) and `autocomplete` (+6). The last full run (`run_parallel.sh`, six lanes, about 15 minutes, a fresh build of the app) passed: 578 of 578; the run before it had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard. Nothing is **Blocked** any more:
+the file dialogs are answered by a stand-in for the desktop's file-chooser portal
+(`resources/fake_portal.py`, see "Native OS dialogs" in
+[00_test_strategy.md](00_test_strategy.md)), which turned the 13 rows that were Blocked into
+Passing (TC-SAVE-008, a race, stays Not implemented). The new areas were mutation-checked with
+23 source mutants, every one killed by the cases meant for it; see each feature doc. One finding
+is open, as TC-SAVE-011 (Save… pressed while a query is still running writes only the results
+that had arrived; see [09_saving.md](09_saving.md)).
+
 **Status as of 2026-10-04 (evening): 18 suites, 369 test cases** (the original ten
 and `autocomplete`, `query_highlight`, `query_box_layout`, `popout`, then the new
 `tools` (130), `satellites` (20), `pane_headers` (10) and `drag_and_drop` (18)),
@@ -51,8 +63,8 @@ during implementation; see 00_test_strategy.md's OCR limitations note).
 
 | ID | Title | Priority | Status | Suite |
 |---|---|---|---|---|
-| TC-OPEN-001 | Open valid file via dialog | P1 | **Blocked** — native dialog hangs the app (confirmed, see strategy doc) | `suites/opening_sources/` |
-| TC-OPEN-002 | File dialog extension filter | P2 | **Blocked** — same reason | `suites/opening_sources/` |
+| TC-OPEN-001 | Open valid file via dialog | P1 | **Passing** — the dialog is answered by the stand-in portal (`resources/fake_portal.py`) | `suites/opening_sources/` |
+| TC-OPEN-002 | File dialog extension filter | P2 | **Passing** — the filters the app sends are read back from the stand-in | `suites/opening_sources/` |
 | TC-OPEN-003 | Open via URL typed into the source field | P1 | **Passing** (local fixture HTTP server, not the public internet) | `suites/opening_sources/` |
 | TC-OPEN-004 | Load disabled while the source field is blank | P3 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-005 | URL: request failure | P1 | **Passing** | `suites/opening_sources/` |
@@ -72,6 +84,13 @@ during implementation; see 00_test_strategy.md's OCR limitations note).
 | TC-OPEN-019 | Typed local path loads that file | P1 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-020 | Missing path: load error, text kept | P2 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-021 | Clear empties typed-but-unloaded text | P3 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-022 | Closing The Dialog Loads Nothing | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-023 | A File Chosen Replaces The Document On Show | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-024 | A Line-Delimited File Becomes One Array | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-025 | A File That Is Not JSON Shows A Load Error | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-026 | A File Chosen Can Be Queried At Once | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-027 | Choosing A File Twice Loads The Second | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-028 | Each Press Asks The Dialog Once | P3 | **Passing** | `suites/opening_sources/` |
 
 **Confirmed during implementation, worth flagging for anyone extending this
 suite**: pasting only loads anything while the empty-state "Paste JSON
@@ -90,7 +109,7 @@ field, unconditionally available) instead of a second paste.
 | TC-TOOL-003 | NDJSON suffix conditional | P3 | **Passing** | `suites/toolbar_and_status/` |
 | TC-TOOL-004 | Status area mutual exclusivity | P2 | **Passing** — retitled to what's actually true: "Parsed in…" and a *new* "Load error" coexist (the still-loaded document's own state isn't clobbered by an unrelated failed reload), not "the two are mutually exclusive" (they aren't — see note below) | `suites/toolbar_and_status/` |
 | TC-TOOL-005 | Parse-time text conditional | P3 | **Passing** | `suites/toolbar_and_status/` |
-| TC-TOOL-006 | Save success/error mutual exclusivity | P2 | **Blocked** — needs the native Save dialog | `suites/toolbar_and_status/` |
+| TC-TOOL-006 | Save success/error mutual exclusivity | P2 | **Passing** — a save to a folder that is not there, then one that works (the dialog is answered by the stand-in portal) | `suites/saving/` |
 | TC-TOOL-007a-d | Query-outcome line format variants | P1 | **Passing** (covered collectively by `query_engines`'s status-bar assertions — normal count, query error, item-error count, engine-suffix "auto" vs explicit — rather than as one dedicated data-driven case here) | `suites/toolbar_and_status/` |
 | TC-TOOL-008 | Item-error count display | P2 | **Passing** (covered by TC-QRY-020) | `suites/query_engines/` |
 | TC-TOOL-009 | Find-in-Source status placement | P3 | **Passing** (covered by TC-SRCH-020/021's status-bar checks) | `suites/search/` |
@@ -242,7 +261,7 @@ has no such requirement — only the Ctrl+Enter path is focus-gated this way).
 | TC-CTX-001 | Menu contents/order, Source row | P1 | **Passing** | `suites/context_menus/` |
 | TC-CTX-002 | Menu contents/order, Results row | P1 | **Passing** | `suites/context_menus/` |
 | TC-CTX-003 | Copy JSON Path → clipboard | P1 | **Passing** | `suites/context_menus/` |
-| TC-CTX-004 | Save… (single row) — cross-ref TC-SAVE-003/004 | P1 | **Blocked** — native dialog (see strategy doc) | `suites/context_menus/` |
+| TC-CTX-004 | Save… (single row) — cross-ref TC-SAVE-003/004 | P1 | **Passing** (covered by TC-SAVE-003a/b/c and TC-SAVE-004a/b/c, which choose the menu item and read the file) | `suites/saving/` |
 | TC-CTX-005 | Find in Source availability — cross-ref TC-SRCH-020+ | P1 | **Passing** (covered by TC-CTX-001's negative half + TC-CTX-002's positive half — no separate test needed) | `suites/context_menus/` |
 | TC-CTX-006 | Search… scoping by tree | P2 | **Passing** | `suites/context_menus/` |
 | TC-CTX-007 | No context menu outside tree rows | P3 | **Passing** | `suites/context_menus/` |
@@ -336,16 +355,17 @@ the sign that the text landed.
 
 | ID | Title | Priority | Status | Suite |
 |---|---|---|---|---|
-| TC-SAVE-001 | Source header Save…, default filenames by source kind | P1 | **Blocked** — native dialog (see strategy doc) | `suites/saving/` |
-| TC-SAVE-002 | Source Save… available regardless of query state | P3 | **Passing** (button-enabled-state check doesn't need the dialog to open) | `suites/saving/` |
-| TC-SAVE-003 | Source row Save…, per-kind default filename | P1 | **Blocked** | `suites/saving/` |
-| TC-SAVE-004 | Results row Save…, `results.json` fallback | P2 | **Blocked** | `suites/saving/` |
-| TC-SAVE-005 | Results header Save…, disabled-when-empty | P1 | **Passing** (same note as TC-SAVE-002 — the disabled-state half doesn't need the dialog) | `suites/saving/` |
-| TC-SAVE-006 | Results save only includes capped preview | P3 | **Blocked** | `suites/saving/` |
-| TC-SAVE-007 | Unwritable destination → save error | P2 | **Blocked** | `suites/saving/` |
-| TC-SAVE-008 | Save-race error text | P3 (may be unautomatable) | **Blocked** | `suites/saving/` |
-| TC-SAVE-009 | Save confirmation cleared by next load | P3 | **Blocked** | `suites/saving/` |
-| TC-SAVE-010 | Save filter always JSON/.json | P3 | **Blocked** | `suites/saving/` |
+| TC-SAVE-001 | Source header Save…, default filenames by source kind | P1 | **Passing** — TC-SAVE-001a (file), 001b (paste), 001c (URL); the name the dialog offers, its file type and the file written are all read | `suites/saving/` |
+| TC-SAVE-002 | Source Save… available regardless of query state | P3 | **Passing** — the label's colour (TC-SAVE-002) and the dialog opening (TC-SAVE-002a) | `suites/saving/` |
+| TC-SAVE-003 | Source row Save…, per-kind default filename | P1 | **Passing** — TC-SAVE-003a (`{key}.json`), 003b (`item_N.json`), 003c (root, `data.json`) | `suites/saving/` |
+| TC-SAVE-004 | Results row Save…, `results.json` fallback | P2 | **Passing** — TC-SAVE-004a/b/c | `suites/saving/` |
+| TC-SAVE-005 | Results header Save…, disabled-when-empty | P1 | **Passing** — the colour of the label (TC-SAVE-005) and, with the dialog, TC-SAVE-005a (the results array is written) and 005b (no results, no dialog) | `suites/saving/` |
+| TC-SAVE-006 | A result larger than the live preview is saved whole | P2 | **Passing** — 60,000 numbers come out as 60,000 (the first version of this row said a save held only the capped preview; the app has always fetched everything again first) | `suites/saving/` |
+| TC-SAVE-007 | Unwritable destination → save error | P2 | **Passing** — TC-SAVE-007a (missing folder), 007b (read-only folder; skipped when run as root) | `suites/saving/` |
+| TC-SAVE-008 | Save-race error text | P3 (may be unautomatable) | Not implemented — a genuine race; the harness has no timing control over the worker | `suites/saving/` |
+| TC-SAVE-009 | Save confirmation cleared by next load | P3 | **Passing** | `suites/saving/` |
+| TC-SAVE-010 | The save file type follows the format (JSON `*.json`; CSV/TSV for rows) | P2 | **Passing** — TC-SAVE-010a, and TC-FMT-050/051/063 for rows | `suites/saving/` |
+| TC-SAVE-011 | Save… while the query is still running | P2 | Not implemented — a finding, not a case: the file written holds only the results that had arrived when the button was pressed, and is written when the query ends (see 09_saving.md); a case would pin a behaviour the app's owner has not chosen | `suites/saving/` |
 
 ## Keyboard shortcuts — [10_keyboard_shortcuts.md](10_keyboard_shortcuts.md)
 
@@ -354,7 +374,7 @@ the sign that the text landed.
 | TC-KEY-000 | Click sets panel focus for Ctrl+F/S | P2 | **Passing** (combined with TC-KEY-002 into one test case) | `suites/keyboard_shortcuts/` |
 | TC-KEY-001 | Ctrl+Enter runs query globally | P1 | **Passing** (covered by TC-QRY-061 — not duplicated here) | `suites/query_engines/` |
 | TC-KEY-002 | Ctrl+F opens Search for focused panel | P2 | **Passing** | `suites/keyboard_shortcuts/` |
-| TC-KEY-003 | Ctrl+S saves focused panel's whole-panel target | P2 | **Blocked** — needs the native Save dialog | `suites/keyboard_shortcuts/` |
+| TC-KEY-003 | Ctrl+S saves focused panel's whole-panel target | P2 | **Passing** — TC-KEY-003a (Source), 003b (Results), 003c (no results: nothing opens); TC-FMT-060 for rows | `suites/saving/` |
 | TC-KEY-004 | Ctrl+Enter loads paste (focus-gated) | P2 | **Passing** (both the positive case and the focus-gated negative case — Ctrl+Enter does nothing once the paste box has lost focus) | `suites/keyboard_shortcuts/` |
 | TC-KEY-005 | Ctrl+Enter applies edited paste (focus-gated) | P2 | **Passing** (covered by TC-TXT-007's positive case; the focus-gated negative half isn't separately re-tested there, but TC-KEY-004 demonstrates the same focus-gating for the analogous paste-box shortcut) | `suites/text_view/` |
 | TC-KEY-006 | Enter loads the source field / submits the Search popup | P3 | **Passing** (split into TC-KEY-006a/006b) | `suites/keyboard_shortcuts/` |
@@ -524,12 +544,22 @@ the sign that the text landed.
 | TC-VAL-016 | Editing A Box Drops The Report | P1 | **Passing** | `suites/tools/` |
 | TC-VAL-017 | Ctrl+Enter Validates | P2 | **Passing** | `suites/tools/` |
 | TC-VAL-018 | Every Problem Is Listed | P2 | **Passing** | `suites/tools/` |
+| TC-TDLG-001 | Format Saves Under formatted.json | P1 | **Passing** | `suites/tools/` |
+| TC-TDLG-002 | Format Minified Saves Under min.json | P2 | **Passing** | `suites/tools/` |
+| TC-TDLG-003 | A File Opened Through The Dialog Is Formatted And Saved Next To Its Name | P1 | **Passing** | `suites/tools/` |
+| TC-TDLG-004 | Patch Saves Under patched.json | P1 | **Passing** | `suites/tools/` |
+| TC-TDLG-005 | Merge Saves Under merged.json | P1 | **Passing** | `suites/tools/` |
+| TC-TDLG-006 | Diff Saves The Patch Under patch.json | P1 | **Passing** | `suites/tools/` |
+| TC-TDLG-007 | Merge Add Files Takes Several Files From The Dialog | P1 | **Passing** | `suites/tools/` |
+| TC-TDLG-008 | Closing A Save Dialog Writes Nothing | P2 | **Passing** | `suites/tools/` |
+| TC-TDLG-009 | Closing An Open Dialog Leaves The Box As It Was | P2 | **Passing** | `suites/tools/` |
 
 Exact text is checked through the clipboard (Copy), state and look by pixels, and
 only short plain words and the status bar by OCR — see
-[13_tools_window.md](13_tools_window.md). Native dialogs (Add files…, Open file…,
-Save…) stay blocked; files go in by dropping them. The details of each tool (every
-error message, option and engine edge) are covered by `cargo test`.
+[13_tools_window.md](13_tools_window.md). The native dialogs (Add files…, Open file…,
+Save…) are answered by the stand-in portal and checked in TC-TDLG-001 to 009; files
+also go in by dropping them. The details of each tool (every error message, option and
+engine edge) are covered by `cargo test`.
 
 
 ## Tutorial and About windows — [14_tutorial_and_about_windows.md](14_tutorial_and_about_windows.md)
@@ -595,7 +625,202 @@ error message, option and engine edge) are covered by `cargo test`.
 | TC-DND-017 | The Overlay Goes When The Files Leave | P1 | **Passing** | `suites/drag_and_drop/` |
 | TC-DND-018 | With A Document Loaded There Is No Overlay | P2 | **Passing** | `suites/drag_and_drop/` |
 
+## The jq functions the app adds — [17_jq_functions.md](17_jq_functions.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-JQX-001 | IN Keeps The Members Whose Value Is One Of Several | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-002 | IN Gives A Boolean For Each Input | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-003 | IN Over A Source Asks Whether Any Output Is In The Set | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-004 | IN Over A Source Is False When Nothing Matches | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-005 | Not IN Keeps What Is Not In The List | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-006 | IN Compares Whole Values | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-007 | IN An Empty Source Is False | P3 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-008 | IN A Generated Source | P3 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-009 | IN Does Not Equate A Number And A String | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-010 | IN Finds Null | P3 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-020 | INDEX Keys An Array By A Field | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-021 | INDEX Over A Stream Makes A Lookup Table | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-022 | INDEX Turns Numeric Keys Into Strings | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-023 | INDEX Keeps The Last Of Several With One Key | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-024 | INDEX Of An Empty Array Is An Empty Object | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-025 | INDEX Files A Missing Key Under null | P3 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-026 | INDEX Then map_values Projects The Table | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-027 | INDEX Of The Customers By Code | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-030 | JOIN Pairs Each Order With Its Customer | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-031 | JOIN Without A Join Expression Gives The Pairs | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-032 | JOIN Over An Array Makes An Array Of Pairs | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-033 | JOIN Pairs An Unmatched Element With null | P3 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-040 | tostream Gives A Path And A Leaf For Each Scalar And A Closing Event | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-041 | tostream Of The Whole Document Has Seven Events | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-042 | tostream Of A Scalar Is One Event With An Empty Path | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-043 | tostream Of Empty Containers Is Their Own Leaf | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-044 | The Events Make A Listing Of Every Leaf | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-045 | The Last Event Closes The Top Level | P3 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-046 | fromstream Rebuilds What tostream Took Apart | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-047 | fromstream Builds A Value From Hand-Written Events | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-048 | fromstream Of A Truncated Stream Makes The Inner Values | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-049 | truncate_stream Drops The First Path Level | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-050 | fromstream Over A Filtered Stream Drops A Field From Every Record | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-051 | fromstream Of A Truncated Stream Gives One Result Per Element | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-052 | fromstream Makes One Value Per Complete Top-Level Value | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-053 | tostream Of A Large Array Is Fast Enough To Use | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-060 | @csv Writes Numbers Bare Strings Quoted And null Empty | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-061 | @csv Doubles A Quote Inside A String | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-062 | @csv Leaves A Comma Or A Line Break Inside The Quotes | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-063 | @tsv Escapes Tab Backslash Line Break And Carriage Return | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-064 | @tsv Writes null As Nothing And Booleans As Words | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-065 | @csv And @tsv Of An Empty Array Are Empty Strings | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-066 | @csv Quotes A Lone String | P3 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-067 | @csv Of An Object Is An Error That Names The Value | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-068 | @csv Of A Nested Array Is An Error | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-069 | @tsv Of A String Is An Error | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-080 | An Error Raised In The Query Shows Its Text Plainly | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-081 | try catch Hands Over The Error Text | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-082 | An Unknown Variable Is A Query Error | P2 | **Passing** | `suites/jq_functions/` |
+
+## CSV and TSV output — [18_output_formats.md](18_output_formats.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-FMT-001 | A JSON Result Has No Format Note | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-002 | A Query Ending In @csv Shows The CSV Note | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-003 | A Query Ending In @tsv Shows The TSV Note | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-004 | The Note Follows The Last Query That Ran | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-005 | Editing The Query Without Running It Leaves The Note Alone | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-006 | @csv Before The Last Stage Does Not Make Rows | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-007 | A Query Wrapped In Brackets Is JSON | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-008 | A Parenthesised Last Stage Still Counts | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-009 | A Trailing Comment Does Not Hide The Format | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-010 | The Try Operator After @csv Is Still CSV | P3 | **Passing** | `suites/output_formats/` |
+| TC-FMT-011 | Another Engine Never Writes Rows | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-012 | Clear Removes The Note | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-013 | Loading Another Document Removes The Note | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-014 | Save Says Which Format It Will Write | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-020 | The Tree Lists One Row Per Result | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-021 | The Text View Shows The Rows | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-022 | The Text View Of TSV Keeps Its Tabs And Escapes | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-023 | The Text View Of CSV Keeps A Line Break Inside A Field | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-024 | The Text View Of JSON Results Is Pretty JSON | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-025 | Switching Between Tree And Text Keeps The Rows | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-026 | A Long List Of Rows Is Cut Short In The Text View | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-030 | Copying All CSV Results Gives The Rows | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-031 | Copying One CSV Row Gives That Row | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-032 | Copying All TSV Results Gives Tabbed Rows | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-033 | Copying One TSV Row Gives That Row | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-034 | CSV Quoting Is Exact | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-035 | TSV Escaping Is Exact | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-036 | Non-ASCII Text Survives | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-037 | JSON Results Still Copy As JSON | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-038 | A Wrapped @csv Query Copies JSON Strings | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-039 | The Source Pane Still Copies JSON | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-040 | A Single Row Has No Line Break After It | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-041 | A Header Row And Then The Data Rows | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-042 | Numbers Booleans And Null In A Row | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-043 | An Empty Result Has No Rows And Nothing To Save | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-044 | A Row That Cannot Be Made Is An Item Error The Others Survive | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-045 | Copying A Long List Of Rows Gives Every Row | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-050 | Saving CSV Results Writes The Rows | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-051 | Saving TSV Results Writes Tabbed Rows | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-052 | Saving JSON Results Still Writes Pretty JSON | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-053 | Cancelling The Dialog Writes Nothing | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-054 | A Row Saved From Its Menu Is Written As That Row | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-055 | The Root Saved From Its Menu Is Every Row | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-056 | Awkward Rows Are Saved Exactly | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-057 | Non-ASCII Text Is Saved As UTF-8 Without A Byte Order Mark | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-058 | A Result Past The Live Preview Is Saved Whole | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-059 | The File Follows The Latest Query | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-060 | Ctrl+S In The Results Pane Saves The Rows | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-061 | A Name The Person Chose Is Used As Given | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-062 | Saving Into A Missing Folder Says So | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-063 | The Source Pane Saves JSON Whatever The Results Are | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-070 | The Popped-Out Results Pane Has The Note | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-071 | The Popped-Out Results Pane Has No Note For JSON | P2 | **Passing** | `suites/output_formats/` |
+| TC-FMT-072 | Copying From The Popped-Out Pane Gives Rows | P1 | **Passing** | `suites/output_formats/` |
+| TC-FMT-073 | Saving From The Popped-Out Pane Writes The Rows | P1 | **Passing** | `suites/output_formats/` |
+
+## Tutorial pages for the jq functions — [19_tutorial_pages.md](19_tutorial_pages.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-TUT-001 | The @csv Filter Lists The Four Table Pages | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-002 | The tostream Filter Lists The Event Stream Pages | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-003 | The INDEX Filter Finds The Page And The Cheat Sheet | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-004 | Another Language Has No Table Pages | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-005 | Both Topics Are In The List | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-006 | Next Goes From CSV & TSV To Records To A Table | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-007 | Next Goes On From The Last Table Page Into The Next Topic | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-008 | Previous Goes Back From The First Event Stream Page | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-009 | The Last Event Stream Page Leads On To Errors | P3 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-010 | CSV & TSV Opens With Its Examples And Tips | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-011 | Records To A Table Opens With Its Examples And Tips | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-012 | Quoting & Escaping Opens With Its Examples And Tips | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-013 | Copy & Save As CSV Or TSV Opens With Its Examples And Tips | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-014 | IN Opens With Its Examples And Tips | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-015 | INDEX & JOIN Opens With Its Examples And Tips | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-016 | tostream Opens With Its Examples And Tips | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-017 | fromstream & truncate_stream Opens With Its Examples And Tips | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-018 | The Compatibility Page Says The Functions Are Added | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-020 | CSV & TSV: One CSV Row Per Member | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-021 | CSV & TSV: A Header Row First Tab-Separated | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-022 | CSV & TSV: Missing Values Are Empty Fields | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-023 | Records: Header And Rows From One List Of Columns | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-024 | Records: A List In One Cell | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-025 | Records: An Object As Two Columns | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-026 | Quoting: CSV Quotes Strings And Doubles The Quotes Inside | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-027 | Quoting: TSV Quotes Nothing And Escapes Instead | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-028 | Quoting: Only An Array Makes A Row | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-029 | Copy & Save: The Last Step @csv Makes Rows | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-030 | Copy & Save: Not The Last Step Is Still JSON | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-031 | IN: Members Whose Role Is One Of Several | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-032 | IN: Is Any Member In QA | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-033 | IN: Skills That Are Not On A List | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-034 | INDEX: A Lookup Table By Code | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-035 | INDEX: Look Up The Customer Of Every Order | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-036 | INDEX: JOIN Does The Matching | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-037 | tostream: The Events Of A Small Value | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-038 | tostream: Every Leaf As Path = Value | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-039 | tostream: Where Is A Value | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-040 | fromstream: Events Written By Hand | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-041 | fromstream: Drop A Field From Every Record | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-042 | fromstream: One Result Per Order | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-050 | Load Query Puts The CSV Query In The Main Window And Nothing Else | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-051 | Load Data Opens The Sample Document | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-052 | Copy Query Copies The Query Exactly | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-053 | Try It Replaces The Open Document And Query | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-054 | A Page's Rows Can Be Saved As They Are | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-060 | Cheat Sheet: One CSV Row Per Member | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-061 | Cheat Sheet: A Lookup Table Keyed By Name | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-062 | Cheat Sheet: Keep When The Value Is One Of Several | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-063 | Cheat Sheet: The Value As Events | P1 | **Passing** | `suites/tutorial_pages/` |
+
+## Workflows — [20_workflows.md](20_workflows.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-WF-001 | From A File To A CSV File | P1 | **Passing** | `suites/workflows/` |
+| TC-WF-002 | From A Line-Delimited File To CSV | P2 | **Passing** | `suites/workflows/` |
+| TC-WF-003 | From A Lesson To Your Own Query And A File | P1 | **Passing** | `suites/workflows/` |
+| TC-WF-004 | Joining Two Tables And Saving The Result As JSON | P1 | **Passing** | `suites/workflows/` |
+| TC-WF-005 | Taking A Document Apart And Putting It Back | P2 | **Passing** | `suites/workflows/` |
+| TC-WF-006 | The Format Follows The Query Through A Change Of Engine | P2 | **Passing** | `suites/workflows/` |
+| TC-WF-007 | A Large Document Becomes A Large CSV File | P2 | **Passing** | `suites/workflows/` |
+| TC-WF-008 | Saved JSON Can Be Opened Again | P1 | **Passing** | `suites/workflows/` |
+| TC-WF-009 | Every Window Open And A Save Still Works | P2 | **Passing** | `suites/workflows/` |
+| TC-WF-010 | Rows Copied As CSV Are Not A JSON Document | P3 | **Passing** | `suites/workflows/` |
+
 ## Coverage summary
+
+**2026-10-06 pass** (the jq functions the app adds, CSV and TSV output, the tutorial pages
+for them, and the file dialogs): 369 → 578 cases in 22 suites. The last full run (`run_parallel.sh`, six lanes, about 15 minutes, a fresh build of the app) passed: 578 of 578; the run before it had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard. The suite now answers the
+native file dialogs through a stand-in portal, so every case that was **Blocked** is implemented
+(13 rows: TC-OPEN-001/002, TC-TOOL-006, TC-CTX-004, TC-SAVE-001/003/004/006/007/008/009/010 and
+TC-KEY-003; TC-SAVE-008 is a race and became Not implemented) and the Tools window's own dialogs
+are covered too (TC-TDLG-001 to 009). It found no defect in the CSV/TSV, jq-function or tutorial
+code; it found the Save… finding of TC-SAVE-011, a wrong sentence in the older version of
+`09_saving.md` (a save was said to hold only the capped preview), and showed that the harness needed
+a stand-in for the file portal, progress-aware waits for big files and temporary files on disk
+(see [writing_tests.md](writing_tests.md)). The figures below are the older passes'.
 
 **2026-10-04 evening pass** (after the Tools redesign, the side-by-side Diff, the
 pane headers and the satellite windows): `tools` 12 → 130, `satellites`
@@ -624,13 +849,15 @@ windows, a real XDND source and pixel probes; see
   cross-reference to one of those 91 (same underlying code path, deliberately
   not re-implemented as a separate test — see each area's own note above),
   for **124 of the 149 IDs covered**.
-- **Blocked: 12** — every case needing the native file dialog (the `…` button) or Save dialog to
-  actually complete (TC-OPEN-001/002, TC-CTX-004, TC-SAVE-001/003/004/006/
-  007/008/009/010, TC-KEY-003). Root cause confirmed and documented in
-  [00_test_strategy.md](00_test_strategy.md): `rfd`'s default portal backend
-  hangs or errors before showing a usable dialog in every environment tried.
-  Not a testing-technique gap — a real integration gap between `rfd` and a
-  non-GTK toolkit, would need an app-side dependency change to unblock.
+- **Blocked: none now.** There were 12 (13 rows) until 2026-10-06 — every case needing the native
+  file dialog (the `…` button) or a Save dialog to complete (TC-OPEN-001/002, TC-CTX-004,
+  TC-SAVE-001/003/004/006/007/008/009/010, TC-KEY-003, TC-TOOL-006); the root cause (`rfd`'s portal
+  backend hangs or errors before a dialog a test can drive) is in
+  [00_test_strategy.md](00_test_strategy.md), together with the stand-in portal that answers the
+  dialogs now.
+- **Not implemented, changes of 2026-10-06**: TC-SAVE-008 (a race the harness cannot time) joins
+  the list below, and TC-SAVE-011 (a finding, see [09_saving.md](09_saving.md)) is new; TC-OPEN-010/011 had
+  left it on 2026-10-04. Its count below is the older passes'.
 - **Not implemented: 12** whole IDs (TC-WIN-004, TC-OPEN-007/010/011,
   TC-QRY-022/062, TC-TREE-004, TC-TXT-002/003/005, TC-SRCH-006, TC-KEY-007),
   plus 2 of TC-SRCH-007's 3 sub-cases (only the Clear sub-case is

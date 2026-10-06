@@ -1,7 +1,9 @@
 # jsonquery GUI test strategy (Robot Framework)
 
 Status: **10 suites, 74 test cases implemented and passing** (as of
-2026-09-05, second implementation pass). The sections below through
+2026-09-05, second implementation pass; by 2026-10-06 it is 22 suites and 578 cases, see
+`README.md` and [99_traceability_matrix.md](99_traceability_matrix.md), and the
+file dialogs are no longer blocked, see "Native OS dialogs" below). The sections below through
 "Tooling" are the original requirements pass. Everything from "Confirmed
 during implementation" onward documents what was actually verified by
 running the real stack — screen capture and native dialogs were the two
@@ -100,61 +102,78 @@ repository), which is outside the scope of this suite. **Flagging it here for a
 decision, not implementing it.** If approved later, it changes several "Automation
 notes" below from OCR to "read state file" and meaningfully de-risks the whole suite.
 
-## Native OS dialogs: the `…` file picker and Save… — CONFIRMED BLOCKED, root cause known
+## Native OS dialogs: the `…` file picker and Save… — answered by a stand-in portal
 
-**Update from implementation**: this was spiked as planned, and the outcome is
-worse than "needs the right technique" — **the file picker (then a toolbar button
-labeled `Open File…`, now the `…` beside the source field) and every `Save…` trigger
-currently freeze the app's entire UI thread, in every environment tried.**
+**Resolved 2026-10-06.** For a long time every case that needed a file dialog was **Blocked**
+(12 of them, see the history below). The harness now answers the dialog itself, so those cases are
+implemented and the ones that never could be written are too: the `…` button, every `Save…` trigger,
+Ctrl+S and the Tools window's own Open, Add files and Save buttons
+(`suites/saving/saving_dialogs.robot`, `suites/opening_sources/opening_dialog.robot`,
+`suites/tools/tools_dialogs.robot`, and the file cases of `suites/output_formats/` and
+`suites/workflows/`).
 
-`jsonquery_gui` depends on `rfd = "0.17.2"` with default features, which resolve to
-`xdg-portal` + `wayland` (confirmed by reading `rfd`'s `Cargo.toml` — `gtk3` is a
-separate, non-default feature this build doesn't enable). That means every
-`rfd::FileDialog::...().pick_file()`/`save_file()` call goes through the XDG Desktop
-Portal (`org.freedesktop.portal.Desktop` over D-Bus), called synchronously
-(`pollster`-blocked) on the UI thread — so the whole app hangs until that call
-resolves.
+### How the app asks
 
-Three environments were tried, all hang or fail before a usable dialog appears:
+`jsonquery_gui` depends on `rfd = "0.17.2"` with default features (`xdg-portal` + `wayland`).
+Every `rfd::FileDialog::...().pick_file()` / `save_file()` is a call on the D-Bus **session bus**
+to `org.freedesktop.portal.Desktop` — `org.freedesktop.portal.FileChooser.OpenFile` or `SaveFile`,
+made through libdbus (`dbus_bus_get_private`) on the UI thread. The call returns a request handle
+at once and the answer comes later, as a `Response` signal on that handle (`ua{sv}`: a code, and
+`uris` for the files chosen). If the call fails, `rfd` falls back to running `zenity`.
 
-1. **Real GNOME/Wayland session, inherited D-Bus** — clicking the file picker freezes
-   the app indefinitely (no further clicks, keystrokes, or repaints land). No portal
-   dialog ever became visible on the real display either.
-2. **Isolated `dbus-run-session`, `GDK_BACKEND=x11` + `XDG_CURRENT_DESKTOP=GNOME`
-   forced** — the portal activates fresh `xdg-desktop-portal` +
-   `xdg-desktop-portal-gnome` + `xdg-desktop-portal-gtk` instances scoped to that
-   bus, but the GNOME backend logs `GDK backend forced via env var, portal dialogs
-   will not work properly` and declines, and the GTK backend then fails with
-   `No such interface "org.freedesktop.impl.portal.FileChooser"`. This at least
-   fails **fast** (no hang) — `rfd` gets an error and the dialog call returns, so
-   the app stays responsive — but no dialog ever appears, so nothing can be
-   automated through it either.
-3. **Isolated `dbus-run-session`, no forced backend vars** — furthest we got:
-   `xdg-desktop-portal-gtk` logs `Failed to associate portal window with parent
-   window`, then hangs the same way as (1). Root cause: `rfd` hands the portal a
-   parent-window token derived from `winit`'s raw X11 window handle, and
-   `xdg-desktop-portal-gtk` can't turn that into a GTK-recognized parent (`winit`/
-   `egui` don't participate in the GTK/portal window-identifier protocol) — it gets
-   stuck at that association step rather than falling back to a parentless dialog
-   or erroring out.
+### The stand-in
 
-This is an **`rfd`-vs-non-GTK-toolkit integration gap**, not an environment
-misconfiguration — it reproduced identically on the real desktop and on a fully
-isolated Xvfb + private D-Bus session. Fixing it for real would mean either
-patching `jsonquery_gui` to build `rfd` with the `gtk3` feature instead of the
-default portal backend (an app dependency change, out of scope for this suite
-without a separate decision), or getting the portal association bug fixed upstream.
+`resources/fake_portal.py` starts a **private `dbus-daemon`** (a generated minimal config, no
+service activation) and puts a small `org.freedesktop.portal.Desktop` on it, written with
+[jeepney](https://pypi.org/project/jeepney/). `AppLibrary.launch_jsonquery_app` points the app at
+that bus with `DBUS_SESSION_BUS_ADDRESS`. A case says what the person chooses — `Portal Will Save
+To`, `Portal Will Pick`, `Portal Will Accept Suggested Name In`, `Portal Will Cancel` — and the
+stand-in answers the next dialog that way; it also records what the app *asked for* (title,
+suggested file name, folder, file types, one file or several, folder or file), which `Get Portal
+Requests` returns, so a case can check the name `results.csv` and the type `CSV` the app offered
+before it checks the file the app wrote.
 
-**Consequence for this suite**: every test case that requires a native dialog to
-actually complete — the `…` button's success path, and **all** `Save…` triggers
-(toolbar buttons, both row context-menu items, Ctrl+S) — is marked **BLOCKED** in
-the traceability matrix rather than implemented. This is 12 of 107 cases.
-It does not block much else: Paste, a typed URL and a typed path exercise the
-identical load/parse/worker code path as the `…` button (same
-`Command::OpenText`/`OpenUrl`/`OpenFile` handling in `worker.rs`) and are fully
-testable, so load-flow correctness coverage
-is not actually lost — only coverage of "does clicking this button produce a
-working native dialog" is.
+What this tests is the app's side of the dialog: what it asks for and what it does with the
+answer. The dialog's own look and behaviour belong to the desktop (GTK, GNOME, KDE) and are not
+covered, nor is the `zenity` fallback.
+
+- **One bus per display**, so parallel lanes never share a portal; and **a test app never sees the
+  desktop's session bus** any more, which makes the isolation of the whole suite stricter than it
+  was. (An app launched without the variable, as the old suites launched it, inherits the bus of
+  the desktop session it was started from, when there is one, and a file dialog would then have
+  reached that session's own portal.)
+- **The answer is delayed 0.4 s** (`FakePortal.ANSWER_DELAY`). `rfd` reads the method reply and
+  only then waits for the `Response`; a signal that libdbus has already read *together with* the
+  reply sits in a queue nobody looks at, and the UI thread then waits for ever. A real portal answers
+  when the person has chosen — seconds later — so only a stand-in that answers at once can hit it
+  (about one dialog in ten under load, in the first version of the stand-in). Not an app defect.
+- **A click sent while a dialog is open is lost**: the UI thread is inside the dialog call.
+  `Wait Until Portal Is Asked` waits for the answer *and* for the app to carry on; a case with
+  several dialogs counts them (`Portal Request Count`).
+- Needs `dbus-daemon` (apt: `dbus-daemon`) and the Python package `jeepney`; `run.sh` checks both.
+
+### The history: why the real portals were no use
+
+The first spike, before the stand-in, found that the file picker and every `Save…` froze the app's
+whole UI thread in every environment tried:
+
+1. **Real GNOME/Wayland session, inherited D-Bus** — the app froze for ever; no dialog ever became
+   visible on the real display.
+2. **Isolated `dbus-run-session`, `GDK_BACKEND=x11` + `XDG_CURRENT_DESKTOP=GNOME` forced** — the
+   portal started fresh `xdg-desktop-portal` + `-gnome` + `-gtk` instances, the GNOME backend
+   declined ("GDK backend forced via env var, portal dialogs will not work properly") and the GTK
+   backend failed with `No such interface "org.freedesktop.impl.portal.FileChooser"`. That failed
+   fast, so the app stayed responsive, but no dialog appeared to automate.
+3. **Isolated `dbus-run-session`, no forced backend** — `xdg-desktop-portal-gtk` logged `Failed to
+   associate portal window with parent window` and hung as in (1): `rfd` hands the portal a
+   parent-window token made from `winit`'s raw X11 handle, which the GTK backend cannot turn into
+   a window it knows.
+
+That is an `rfd`-versus-non-GTK-toolkit gap, not a misconfiguration: it reproduced identically on
+the real desktop and on an isolated Xvfb with a private bus. The way round it was not to fix the
+portals but to *be* the portal: with nothing but a name and a handle to answer, none of the above
+applies. (Building `rfd` with its `gtk3` feature would have been an app dependency change, and
+would have tested GTK's dialog instead of the app's.)
 
 ## Known, permanent constraints (not bugs to fix, just test-planning facts)
 

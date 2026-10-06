@@ -1,0 +1,5 @@
+[
+  {"name": "Smith, Jo", "note": "said \"hi\""},
+  {"name": "Ada", "note": "two\nlines"},
+  {"name": "Tab\tman", "note": "C:\\temp"}
+]

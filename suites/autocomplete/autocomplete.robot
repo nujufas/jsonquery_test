@@ -136,6 +136,16 @@ Navigate To Last Suggestion And Verify
     Sleep    0.3s
     Suggest Popup Should Contain    49
 
+Accepting Gives
+    [Documentation]    Types `typed` in the query box, accepts the first suggestion with Enter
+    ...    and checks that the box now holds exactly `expected` (read back through the
+    ...    clipboard, which OCR cannot do for a short query under its tints).
+    [Arguments]    ${typed}    ${expected}
+    Type Query Text    ${typed}
+    Press Key    enter
+    Sleep    0.4s
+    Query Text Should Be    ${expected}
+
 *** Test Cases ***
 TC-AC-001 Autocomplete Is Disabled By Default
     [Documentation]    Experimental feature, off until the 💡 toggle is
@@ -750,3 +760,72 @@ TC-AC-061 Field Completion Continues After A Pipe Inside map
     Region Should Not Contain Text    @{STATUS_BAR}    Query error
     Region Should Contain Text    @{RESULTS_PANEL}    36
     Region Should Contain Text    @{RESULTS_PANEL}    29
+
+TC-AC-070 The Stream Functions Are Offered
+    [Documentation]    tostream, fromstream and truncate_stream are not in the jq engine
+    ...    underneath: the app defines them (jq_ext) and the suggestions list them, so
+    ...    that they are found as the built-ins are. The first row is the selected one
+    ...    (white on blue, which OCR does not read), so each is accepted with Enter and
+    ...    the query box read back exactly.
+    [Tags]    p2
+    Load People Fixture
+    Toggle Autocomplete
+    Accepting Gives    tostr    tostream
+    Accepting Gives    fromst    fromstream
+    Accepting Gives    truncate_    truncate_stream
+
+TC-AC-071 INDEX And JOIN Are Offered In Capitals
+    [Documentation]    jq's table functions are written in capitals, and are found by typing
+    ...    them that way: the capitals come before the lower-case `index` of the same
+    ...    letters, so Enter gives them.
+    [Tags]    p2
+    Load People Fixture
+    Toggle Autocomplete
+    Accepting Gives    INDE    INDEX
+    Accepting Gives    JOI    JOIN
+
+TC-AC-072 After An At Sign jq Offers Its Format Names
+    [Documentation]    `@csv`, `@tsv` and the other `@format` strings: the list opens right
+    ...    after the `@`, and narrows as the name is typed.
+    [Tags]    p1
+    Load People Fixture
+    Toggle Autocomplete
+    Type Query Text    .[] | [.name, .age] | @
+    Suggest Popup Should Contain    @csv    psm=4
+    Suggest Popup Should Contain    @tsv    psm=4
+    Suggest Popup Should Contain    @json    psm=4
+    Type Query Text    .[] | [.name, .age] | @t
+    Suggest Popup Should Contain    @tsv    psm=4
+    Suggest Popup Should Not Contain    @csv
+
+TC-AC-073 Accepting A Format Name Makes A Query That Writes Rows
+    [Documentation]    Type "@c", accept the one suggestion with Enter, run: the query ends
+    ...    in @csv, so the results are rows and the CSV note shows.
+    [Tags]    p1
+    Load People Fixture
+    Toggle Autocomplete
+    Type Query Text    .[] | [.name, .age] | @c
+    Suggest Popup Should Contain    @csv    psm=4
+    Press Key    enter
+    Sleep    0.4s
+    Run Current Query
+    Region Should Contain Text    @{STATUS_BAR}    3 result
+    Region Should Not Contain Text    @{STATUS_BAR}    Query error
+    Region Should Contain Text    @{RESULTS_PANEL}    Alice
+
+TC-AC-074 JSONPath Has No Format Names After An At Sign
+    [Documentation]    In JSONPath `@` is the current node, and nothing like @csv follows it.
+    [Tags]    p2
+    Load People Fixture
+    Toggle Autocomplete
+    Select Engine    JSONPath
+    Type Query Text    $[?(@
+    Suggest Popup Should Not Contain    @csv
+
+TC-AC-075 An At Sign Inside A String Offers Nothing
+    [Documentation]    Typed inside a string literal, `@` is just a character.
+    [Tags]    p3
+    Load People Fixture
+    Toggle Autocomplete
+    Type Query Text    .name == "a@
+    Suggest Popup Should Not Contain    @csv

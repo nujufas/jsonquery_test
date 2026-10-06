@@ -64,8 +64,10 @@ drops too) are TC-MRG-010 to TC-MRG-034 in [13_tools_window.md](13_tools_window.
 
 ## What is still not reachable
 
-- The native **Open file…** / **Add files…** / **Save…** dialogs (blocked, see
-  [00_test_strategy.md](00_test_strategy.md)); a drop is the way files get in.
+- The native **Open file…** / **Add files…** / **Save…** dialogs are not part of a drop; they are
+  answered by the stand-in portal and checked in [02_opening_sources.md](02_opening_sources.md),
+  [09_saving.md](09_saving.md) and [13_tools_window.md](13_tools_window.md) (see "Native OS dialogs" in
+  [00_test_strategy.md](00_test_strategy.md)).
 - Files too big for a box (over 1 MB, kept as a path and read when the tool
   runs) and over the tools' 128 MB cap: a fixture that size is not worth
   keeping in the repository; `jobs.rs` and `operand.rs` cover them headlessly.

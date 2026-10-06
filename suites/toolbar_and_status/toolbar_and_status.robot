@@ -39,8 +39,7 @@ TC-TOOL-001 Source Label Reflects The Source Kind
     ${base_url}=    Start Fixture Server    ${HTTP_FIXTURES_DIR}
     Load Via Url    ${base_url}/valid.json
     Wait Until Pasted Source Is Replaced
-    Region Should Contain Text    @{SOURCE_FIELD}    valid.json
-    Region Should Contain Text    @{SOURCE_FIELD}    ${base_url}
+    Source Field Should Be    ${base_url}/valid.json
     [Teardown]    Run Keywords    Stop Fixture Server    AND    Close Jsonquery App
 
 TC-TOOL-002 Byte Size Is Shown In Human-Readable Units

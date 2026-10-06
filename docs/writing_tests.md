@@ -13,12 +13,12 @@ in [99_traceability_matrix.md](99_traceability_matrix.md).
   the suite runs against an isolated Xvfb display instead (`run.sh`
   handles this), with a minimal window manager (`fluxbox`) alongside it,
   because bare Xvfb silently breaks keyboard focus.
-- **Confirmed, and a real limit on scope**: the native file dialog (the `…`
-  button beside the source field) and the Save dialogs hang or fail before
-  showing anything usable, in every environment tried, due to an `rfd`-vs-non-GTK-toolkit integration gap. Every test case
-  that depends on one of those dialogs completing is marked **Blocked** in
-  the traceability matrix, not implemented as a false pass — all of them
-  need an app-side `Cargo.toml` change to ever unblock.
+- **Confirmed, then overcome**: the native file dialogs (the `…` button beside the source field, every
+  `Save…`) hang or fail before showing anything usable under every real portal tried — an
+  `rfd`-versus-non-GTK-toolkit gap. The cases that depend on them were **Blocked** until 2026-10-06,
+  when the harness started answering the dialogs itself with a stand-in for the desktop's file-chooser
+  portal (`resources/fake_portal.py`). See [Writing a case that uses a file dialog](#writing-a-case-that-uses-a-file-dialog)
+  and "Native OS dialogs" in [00_test_strategy.md](00_test_strategy.md).
 
 ## Adding or changing a case
 
@@ -40,11 +40,15 @@ in [99_traceability_matrix.md](99_traceability_matrix.md).
    ```
 
 3. **Index it**: give its row in the [traceability matrix](99_traceability_matrix.md) a status,
-   `Passing`, `Blocked` or `Not implemented`, with the reason.
+   `Passing`, `Blocked` or `Not implemented`, with the reason. For a new suite file,
+   `python scripts/robot_cases.py --matrix suites/<area>/ suites/<area>/<file>.robot` prints the rows
+   (without `--matrix`, a table of ID, title and priority for the feature document).
 
 Shared keywords and layout constants are in `resources/keywords.resource` (and
-`resources/tools.resource` for the Tools window); the low-level keywords (clicks, typing, OCR,
-pixels, the clipboard, windows, drops) are in `resources/AppLibrary.py`. Every region and click
+`resources/tools.resource` for the Tools window, `resources/results.resource` for the Results pane,
+the CSV/TSV note and the file dialogs, `resources/tutorial.resource` for the lessons); the low-level
+keywords (clicks, typing, OCR, pixels, the clipboard, windows, drops, the stand-in portal) are in
+`resources/AppLibrary.py`. Every region and click
 point is relative to the app window and calibrated against the default 1200x800 window in the
 Dark theme. When the app's layout changes, recalibrate from screenshots rather than from layout
 arithmetic (see *Redesign pass* in [00_test_strategy.md](00_test_strategy.md)).
@@ -57,6 +61,41 @@ While writing a case, run just that one:
 
 and check that it can fail: run it against a build with the behaviour broken and confirm that it
 fails at the intended assertion (*Mutation checks* in [00_test_strategy.md](00_test_strategy.md)).
+
+## Writing a case that uses a file dialog
+
+The app asks the desktop's file-chooser portal; `Start Test Display` starts a stand-in on a private bus
+and every app the suite launches is pointed at it. A case says what the person does *before* the click
+that opens the dialog, and the stand-in answers it:
+
+```robot
+${dir}=    Make Temp Directory
+Save Results Suggested In    ${dir}                # Save..., accept the name the app suggests
+Wait Until File Has Lines    ${dir}/results.csv    3
+```
+
+| Keyword | What the person does |
+|---|---|
+| `Portal Will Save To  path` | types that name and presses Save |
+| `Portal Will Accept Suggested Name In  dir` | presses Save without typing: the file is `dir/<the name the app offered>` |
+| `Portal Will Pick  path...` | picks one file, or several for Add files… |
+| `Portal Will Cancel` | closes the dialog (a dialog with no answer queued is cancelled too) |
+| `Get Portal Requests` | what the app asked, one dict per dialog: `method` (`OpenFile` or `SaveFile`), `title`, `current_name`, `current_folder`, `filters`, `multiple`, `directory` |
+
+`Browse And Choose path` (results.resource) is the whole open journey; `Save Results Suggested In dir` and
+the other `… Suggested In` keywords are the save ones. A few rules, all learned the hard way:
+
+- **A click sent while a dialog is open is lost** — the UI thread is inside the call.
+  `Wait Until Portal Is Asked` waits for the answer and for the app to carry on; the keywords above
+  already call it. A case with several dialogs counts them (`Portal Request Count`, `Wait For Dialog After`).
+- **The stand-in answers after 0.4 s on purpose.** `rfd` freezes for good if the answer arrives together
+  with the method reply (it is then in a queue nobody reads); a real portal answers when a person has
+  chosen. Do not "speed it up".
+- The file is written by the app's worker thread a moment after the dialog closes: read it with
+  `Wait Until Keyword Succeeds … File Should Be …` or, for a big file, with `Wait Until File Has Lines`
+  / `Wait Until File Holds Json`, which wait for *progress* (a busy machine can write a 25,000-line file at
+  a few hundred lines a second) instead of a fixed budget.
+- The dialogs themselves — their look, the folder they open in — belong to the desktop and are not tested.
 
 ## Gotchas
 
@@ -137,3 +176,29 @@ non-obvious findings, worth reading before extending any suite:
   `--help`: a shell on this machine has the real `WAYLAND_DISPLAY`, and the app
   opens a window on the live session. Kill test processes by PID or `pkill -x`,
   never `pkill -f` (it matches its own shell and other projects' runs).
+
+### Found while writing the CSV, jq-function, tutorial and workflow suites
+
+- **A query that ends in `@csv` or `@tsv` is not JSON.** Copy to Clipboard, the Text view and Save…
+  then write its rows as text, so `Results Should Be Json` fails for it by design; compare with
+  `Results Should Be Text` / `Copy Should Give` (see [18_output_formats.md](18_output_formats.md)). Wrap the
+  call in `try … catch .` to get JSON back when the case is about an error.
+- **Expected values come from jq 1.8.1** (`jq -c '[ QUERY ]'`), written into the case, so the suite
+  needs no jq. Its wording of errors differs from jq 1.7 and from the app's: assert the part the two share.
+- **Menu items are clicked by their distance from the pointer**, not read: a context menu laid over a row of
+  backslashes defeats OCR. From the right-click point: Save… +55/+16, Copy to Clipboard +37,
+  Copy JSON Path +58 (`Copy All Results`, `Copy Result Row`).
+- **Dim text is only readable from a crop one line high with `psm=7`** (the status line's "Saved to …"). The CSV/TSV
+  note is too dim even for that: its presence is a pixel probe (`Get Ink Bounds`, `Region Should Be Plain`)
+  and its words are read from its tooltip.
+- **White on blue is unreadable**: a selected popup row, the tutorial's ▶ Try it. Accept the suggestion with Enter
+  and read the query box back (`Query Text Should Be`); find the button by its fill (`Find Color Blocks`,
+  `First Block Below`).
+- **A selectable label is only as wide as its text**: a click at the middle of the tutorial's row for "IN" (which ends at
+  x=43) missed; the lesson list is clicked at x=36.
+- **Do not press an engine button twice in one case**: clicking the selected engine deselects it and goes
+  back to auto-detect. The jq-function cases leave the engine on auto-detect, as a person does.
+- **Never reuse a display while an earlier run on it is alive**, and never kill an Xvfb under a run: the run
+  goes on and fails in ways that look like app bugs. Give every lane a fresh display.
+- A Robot cell splits at two spaces; a backslash is written doubled (`\\"`, `\\n`); `Evaluate` cannot see
+  `$variables` inside a generator expression (use a keyword); `--test` globs know only `*` and `?`.

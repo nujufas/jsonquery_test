@@ -1154,13 +1154,14 @@ class AppLibrary:
         return path
 
     @keyword("Make Heavy File")
-    def make_heavy_file(self, mebibytes=270):
+    def make_heavy_file(self, mebibytes=270, head=None):
         """A file of `mebibytes` MiB named heavy.json in a new temp directory (which goes
         when the display stops); returns its path. The app parses a file of under 256 MiB
         and, from 256 MiB, keeps it on disk and indexes it. This one costs nothing to
-        check: `{"heavy": ["a", "b", "c"], "n": 1}` and then blanks, which JSON allows."""
+        check: `{"heavy": ["a", "b", "c"], "n": 1}` (or the JSON given as `head`) and
+        then blanks, which JSON allows."""
         path = os.path.join(self.make_temp_directory(), "heavy.json")
-        head = b'{"heavy": ["a", "b", "c"], "n": 1}'
+        head = (head or '{"heavy": ["a", "b", "c"], "n": 1}').encode("utf-8")
         size = int(mebibytes) * 1024 * 1024
         with open(path, "wb") as out:
             out.write(head)
@@ -1188,6 +1189,50 @@ class AppLibrary:
                 out.write('"item-%05d-%s"' % (number, body))
             out.write("]")
         return path
+
+    @keyword("Make File Of Records")
+    def make_file_of_records(self, mebibytes=270):
+        """records.json in a new temp directory: a list of records of a few short fields,
+        `{"id": 7, "k": "cat-007", "n": 7, "name": "item 7"}`, where `id` counts from 0, `k`
+        is one of 200 categories (`id` modulo 200) and `n` is `id` modulo 1000, as many
+        of them as take `mebibytes` MiB or more (a number of thousands of them). Returns
+        the path and how many records there are. Parsed, such a file takes about
+        seventeen times its size."""
+        path = os.path.join(self.make_temp_directory(), "records.json")
+        target = int(mebibytes) * 1024 * 1024
+        written = 0
+        count = 0
+        with open(path, "w", encoding="ascii") as out:
+            out.write("[")
+            written += 1
+            while written < target or count % 1000:
+                rows = []
+                for number in range(count, count + 1000):
+                    rows.append(
+                        '{"id":%d,"k":"cat-%03d","n":%d,"name":"item %d"}'
+                        % (number, number % 200, number % 1000, number)
+                    )
+                text = ("," if count else "") + ",".join(rows)
+                out.write(text)
+                written += len(text)
+                count += 1000
+            out.write("]")
+        return path, count
+
+    @keyword("Copy Of File")
+    def copy_of_file(self, path):
+        """A copy of the file in a new temp directory; returns its path."""
+        copy = os.path.join(self.make_temp_directory(), os.path.basename(path))
+        shutil.copyfile(path, copy)
+        return copy
+
+    @keyword("Cut File In Half")
+    def cut_file_in_half(self, path):
+        """Truncates the file to half its size, in place, as another program could while
+        the app has it open. Returns the new size."""
+        size = os.path.getsize(path) // 2
+        os.truncate(path, size)
+        return size
 
     @keyword("Start Watching App Memory")
     def start_watching_app_memory(self):

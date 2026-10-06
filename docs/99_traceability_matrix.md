@@ -16,10 +16,10 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
-**Status as of 2026-10-06: 22 suites, 588 test cases** — the 369 of the evening
-before plus 219: the new suites `jq_functions` (49), `output_formats` (55), `tutorial_pages`
-(50) and `workflows` (10), and cases added to `opening_sources` (+9 for the file dialogs, +10 for heavy files, pipes, downloads and files kept on disk, in `heavy_files.robot`), `saving` (+21), `tools`
-(+9, `tools_dialogs`) and `autocomplete` (+6). The last full run (`run_parallel.sh`, four lanes, 21 minutes, a fresh build of the app) passed: 588 of 588. (The one before the cases for the files that are kept on disk, five lanes and 18 minutes, had passed 578 of 578; the run before that had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard.) Nothing is **Blocked** any more:
+**Status as of 2026-10-06: 22 suites, 593 test cases** — the 369 of the evening
+before plus 224: the new suites `jq_functions` (49), `output_formats` (55), `tutorial_pages`
+(50) and `workflows` (10), and cases added to `opening_sources` (+9 for the file dialogs, +14 for heavy files, pipes, downloads and files kept on disk, in `heavy_files.robot`), `saving` (+21), `tools`
+(+9, `tools_dialogs`, +1 for Format on a file kept on disk) and `autocomplete` (+6). The last full run (`run_parallel.sh`, four lanes, 21 minutes, a fresh build of the app) passed: 593 of 593. (The one before that, 588 of 588, was before the sorting, the guard against a file cut short, JSONPath and JMESPath, repeated keys and Format on disk; the one before the cases for the files that are kept on disk, five lanes and 18 minutes, had passed 578 of 578; the run before that had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard.) Nothing is **Blocked** any more:
 the file dialogs are answered by a stand-in for the desktop's file-chooser portal
 (`resources/fake_portal.py`, see "Native OS dialogs" in
 [00_test_strategy.md](00_test_strategy.md)), which turned the 13 rows that were Blocked into
@@ -98,9 +98,13 @@ during implementation; see 00_test_strategy.md's OCR limitations note).
 | TC-OPEN-033 | A File Past The Indexing Size Is Not Held In Memory | P1 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-034 | A Long List Of A File Kept On Disk Is Shown In Runs | P1 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-035 | A Query Reads A File Kept On Disk As It Goes | P1 | **Passing** | `suites/opening_sources/` |
-| TC-OPEN-036 | A Query That Needs All Of A Long List Says So | P1 | **Passing** | `suites/opening_sources/` |
-| TC-OPEN-037 | JSONPath Is Not Run On A File Kept On Disk | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-036 | A Query That Needs All Of A Long List As A Value Says So | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-037 | JSONPath And JMESPath Read A File Kept On Disk | P1 | **Passing** | `suites/opening_sources/` |
 | TC-OPEN-038 | A File Below The Indexing Size Is Parsed | P2 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-039 | A File Cut Short While It Is Open Does Not Close The App | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-040 | A Long List Is Sorted And Grouped Where It Lies | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-041 | An Expression Of Parts And A Search Down Through Everything Are Run On A File Kept On Disk | P1 | **Passing** | `suites/opening_sources/` |
+| TC-OPEN-042 | A Key Repeated In An Object Of A File Kept On Disk Is Shown Once | P2 | **Passing** | `suites/opening_sources/` |
 
 **Confirmed during implementation, worth flagging for anyone extending this
 suite**: pasting only loads anything while the empty-state "Paste JSON
@@ -490,6 +494,7 @@ the sign that the text landed.
 | TC-FMT-020 | The Status Bar Compares The Sizes | P2 | **Passing** | `suites/tools/` |
 | TC-FMT-021 | The Open Document Can Be Formatted | P1 | **Passing** | `suites/tools/` |
 | TC-FMT-022 | Open Document Is Dim Without A Document | P2 | **Passing** | `suites/tools/` |
+| TC-FMT-080 | A Document Kept On Disk Is Formatted As It Is Saved | P2 | **Passing** | `suites/tools/` |
 | TC-TWIN-007 | Diff JSON Shows The Documents Side By Side | P1 | **Passing** (reads words and the status bar; the exact patch is pinned by TC-DIF-011/012 through the clipboard) | `suites/tools/` |
 | TC-DIF-001 | Compare Needs Both Documents | P1 | **Passing** | `suites/tools/` |
 | TC-DIF-002 | Documents That Are The Same Are Said To Be | P1 | **Passing** | `suites/tools/` |
@@ -831,6 +836,15 @@ build in which no file is ever indexed, TC-OPEN-029 and 032 fail on `Parsed in`,
 034 on the missing runs, 035 on the memory (595.8 MiB), and 036 and 037 because nothing is refused; TC-OPEN-038
 passes there, as it should. That run also showed that a parsed document with a string of 190,000 characters in a
 row closed the window, which the preview of a row (its first kilobyte) now prevents.
+
+**2026-10-06, heavy files, third step** (what did not work on a file kept on disk is fixed where it can be:
+`sort_by`, `group_by` and `..`; JSONPath and JMESPath; a key repeated in an object; a file cut short while it
+is open, which ended the app; Format in the Tools window): 588 → 593 cases. TC-OPEN-036 and 037 are rewritten
+(`to_entries` is the program that is still refused; JSONPath and JMESPath are run on 4.5 million records),
+TC-OPEN-039 to 042 and TC-FMT-080 are new, and the check that a query is done reads "Query ran in" as well
+as "result(s)" (OCR read the latter as `resulkt{s)` for some timings). The last full run (`run_parallel.sh`,
+four lanes, a release build) passed: 593 of 593. TC-OPEN-039 was run against a build in which the mapping is
+not watched, and fails (the app ends with SIGBUS).
 
 **2026-10-06 pass** (the jq functions the app adds, CSV and TSV output, the tutorial pages
 for them, and the file dialogs): 369 → 578 cases in 22 suites. The last full run (`run_parallel.sh`, six lanes, about 15 minutes, a fresh build of the app) passed: 578 of 578; the run before it had passed 577, the one failure being an OCR misread of a URL in TC-TOOL-001, which now reads the field through the clipboard. The suite now answers the

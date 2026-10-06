@@ -336,20 +336,24 @@ for something in the file (a path, a slice, `length`, `first`, `map`, `[…]`) a
 what they hand on, an element at a time, is given to jaq with the rest of the program.
 Automation notes: `Query Should Give` compares the copied results as JSON. **Passing.**
 
-### TC-OPEN-036 — A query that needs all of a long list says so
+### TC-OPEN-036 — A query that needs all of a long list as a value says so
 Priority: P1
-Steps: Load that file and run `sort_by(.)`.
-Expected: no result; the status bar says `` `sort_by(.)` needs all of an array of 1500 items (… MB) in
-memory, which is too much for this `` and what to do instead. A program that needs the whole of a list at
-once (`sort_by`, `group_by`, `add` on the document, `..`) cannot be run against a file that is not in
-memory; it is refused, not attempted. **Passing.**
+Steps: Load that file and run `to_entries`.
+Expected: no result; the status bar says `` `to_entries` needs all of an array of 1500 items (… MB) in
+memory, which is too much for this `` and what to do instead. A program that needs the whole of a list as a
+value (`to_entries`, `add` on the document, `flatten`) cannot be run against a file that is not in memory; it
+is refused, not attempted, and `?` and `try` do not take that for an error of the program. (`sort_by`,
+`group_by` and `..` are not of these any more: see TC-OPEN-040 and 041.) **Passing.**
 
-### TC-OPEN-037 — JSONPath is not run on a file kept on disk
-Priority: P2
-Steps: Load that file, pick the JSONPath engine and run `$[0]`.
-Expected: no result; the status bar says that JSONPath works on a document held in memory, which this is
-too big to be, and to use jq. JSONPath and JMESPath take a value in memory; jq and JSON Pointer are walked
-against the file. **Passing.**
+### TC-OPEN-037 — JSONPath and JMESPath read a file kept on disk
+Priority: P1
+Steps: Load a file of 4.5 million records (`id`, `k`, `n`, `name`: 270 MiB, which parsed would take more
+than 4 GiB) and run `$[?(@.id == 1234567)].k`, and ``[?id == `1234567`].k | [0]``.
+Expected: both give `["cat-167"]`. The engines read the query as they do for any document and the file is
+walked for as long as a node is too big to be a value (a filter is run on each of the records); what is small
+enough goes to the engine with the rest of the query. A function that needs a whole big list for its
+argument (`sort_by`, `max`) and a JSONPath filter that reads the root (`$`) are refused, which the unit
+tests of the query crate cover. **Passing.**
 
 ### TC-OPEN-038 — A file below the indexing size is parsed
 Priority: P2
@@ -357,6 +361,43 @@ Steps: Type the path of a 100 MiB file of the same kind as TC-OPEN-029.
 Expected: it loads (`2 keys`, `100.0 MB`) and the status bar says `Parsed in …`. Below 256 MiB a file is
 read and parsed into a tree, as it always was; this is the other side of the line TC-OPEN-029 is on.
 **Passing.**
+
+### TC-OPEN-039 — A file cut short while it is open does not close the app
+Priority: P1
+Steps: Load a copy of the file of records, cut the copy in half from outside (`Cut File In Half`, as another
+program could), run `.[-1].id`, then `length`.
+Expected: the first query reads what is past the cut, which used to end the whole process (SIGBUS); it ends
+with the status bar saying that the file was changed on disk, the second says so too without reading
+anything, and the window is there, with its tree, throughout. A handler for the signal replaces the
+mapping from the page that faulted on by zeros and marks the document as damaged, so that a query, a
+save, a copy and a search are refused rather than made from what is not in the file.
+Automation notes: `Copy Of File`, `Cut File In Half`. **Passing.**
+
+### TC-OPEN-040 — A long list is sorted and grouped where it lies
+Priority: P1
+Steps: Load the file of records, start watching the memory, and run in turn:
+`sort_by(.n) | .[0:3] | map(.id)`; `sort_by(.id) | reverse | .[0].id`; `group_by(.k) | length`;
+``group_by(.k) | map({k: .[0].k, n: length}) | .[0]``; `min_by(.n) | .id`; `max_by(.n) | .id`.
+Expected: `[0,1000,2000]` (equal keys keep the order of the file); the number of the last record; `200`;
+`{"k":"cat-000","n":…}` with the size of a group; `0`; the number of the last record (the last that is
+biggest, as in jq); and the most the app held, throughout, was under 1100 MiB. The key of each of 4.5 million
+elements is made (by threads) and where each is in the file; what comes out is the same list in another order,
+or a list of lists, still in the file, read as the next stage asks. **Passing.**
+
+### TC-OPEN-041 — An expression of parts and a search down through everything are run on a file kept on disk
+Priority: P1
+Steps: Load the file of records and run `{count: length, first: .[0].id, last: .[-1].id}`,
+`.[-1].id - .[0].id` and `first(.. | select(type == "string" and test("cat-199$")))`.
+Expected: the object with the count and the first and last ids; the difference of them; `["cat-199"]`. An
+expression made of parts that are walked is taken apart at its braces and operators, each part is walked
+and what it makes stands in the text that jaq runs; `..` goes down through the list to the first string that
+ends as asked and stops there (the `test` is not run on the list itself, which it cannot be). **Passing.**
+
+### TC-OPEN-042 — A key repeated in an object of a file kept on disk is shown once
+Priority: P2
+Steps: Load a file of 270 MiB that begins `{"a": 1, "b": 2, "a": 3}` (and then blanks), and run `.a`.
+Expected: the Source pane says `2 keys` and not three, and `.a` gives `[3]`: the key once, in the place of its
+first, holding the value of its last, as a parsed object has it. **Passing.**
 
 ## Mutation checks
 
@@ -373,6 +414,9 @@ every file is parsed (2026-10-06): TC-OPEN-029 and 032 fail (`Parsed in` where `
 the document is in memory), and TC-OPEN-038 passes, as it should. That run also found that a parsed
 document with a string of 190,000 characters in a row closed the whole window (the graphics card was asked
 for a vertex buffer of more than it gives); a row now shows the first kilobyte of a string, parsed or not.
+
+TC-OPEN-039 was run against a build in which the mapping is not watched (2026-10-06): the app ends with the
+signal, and the case fails.
 
 Leaving `.jsonl` out of the `…` button's file filter fails TC-OPEN-002 and nothing else (the case
 compares the whole list of extensions the app asks the dialog for).

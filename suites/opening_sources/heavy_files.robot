@@ -1,6 +1,6 @@
 *** Settings ***
 Documentation     Opening what is not an ordinary small file -- see docs/02_opening_sources.md
-...               (TC-OPEN-029 to TC-OPEN-038). A file of 256 MiB or more is not parsed: it is
+...               (TC-OPEN-029 to TC-OPEN-042). A file of 256 MiB or more is not parsed: it is
 ...               kept on disk, memory-mapped, checked once and indexed, and read as it is
 ...               looked at; a smaller one is parsed. A pipe has to be read whatever size it says
 ...               it is; a download is parsed from memory when it is small and goes through a
@@ -20,19 +20,45 @@ Test Teardown     Close Jsonquery App
 
 *** Keywords ***
 Start The Display And Make The Big Files
-    [Documentation]    Two files of more than 256 MiB, made once for the suite (they go
-    ...    when the display stops): 270 MiB of a small document and blanks, and 1500
+    [Documentation]    Three files of more than 256 MiB, made once for the suite (they go
+    ...    when the display stops): 270 MiB of a small document and blanks, 1500
     ...    strings of 190,000 characters, 272 MiB, which is a list of more than a thousand
-    ...    children and takes a lot of memory to parse.
+    ...    children and takes a lot of memory to parse, and some 4.5 million records of
+    ...    a few short fields, 270 MiB, which would take more than 4 GiB.
     Start Test Display
     ${heavy}=    Make Heavy File    270
     Set Suite Variable    ${HEAVY_FILE}    ${heavy}
     ${strings}=    Make File Of Long Strings
     Set Suite Variable    ${LONG_STRINGS_FILE}    ${strings}
+    ${records}    ${count}=    Make File Of Records    270
+    Set Suite Variable    ${RECORDS_FILE}    ${records}
+    Set Suite Variable    ${RECORDS}    ${count}
 
 Open The Long Strings
     Load Via Url    ${LONG_STRINGS_FILE}
     Wait Until Region Contains Text    @{SOURCE_PANEL}    1500 items    timeout=30
+
+Open The Records
+    Load Via Url    ${RECORDS_FILE}
+    Wait Until Region Contains Text    @{SOURCE_PANEL}    ${RECORDS} items    timeout=60
+
+Run Slow Query
+    [Documentation]    Runs `query` and waits as long as `timeout` seconds for it to be
+    ...    done: Run Query waits five, which is not for what reads 270 MiB.
+    [Arguments]    ${query}    ${timeout}=90
+    Click At    100    58
+    Sleep    0.3s
+    Press Keys    ctrl    a
+    Type Text    ${query}
+    Sleep    0.3s
+    Press Keys    ctrl    enter
+    Sleep    0.5s
+    Wait Until Region Matches    @{STATUS_BAR}    Query ?ran ?in|result\\(s\\)|error    timeout=${timeout}
+
+Slow Query Should Give
+    [Arguments]    ${query}    ${expected}    ${timeout}=90
+    Run Slow Query    ${query}    ${timeout}
+    Results Should Be Json    ${expected}
 
 *** Test Cases ***
 TC-OPEN-029 A File Past The Indexing Size Opens Like Any Other
@@ -144,21 +170,81 @@ TC-OPEN-035 A Query Reads A File Kept On Disk As It Goes
     Should Be True    ${peak} < 200
     ...    msg=The app held ${peak} MiB at its most while it read a file of 272 MiB
 
-TC-OPEN-036 A Query That Needs All Of A Long List Says So
-    [Documentation]    `sort_by` needs the whole of a list at once, which is more than can be
-    ...    held: the error says what it needed, and no result is made.
+TC-OPEN-036 A Query That Needs All Of A Long List As A Value Says So
+    [Documentation]    `to_entries` makes a list of the same length of objects, which is
+    ...    more than can be held for a list this long: the error says what it needed,
+    ...    and no result is made. (`sort_by`, `group_by` and `..` are not of these: see
+    ...    TC-OPEN-040.)
     [Tags]    p1
     Open The Long Strings
-    Run Query    sort_by(.)
+    Run Query    to_entries
     Status Bar Should Say    needs all of an array of 1500 items
     Status Bar Should Say    0 result(s)
 
-TC-OPEN-037 JSONPath Is Not Run On A File Kept On Disk
-    [Documentation]    JSONPath and JMESPath work on a value in memory, and a file this big
-    ...    is not one: they say so, and that jq and JSON Pointer do work.
+TC-OPEN-037 JSONPath And JMESPath Read A File Kept On Disk
+    [Documentation]    Both engines read the query as they do for any document and walk
+    ...    the file for as long as a node is too big to be a value: a filter is tested on
+    ...    each of 4.5 million records, and the one that passes is the answer.
+    [Tags]    p1
+    Open The Records
+    Slow Query Should Give    $[?(@.id == 1234567)].k    ["cat-167"]
+    Slow Query Should Give    [?id == `1234567`].k | [0]    ["cat-167"]
+
+TC-OPEN-039 A File Cut Short While It Is Open Does Not Close The App
+    [Documentation]    Another program cuts the file the app has open in half. Reading
+    ...    what is past the cut used to end the whole process (SIGBUS): now the app
+    ...    says that the file was changed, and goes on.
+    [Tags]    p1
+    ${copy}=    Copy Of File    ${RECORDS_FILE}
+    Load Via Url    ${copy}
+    Wait Until Region Contains Text    @{SOURCE_PANEL}    ${RECORDS} items    timeout=60
+    Cut File In Half    ${copy}
+    Run Query    .[-1].id
+    Status Bar Should Say    changed on disk
+    # Whatever is asked of it from now on is refused, and the window is there.
+    Run Query    length
+    Status Bar Should Say    changed on disk
+    Region Should Contain Text    @{SOURCE_PANEL}    ${RECORDS} items
+
+TC-OPEN-040 A Long List Is Sorted And Grouped Where It Lies
+    [Documentation]    `sort_by`, `group_by`, `min_by` and `max_by` over 4.5 million
+    ...    records: the key of each is made, and where it is in the file, and what comes
+    ...    out is the same list in another order or in groups, still in the file, read
+    ...    as the next stage asks. The app holds some hundreds of MiB, not the more than
+    ...    4 GiB that parsing the file would take.
+    [Tags]    p1
+    Open The Records
+    ${last}=    Evaluate    ${RECORDS} - 1
+    ${per}=    Evaluate    ${RECORDS} // 200
+    Start Watching App Memory
+    Slow Query Should Give    sort_by(.n) | .[0:3] | map(.id)    [[0,1000,2000]]
+    Slow Query Should Give    sort_by(.id) | reverse | .[0].id    [${last}]
+    Slow Query Should Give    group_by(.k) | length    [200]
+    Slow Query Should Give    group_by(.k) | map({k: .[0].k, n: length}) | .[0]    [{"k":"cat-000","n":${per}}]
+    Slow Query Should Give    min_by(.n) | .id    [0]
+    Slow Query Should Give    max_by(.n) | .id    [${last}]
+    ${peak}=    Stop Watching App Memory
+    Should Be True    ${peak} < 1100
+    ...    msg=The app held ${peak} MiB at its most while it sorted and grouped 270 MiB
+
+TC-OPEN-041 An Expression Of Parts And A Search Down Through Everything Are Run On A File Kept On Disk
+    [Documentation]    `{count: length, first: .[0].id}` and `.[-1].id - .[0].id` are taken
+    ...    apart at their braces and operators and each part is walked; `..` goes down
+    ...    through the whole list to the first string that ends as it is asked, and
+    ...    stops there.
+    [Tags]    p1
+    Open The Records
+    ${last}=    Evaluate    ${RECORDS} - 1
+    Slow Query Should Give    {count: length, first: .[0].id, last: .[-1].id}    [{"count":${RECORDS},"first":0,"last":${last}}]
+    Slow Query Should Give    .[-1].id - .[0].id    [${last}]
+    Slow Query Should Give    first(.. | select(type == "string" and test("cat-199$")))    ["cat-199"]
+
+TC-OPEN-042 A Key Repeated In An Object Of A File Kept On Disk Is Shown Once
+    [Documentation]    `{"a": 1, "b": 2, "a": 3}` has two keys, `a` and `b`, with `a`
+    ...    holding 3, as it does parsed; the file here is 270 MiB, so it is kept on disk.
     [Tags]    p2
-    Open The Long Strings
-    Select Engine    JSONPath
-    Run Query    $[0]
-    Status Bar Should Say    held in memory
-    Status Bar Should Say    use jq
+    ${file}=    Make Heavy File    270    {"a": 1, "b": 2, "a": 3}
+    Load Via Url    ${file}
+    Wait Until Region Contains Text    @{SOURCE_PANEL}    2 keys    timeout=30
+    Region Should Not Contain Text    @{SOURCE_PANEL}    3 keys
+    Query Should Give    .a    [3]

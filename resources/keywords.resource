@@ -191,7 +191,9 @@ Type And Run Query
     Type Text    ${query_text}
     Sleep    0.3s
     Press Keys    ctrl    enter
-    Wait Until Region Matches    @{STATUS_BAR}    result\\(s\\)|error    timeout=5
+    # "Query ran in" as well as "result(s)": OCR now and then reads the latter wrong ("resulkt{s)"),
+    # depending on where the glyphs fall, and the former says as well that the query is done.
+    Wait Until Region Matches    @{STATUS_BAR}    Query ?ran ?in|result\\(s\\)|error    timeout=5
 
 Query Box Should Contain Text
     [Documentation]    OCR check of the text in the query box. Use this, not a

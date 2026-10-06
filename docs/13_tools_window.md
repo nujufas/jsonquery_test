@@ -242,6 +242,7 @@ on the Tools window. Results are read as words (`platypus`, `echidna`, `koala`,
 | TC-FMT-020 | The Status Bar Compares The Sizes | P2 |
 | TC-FMT-021 | The Open Document Can Be Formatted | P1 |
 | TC-FMT-022 | Open Document Is Dim Without A Document | P2 |
+| TC-FMT-080 | A Document Kept On Disk Is Formatted As It Is Saved | P2 |
 
 ### Diff JSON — `tools_diff.robot`
 

@@ -325,3 +325,21 @@ TC-FMT-022 Open Document Is Dim Without A Document
     Sleep    0.5s
     Format Button Should Be Disabled
     Region Should Not Contain Text    @{INPUT_BOX}    open document
+
+TC-FMT-080 A Document Kept On Disk Is Formatted As It Is Saved
+    [Documentation]    A file of 256 MiB or more is not text in memory: Format shows the
+    ...    start of it, says that it is written from its file when saved, and Copy is
+    ...    off. (Save… writes all of it from the file, a piece at a time.)
+    [Tags]    p2
+    ${file}=    Make Heavy File    270    {"members": [{"name": "Ann"}], "team": "platypus"}
+    Load Via Url    ${file}
+    Wait Until Region Contains Text    @{SOURCE_PANEL}    platypus    timeout=30
+    Open Tool    format
+    Click At    ${OPEN_DOCUMENT_X}    ${HEADER_Y}
+    Sleep    0.5s
+    Press Main Button
+    Result Should Read    platypus
+    Result Should Read    Ann
+    Status Should Read    written from its file
+    Click At    ${FORMAT_COPY_X}    ${HEADER_Y}
+    Status Should Not Read    Copied

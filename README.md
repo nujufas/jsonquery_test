@@ -6,7 +6,11 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (October 2026): **612 test cases in 23 suites**.
+touches your desktop. Status (October 2026): **616 test cases in 23 suites**.
+
+Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
+app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
+results as JSON so that one revision can be compared with another.
 
 ## Quick start
 
@@ -211,9 +215,25 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `output_formats` | a query ending in `@csv` or `@tsv`: the CSV/TSV note, the Text view, Copy to Clipboard and Save... write rows, not JSON | [18](docs/18_output_formats.md) |
 | `tutorial_pages` | the eight tutorial pages for those functions: every example run, the buttons, the cheat sheet | [19](docs/19_tutorial_pages.md) |
 | `workflows` | whole journeys: a file chosen in the dialog, a lesson, a query, rows or JSON saved to disk | [20](docs/20_workflows.md) |
-| `settings` | the ⚙ Settings window (the nine limits on the size of files) and what the app keeps for the next start: the theme, 💡, the size of the window and of the panes | [21](docs/21_settings.md) |
+| `settings` | the ⚙ Settings window (the limit on keeping a file on disk, the other eight under Advanced, the explanations as tooltips) and what the app keeps for the next start: the theme, 💡, the size of the window and of the panes | [21](docs/21_settings.md) |
 
 [11_error_and_edge_cases.md](docs/11_error_and_edge_cases.md) cross-references every error string in the app.
+
+## Performance tests
+
+[performance/](performance/README.md) is a separate suite, with its own tooling (`performance/perf.py`, standard-library
+Python, and a harness in Rust that is built against the revision of the app under test). Where the Robot suite asks
+whether the app works, this asks how fast and how heavy: opening, the rows of the tree, queries in all four languages,
+search, Copy and Save, autocomplete and the Tools window, on datasets from a few kilobytes to a gigabyte. A run is one JSON
+file in `performance/runs/` with the machine, the revision and every sample, and `perf.py compare` says what changed
+between two. [performance/PLAN.md](performance/PLAN.md) says what is measured and why, and
+[performance/FINDINGS.md](performance/FINDINGS.md) what the comparison of the app before and after files of 256 MiB or
+more were memory-mapped and indexed found.
+
+```sh
+python3 performance/perf.py run --rev before=<commit> --rev after=<commit> --profile standard --passes 3
+python3 performance/perf.py compare performance/runs/<before>.json performance/runs/<after>.json
+```
 
 ## Repository layout
 
@@ -232,6 +252,7 @@ resources/
   xdnd.py               an XDND source, for dropping files on the app
   fixtures/             sample JSON files
 scripts/robot_cases.py  prints the case tables for docs/ from the Robot files
+performance/            the performance tests: plan, harness, tooling, and the results kept as JSON (see its README)
 docs/                   test strategy, a document per area, the traceability matrix
 results/, .venv/        generated, and ignored by git
 ```

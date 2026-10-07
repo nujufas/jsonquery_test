@@ -1,0 +1,57 @@
+[
+  {
+    "what": "answers",
+    "scenario": "rows.*",
+    "kind": "strings",
+    "reason": "a row shows a string by its first kilobyte after the change (PREVIEW_BYTES); before, all of it"
+  },
+  {
+    "what": "answers",
+    "scenario": "tree.resolve_random",
+    "kind": "strings",
+    "reason": "the row text of a long string is cut at a kilobyte after the change; before, all of it"
+  },
+  {
+    "what": "failing",
+    "scenario": "query.jmespath.max_by",
+    "min_mib": 256,
+    "reason": "it needs the whole list in memory, which a file kept on disk cannot give: refused with a message that says so"
+  },
+  {
+    "what": "failing",
+    "scenario": "copy.document",
+    "min_mib": 256,
+    "reason": "a copy of more than 64 MiB of a file kept on disk is refused; Save… writes it"
+  },
+  {
+    "what": "failing",
+    "scenario": "query.jq.num_add",
+    "min_mib": 256,
+    "reason": "add needs the whole list in memory: refused (as an error in place of the answer) with what to do instead"
+  },
+  {
+    "what": "failing",
+    "scenario": "query.jq.num_map_add",
+    "min_mib": 256,
+    "reason": "what map(...) gathers is held to 1 GiB (an estimate of its memory): refused above that"
+  },
+  {
+    "what": "failing",
+    "scenario": "query.jq.obj_values_count",
+    "min_mib": 256,
+    "reason": "what [...] gathers is held to 1 GiB (an estimate of its memory): refused above that"
+  },
+  {
+    "what": "answers",
+    "scenario": "text.render_source",
+    "kind": "strings",
+    "min_mib": 256,
+    "reason": "the Text view of a file kept on disk cuts a string at 4 KiB and the text at 4 MiB; a parsed document shows every string whole"
+  },
+  {
+    "what": "failing",
+    "scenario": "query.jq.tree_all_skus",
+    "min_mib": 256,
+    "reason": "`..` with `// empty` needs the whole document as one value, which a file kept on disk cannot give: refused, with a message that says so"
+  }
+]

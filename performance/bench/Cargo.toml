@@ -1,0 +1,21 @@
+# The benchmark harness. It is not built here: `perf.py build` copies this folder into
+# `crates/perf-bench` of an export of the app at the revision under test, adds it to that
+# workspace and builds it there, so the harness links against that revision's own
+# `jsonquery-core` and `jsonquery-query`, with its Cargo.lock and its release profile.
+# (The path dependencies below only resolve there.)
+
+[package]
+name = "jq-perf-bench"
+version = "1.0.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "jq-perf"
+path = "src/main.rs"
+
+[dependencies]
+jsonquery-core = { path = "../core" }
+jsonquery-query = { path = "../query" }
+# The same features the app asks for, so that a Value here is the Value there.
+serde_json = { version = "1", features = ["arbitrary_precision", "preserve_order"] }

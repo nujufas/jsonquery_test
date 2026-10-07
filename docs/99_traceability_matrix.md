@@ -16,6 +16,22 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-07: 23 suites, 616 test cases** — the Settings window was made small: one limit
+shown (from what size a file is kept on disk), the other eight under an Advanced header that opens inside the
+window (which grows to hold them), the explanations as tooltips. `suites/settings/` was recalibrated for it
+(TC-SET-001 to 012) and gained TC-SET-013 to 016 (Advanced shut at first and the window following it; a
+tooltip read by OCR; the count of limits changed under Advanced; a window opened with many complaints in it).
+The last run of the suite (23 cases, the debug build): **23 of 23 passed**, as did the unit tests of the
+app (372), clippy and fmt. The first run of the recalibrated suite had passed 13 of 22, for two reasons found
+in the saved screenshots, both of the cases and not of the app: fluxbox opens a window at the pointer, here the
+corner of the screen, so a window that had grown had its lower rows off the display (the suite now moves the
+window clear of the corner); and a box 78 px wide left too little room for OCR to read a value with the
+outline a hovered box has (the box is 90 px again, and the suite takes the pointer off it after typing).
+Nine one-place mutants of the new behaviour were each killed by the case meant for it (table in
+[21_settings.md](21_settings.md)); one of them, a window that does not grow for the complaints it opens with,
+survived TC-SET-011 (two complaints are too few to hide the header) and is why TC-SET-016 exists. The rest
+of the suites were not run again: none of them opens the Settings window.
+
 **Status as of 2026-10-06, late: 23 suites, 612 test cases** — the 593 below plus the 19 of the new
 suite `settings` (the ⚙ Settings window and what the app keeps between runs, in
 [21_settings.md](21_settings.md)); each case starts the app with a settings folder of its own, so none
@@ -856,6 +872,10 @@ engine edge) are covered by `cargo test`.
 | TC-SET-010 | The Limit On Keeping A File On Disk Decides How A File Opens | P1 | **Passing** | `suites/settings/` |
 | TC-SET-011 | A Settings File With Something Wrong In It Does Not Stop The App | P1 | **Passing** | `suites/settings/` |
 | TC-SET-012 | A File That Is Not JSON Does Not Stop The App Either | P2 | **Passing** (the warning is read by its colour, not its words — see the note in the doc) | `suites/settings/` |
+| TC-SET-013 | Advanced Is Closed At First And The Window Follows It | P1 | **Passing** | `suites/settings/` |
+| TC-SET-014 | Hovering The Name Of A Limit Says What It Is For | P1 | **Passing** | `suites/settings/` |
+| TC-SET-015 | Advanced Says How Many Of Its Limits Are Not The Default | P1 | **Passing** | `suites/settings/` |
+| TC-SET-016 | A Window Opened With Many Complaints Is Tall Enough For Them | P2 | **Passing** | `suites/settings/` |
 | TC-SET-020 | The Theme Is Kept For The Next Start | P1 | **Passing** | `suites/settings/` |
 | TC-SET-021 | The Theme Is Kept Though The App Ends At Once | P2 | **Passing** | `suites/settings/` |
 | TC-SET-022 | Autocomplete On Is Kept For The Next Start | P2 | **Passing** | `suites/settings/` |

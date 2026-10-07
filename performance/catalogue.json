@@ -1,0 +1,1529 @@
+{
+ "schema": "jsonquery-perf/1",
+ "kind": "catalogue",
+ "harness_version": 1,
+ "generator_version": "1",
+ "scenarios": [
+  {
+   "id": "copy.document",
+   "group": "output",
+   "title": "\"Copy to Clipboard\" of the whole document",
+   "kinds": [
+    "records",
+    "wide",
+    "strings",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": 400,
+   "needs_lazy": false
+  },
+  {
+   "id": "copy.row",
+   "group": "output",
+   "title": "\"Copy to Clipboard\" of one element from the middle of the root list",
+   "kinds": [
+    "records",
+    "ndjson",
+    "numbers",
+    "strings"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "load.open",
+   "group": "load",
+   "title": "Open a file: read and parse it; from 256 MiB, where the revision has it, map and index it",
+   "kinds": [
+    "records",
+    "wide",
+    "ndjson",
+    "strings",
+    "numbers",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "load.open_cold",
+   "group": "load",
+   "title": "Open a file whose pages are not in the page cache, so that it is read from the disk",
+   "kinds": [
+    "records",
+    "wide",
+    "ndjson",
+    "strings",
+    "numbers",
+    "nested"
+   ],
+   "min_mib": 100,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "load.open_text",
+   "group": "load",
+   "title": "Parse JSON that is already in memory (pasted text): the same parser, no file",
+   "kinds": [
+    "records",
+    "wide",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": 100,
+   "needs_lazy": false
+  },
+  {
+   "id": "load.open_tiny",
+   "group": "load",
+   "title": "Open a tiny file a thousand times: what opening costs besides the bytes",
+   "kinds": [
+    "tiny"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "load.release",
+   "group": "load",
+   "title": "Let go of an open document (the one that is replaced when another file is opened)",
+   "kinds": [
+    "records",
+    "wide",
+    "ndjson",
+    "strings",
+    "numbers",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": 400,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.cancel_latency",
+   "group": "query",
+   "title": "Cancel a query that reads the whole list after 50 ms: how long until it stops",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 16,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jmespath.deep",
+   "group": "query",
+   "title": "JMESPath: a deep path into a catalog",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jmespath.filter_count",
+   "group": "query",
+   "title": "JMESPath: filter the whole list and count",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jmespath.index_field",
+   "group": "query",
+   "title": "JMESPath: a field of a record in the middle",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jmespath.length",
+   "group": "query",
+   "title": "JMESPath: how many elements",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jmespath.max_by",
+   "group": "query",
+   "title": "JMESPath: the record with the highest value of a field (needs the whole list)",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jmespath.project",
+   "group": "query",
+   "title": "JMESPath: a field of every record, and how many",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.first_early",
+   "group": "query",
+   "title": "jq: first(...) that is found almost at once",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.first_keys",
+   "group": "query",
+   "title": "jq: the keys of the first record",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.first_mid",
+   "group": "query",
+   "title": "jq: first(...) that is found in the middle",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.group_by_count",
+   "group": "query",
+   "title": "jq: group_by a field and count the groups",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.index_last",
+   "group": "query",
+   "title": "jq: the last element",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.index_mid",
+   "group": "query",
+   "title": "jq: one element from the middle of the list",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.length",
+   "group": "query",
+   "title": "jq: how many elements",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.limit_active",
+   "group": "query",
+   "title": "jq: limit(100; ...) over a filter",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.map_len",
+   "group": "query",
+   "title": "jq: map a field over every record",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.min_by",
+   "group": "query",
+   "title": "jq: the record with the lowest value of a field",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.num_add",
+   "group": "query",
+   "title": "jq: add up a list of numbers",
+   "kinds": [
+    "numbers"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.num_index_mid",
+   "group": "query",
+   "title": "jq: a number from the middle",
+   "kinds": [
+    "numbers"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.num_length",
+   "group": "query",
+   "title": "jq: how many numbers",
+   "kinds": [
+    "numbers"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.num_map_add",
+   "group": "query",
+   "title": "jq: double every number and add them up",
+   "kinds": [
+    "numbers"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.num_max",
+   "group": "query",
+   "title": "jq: the largest of a list of numbers",
+   "kinds": [
+    "numbers"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.obj_key_mid",
+   "group": "query",
+   "title": "jq: one member of a huge object by its key",
+   "kinds": [
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.obj_keys_len",
+   "group": "query",
+   "title": "jq: how many keys a huge object has",
+   "kinds": [
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.obj_values_count",
+   "group": "query",
+   "title": "jq: gather every member of a huge object",
+   "kinds": [
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.object_compose",
+   "group": "query",
+   "title": "jq: an object made of a few parts of the list",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.recursive_find",
+   "group": "query",
+   "title": "jq: first(..) over the whole document for a string",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.regex_count",
+   "group": "query",
+   "title": "jq: a regular expression over a field of every record",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.select_count",
+   "group": "query",
+   "title": "jq: count the records that pass a filter",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.select_one",
+   "group": "query",
+   "title": "jq: filter the whole list for one record and take a field",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.slice_head",
+   "group": "query",
+   "title": "jq: the first hundred elements",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.sort_by_head",
+   "group": "query",
+   "title": "jq: sort_by a field and take the first three",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.str_length_one",
+   "group": "query",
+   "title": "jq: the length of one long string",
+   "kinds": [
+    "strings"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.str_lengths_sum",
+   "group": "query",
+   "title": "jq: the length of every long string, added up",
+   "kinds": [
+    "strings"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.str_select_needle",
+   "group": "query",
+   "title": "jq: the strings that contain a text",
+   "kinds": [
+    "strings"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.str_slice",
+   "group": "query",
+   "title": "jq: the start of one long string",
+   "kinds": [
+    "strings"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.stream_names",
+   "group": "query",
+   "title": "jq: a stream of one field of every record (the panel keeps the first 50,000)",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.sum",
+   "group": "query",
+   "title": "jq: add up a field of every record",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.tree_all_skus",
+   "group": "query",
+   "title": "jq: every sku, found by recursive descent",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.tree_path",
+   "group": "query",
+   "title": "jq: a path of constant steps into a catalog",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.tree_prices_over",
+   "group": "query",
+   "title": "jq: count the products over a price",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jq.unique_count",
+   "group": "query",
+   "title": "jq: the distinct values of a field",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jsonpath.deep",
+   "group": "query",
+   "title": "JSONPath: the titles of the products of one category",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jsonpath.descendants",
+   "group": "query",
+   "title": "JSONPath: every sku, found by recursive descent",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jsonpath.filter",
+   "group": "query",
+   "title": "JSONPath: a filter over the whole list",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jsonpath.index_field",
+   "group": "query",
+   "title": "JSONPath: a field of a record in the middle",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.jsonpath.wildcard",
+   "group": "query",
+   "title": "JSONPath: a field of every record",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.pointer.deep",
+   "group": "query",
+   "title": "Pointer: a deep path into a catalog",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.pointer.member",
+   "group": "query",
+   "title": "Pointer: a member of a huge object",
+   "kinds": [
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "query.pointer.record",
+   "group": "query",
+   "title": "Pointer: a field of a record in the middle",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "rows.deep_expand",
+   "group": "rows",
+   "title": "The rows with a branch opened down to a product's variants (a few clicks into a catalog)",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "rows.initial",
+   "group": "rows",
+   "title": "The rows of the tree for a document that has just been opened (its root open)",
+   "kinds": [
+    "records",
+    "wide",
+    "ndjson",
+    "strings",
+    "numbers",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "rows.reveal_middle",
+   "group": "rows",
+   "title": "The rows after \"Find in Source\" reveals an element in the middle of the root list",
+   "kinds": [
+    "records",
+    "ndjson",
+    "numbers",
+    "strings"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "save.document",
+   "group": "output",
+   "title": "\"Save…\" of the whole document, pretty-printed, to a file",
+   "kinds": [
+    "records",
+    "ndjson",
+    "wide",
+    "strings",
+    "numbers",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": 1100,
+   "needs_lazy": false
+  },
+  {
+   "id": "save.results",
+   "group": "output",
+   "title": "\"Save…\" of results: the first 50,000 records of a query, pretty-printed (the same code in every revision)",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "save.row",
+   "group": "output",
+   "title": "\"Save…\" of one element from the middle of the root list",
+   "kinds": [
+    "records",
+    "ndjson",
+    "numbers",
+    "strings"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "search.key_common",
+   "group": "search",
+   "title": "Search for a key that every record has (the search stops at its 5,000th hit)",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "search.key_once",
+   "group": "search",
+   "title": "Search for a key that is in a huge object once, in the middle of it",
+   "kinds": [
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "search.locate_equal",
+   "group": "search",
+   "title": "\"Find in Source\" for a result that is a whole record from the middle: every node that equals it",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": 1100,
+   "needs_lazy": false
+  },
+  {
+   "id": "search.regex_absent",
+   "group": "search",
+   "title": "Search with a regular expression that matches nothing, so that all of it is looked at",
+   "kinds": [
+    "records",
+    "ndjson",
+    "strings",
+    "nested",
+    "wide",
+    "numbers"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "search.regex_once",
+   "group": "search",
+   "title": "Search with a regular expression that matches one text, in the middle of the document",
+   "kinds": [
+    "records",
+    "ndjson",
+    "strings",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "search.value_absent",
+   "group": "search",
+   "title": "Search for a text that is not in the document, so that all of it is looked at",
+   "kinds": [
+    "records",
+    "ndjson",
+    "strings",
+    "nested",
+    "wide",
+    "numbers"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "search.value_once",
+   "group": "search",
+   "title": "Search for a text that is in the document once, in the middle of it",
+   "kinds": [
+    "records",
+    "ndjson",
+    "strings",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "suggest.field_of_all",
+   "group": "suggest",
+   "title": "Complete a field name after `.[].` (what the elements of the list have)",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "suggest.field_of_element",
+   "group": "suggest",
+   "title": "Complete a field name after `.[0].`",
+   "kinds": [
+    "records",
+    "ndjson"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "suggest.nested_path",
+   "group": "suggest",
+   "title": "Complete a name deep in a catalog after `.catalog.categories[0].prod`",
+   "kinds": [
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "suggest.object_keys",
+   "group": "suggest",
+   "title": "Complete the key of a huge object after `.key_0`",
+   "kinds": [
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "text.render_source",
+   "group": "output",
+   "title": "The Text view of the document: the first 20,000 nodes as indented text",
+   "kinds": [
+    "records",
+    "ndjson",
+    "wide",
+    "strings",
+    "numbers",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "tools.diff",
+   "group": "tools",
+   "title": "Diff: two documents that differ in a few places, compared and laid out side by side",
+   "kinds": [
+    "records",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": 16,
+   "needs_lazy": false
+  },
+  {
+   "id": "tools.format_parsed",
+   "group": "tools",
+   "title": "Format: lay a parsed document out as text (two spaces, keys as they are)",
+   "kinds": [
+    "records",
+    "ndjson",
+    "wide",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": 128,
+   "needs_lazy": false
+  },
+  {
+   "id": "tools.format_sorted",
+   "group": "tools",
+   "title": "Format: the same, with every object's keys put in order",
+   "kinds": [
+    "records",
+    "nested"
+   ],
+   "min_mib": 0,
+   "max_mib": 64,
+   "needs_lazy": false
+  },
+  {
+   "id": "tools.format_stream",
+   "group": "tools",
+   "title": "Format of a document kept on disk: laid out from the file and written a piece at a time",
+   "kinds": [
+    "records",
+    "ndjson",
+    "wide",
+    "strings",
+    "numbers",
+    "nested"
+   ],
+   "min_mib": 256,
+   "max_mib": null,
+   "needs_lazy": true
+  },
+  {
+   "id": "tools.merge",
+   "group": "tools",
+   "title": "Merge: append two copies of a document with jq's add, and render the preview",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": 64,
+   "needs_lazy": false
+  },
+  {
+   "id": "tools.patch",
+   "group": "tools",
+   "title": "Patch: apply fifty replace operations (RFC 6902) to a document",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": 64,
+   "needs_lazy": false
+  },
+  {
+   "id": "tools.validate",
+   "group": "tools",
+   "title": "Validate: check every record of a list against a JSON Schema",
+   "kinds": [
+    "records"
+   ],
+   "min_mib": 0,
+   "max_mib": 64,
+   "needs_lazy": false
+  },
+  {
+   "id": "tree.iterate_children",
+   "group": "tree",
+   "title": "Walk every child of the root, counting them by kind",
+   "kinds": [
+    "records",
+    "ndjson",
+    "numbers",
+    "strings",
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "tree.resolve_by_key",
+   "group": "tree",
+   "title": "Find the member of a huge object by its key (a few keys picked at random)",
+   "kinds": [
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "tree.resolve_random",
+   "group": "tree",
+   "title": "Find the node at a path (an element of the root list, and its name): many places picked at random",
+   "kinds": [
+    "records",
+    "ndjson",
+    "numbers",
+    "strings"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  },
+  {
+   "id": "workflow.open_browse_query",
+   "group": "workflow",
+   "title": "Open a file, make the first rows of its tree and ask two first queries: what a person waits for",
+   "kinds": [
+    "records",
+    "ndjson",
+    "wide"
+   ],
+   "min_mib": 0,
+   "max_mib": null,
+   "needs_lazy": false
+  }
+ ],
+ "datasets": [
+  {
+   "id": "tiny",
+   "kind": "tiny",
+   "target_bytes": 0,
+   "parsed_factor": 1,
+   "description": "a document of a few dozen bytes"
+  },
+  {
+   "id": "rec-1m",
+   "kind": "records",
+   "target_bytes": 1048576,
+   "parsed_factor": 22,
+   "description": "1 MiB of records"
+  },
+  {
+   "id": "nd-1m",
+   "kind": "ndjson",
+   "target_bytes": 1048576,
+   "parsed_factor": 22,
+   "description": "1 MiB of records, one to a line"
+  },
+  {
+   "id": "obj-1m",
+   "kind": "wide",
+   "target_bytes": 1048576,
+   "parsed_factor": 14,
+   "description": "one object, 1 MiB of members"
+  },
+  {
+   "id": "str-2m",
+   "kind": "strings",
+   "target_bytes": 2097152,
+   "parsed_factor": 1.2,
+   "description": "a list of long strings, 2 MiB"
+  },
+  {
+   "id": "num-1m",
+   "kind": "numbers",
+   "target_bytes": 1048576,
+   "parsed_factor": 15,
+   "description": "1 MiB of numbers"
+  },
+  {
+   "id": "tree-1m",
+   "kind": "nested",
+   "target_bytes": 1048576,
+   "parsed_factor": 15.5,
+   "description": "a catalog, 1 MiB"
+  },
+  {
+   "id": "rec-2m",
+   "kind": "records",
+   "target_bytes": 2097152,
+   "parsed_factor": 22,
+   "description": "2 MiB of records"
+  },
+  {
+   "id": "rec-4m",
+   "kind": "records",
+   "target_bytes": 4194304,
+   "parsed_factor": 22,
+   "description": "4 MiB of records"
+  },
+  {
+   "id": "rec-8m",
+   "kind": "records",
+   "target_bytes": 8388608,
+   "parsed_factor": 22,
+   "description": "8 MiB of records"
+  },
+  {
+   "id": "rec-16m",
+   "kind": "records",
+   "target_bytes": 16777216,
+   "parsed_factor": 22,
+   "description": "16 MiB of records"
+  },
+  {
+   "id": "nd-16m",
+   "kind": "ndjson",
+   "target_bytes": 16777216,
+   "parsed_factor": 22,
+   "description": "16 MiB of records, one to a line"
+  },
+  {
+   "id": "obj-16m",
+   "kind": "wide",
+   "target_bytes": 16777216,
+   "parsed_factor": 14,
+   "description": "one object, 16 MiB of members"
+  },
+  {
+   "id": "tree-16m",
+   "kind": "nested",
+   "target_bytes": 16777216,
+   "parsed_factor": 15.5,
+   "description": "a catalog, 16 MiB"
+  },
+  {
+   "id": "rec-100m",
+   "kind": "records",
+   "target_bytes": 104857600,
+   "parsed_factor": 22,
+   "description": "100 MiB of records: below the size from which the app keeps a file on disk"
+  },
+  {
+   "id": "tree-100m",
+   "kind": "nested",
+   "target_bytes": 104857600,
+   "parsed_factor": 15.5,
+   "description": "a catalog, 100 MiB"
+  },
+  {
+   "id": "tree-300m",
+   "kind": "nested",
+   "target_bytes": 314572800,
+   "parsed_factor": 15.5,
+   "description": "a catalog, 300 MiB: kept on disk, not parsed"
+  },
+  {
+   "id": "rec-300m",
+   "kind": "records",
+   "target_bytes": 314572800,
+   "parsed_factor": 22,
+   "description": "300 MiB of records: kept on disk, not parsed"
+  },
+  {
+   "id": "nd-300m",
+   "kind": "ndjson",
+   "target_bytes": 314572800,
+   "parsed_factor": 22,
+   "description": "300 MiB of records, one to a line"
+  },
+  {
+   "id": "obj-300m",
+   "kind": "wide",
+   "target_bytes": 314572800,
+   "parsed_factor": 14,
+   "description": "one object, 300 MiB of members"
+  },
+  {
+   "id": "str-300m",
+   "kind": "strings",
+   "target_bytes": 314572800,
+   "parsed_factor": 1.2,
+   "description": "a list of long strings, 300 MiB"
+  },
+  {
+   "id": "num-300m",
+   "kind": "numbers",
+   "target_bytes": 314572800,
+   "parsed_factor": 15,
+   "description": "300 MiB of numbers"
+  },
+  {
+   "id": "rec-1g",
+   "kind": "records",
+   "target_bytes": 1073741824,
+   "parsed_factor": 22,
+   "description": "1 GiB of records"
+  }
+ ],
+ "profiles": {
+  "smoke": [
+   [
+    "tiny",
+    "auto"
+   ],
+   [
+    "rec-1m",
+    "auto"
+   ],
+   [
+    "nd-1m",
+    "auto"
+   ],
+   [
+    "obj-1m",
+    "auto"
+   ],
+   [
+    "str-2m",
+    "auto"
+   ],
+   [
+    "num-1m",
+    "auto"
+   ],
+   [
+    "tree-1m",
+    "auto"
+   ]
+  ],
+  "quick": [
+   [
+    "tiny",
+    "auto"
+   ],
+   [
+    "rec-1m",
+    "auto"
+   ],
+   [
+    "nd-1m",
+    "auto"
+   ],
+   [
+    "obj-1m",
+    "auto"
+   ],
+   [
+    "str-2m",
+    "auto"
+   ],
+   [
+    "num-1m",
+    "auto"
+   ],
+   [
+    "tree-1m",
+    "auto"
+   ],
+   [
+    "rec-16m",
+    "auto"
+   ],
+   [
+    "nd-16m",
+    "auto"
+   ],
+   [
+    "obj-16m",
+    "auto"
+   ],
+   [
+    "tree-16m",
+    "auto"
+   ]
+  ],
+  "standard": [
+   [
+    "tiny",
+    "auto"
+   ],
+   [
+    "rec-1m",
+    "auto"
+   ],
+   [
+    "nd-1m",
+    "auto"
+   ],
+   [
+    "obj-1m",
+    "auto"
+   ],
+   [
+    "str-2m",
+    "auto"
+   ],
+   [
+    "num-1m",
+    "auto"
+   ],
+   [
+    "tree-1m",
+    "auto"
+   ],
+   [
+    "rec-16m",
+    "auto"
+   ],
+   [
+    "nd-16m",
+    "auto"
+   ],
+   [
+    "obj-16m",
+    "auto"
+   ],
+   [
+    "tree-16m",
+    "auto"
+   ],
+   [
+    "rec-100m",
+    "auto"
+   ],
+   [
+    "tree-100m",
+    "auto"
+   ],
+   [
+    "rec-300m",
+    "auto"
+   ],
+   [
+    "nd-300m",
+    "auto"
+   ],
+   [
+    "obj-300m",
+    "auto"
+   ],
+   [
+    "str-300m",
+    "auto"
+   ],
+   [
+    "num-300m",
+    "auto"
+   ],
+   [
+    "tree-300m",
+    "auto"
+   ]
+  ],
+  "full": [
+   [
+    "tiny",
+    "auto"
+   ],
+   [
+    "rec-1m",
+    "auto"
+   ],
+   [
+    "nd-1m",
+    "auto"
+   ],
+   [
+    "obj-1m",
+    "auto"
+   ],
+   [
+    "str-2m",
+    "auto"
+   ],
+   [
+    "num-1m",
+    "auto"
+   ],
+   [
+    "tree-1m",
+    "auto"
+   ],
+   [
+    "rec-16m",
+    "auto"
+   ],
+   [
+    "nd-16m",
+    "auto"
+   ],
+   [
+    "obj-16m",
+    "auto"
+   ],
+   [
+    "tree-16m",
+    "auto"
+   ],
+   [
+    "rec-100m",
+    "auto"
+   ],
+   [
+    "tree-100m",
+    "auto"
+   ],
+   [
+    "rec-300m",
+    "auto"
+   ],
+   [
+    "nd-300m",
+    "auto"
+   ],
+   [
+    "obj-300m",
+    "auto"
+   ],
+   [
+    "str-300m",
+    "auto"
+   ],
+   [
+    "num-300m",
+    "auto"
+   ],
+   [
+    "tree-300m",
+    "auto"
+   ],
+   [
+    "rec-1g",
+    "auto"
+   ]
+  ],
+  "threshold": [
+   [
+    "rec-1m",
+    "parsed"
+   ],
+   [
+    "rec-1m",
+    "lazy"
+   ],
+   [
+    "rec-16m",
+    "parsed"
+   ],
+   [
+    "rec-16m",
+    "lazy"
+   ],
+   [
+    "rec-100m",
+    "parsed"
+   ],
+   [
+    "rec-100m",
+    "lazy"
+   ],
+   [
+    "obj-16m",
+    "parsed"
+   ],
+   [
+    "obj-16m",
+    "lazy"
+   ],
+   [
+    "tree-16m",
+    "parsed"
+   ],
+   [
+    "tree-16m",
+    "lazy"
+   ]
+  ],
+  "crossover": [
+   [
+    "rec-1m",
+    "parsed"
+   ],
+   [
+    "rec-1m",
+    "lazy"
+   ],
+   [
+    "rec-2m",
+    "parsed"
+   ],
+   [
+    "rec-2m",
+    "lazy"
+   ],
+   [
+    "rec-4m",
+    "parsed"
+   ],
+   [
+    "rec-4m",
+    "lazy"
+   ],
+   [
+    "rec-8m",
+    "parsed"
+   ],
+   [
+    "rec-8m",
+    "lazy"
+   ],
+   [
+    "rec-16m",
+    "parsed"
+   ],
+   [
+    "rec-16m",
+    "lazy"
+   ]
+  ]
+ }
+}

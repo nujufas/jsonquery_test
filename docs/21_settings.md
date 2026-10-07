@@ -2,17 +2,20 @@
 
 The app keeps one small file of settings, `settings.json` in the folder `.jsonquery` of the
 person's home (`%USERPROFILE%\.jsonquery` on Windows), and a window to change part of it: the ⚙ at the
-right end of the status bar opens "jsonquery — Settings", with the nine limits on the size of files
-(each with its default), Reset for one of them, Restore defaults for all, and at the foot the file
-they are kept in. Beside the limits, the app remembers how it was left: the theme, whether
+right end of the status bar opens "jsonquery — Settings", a small window (430 × 190) with the one limit on
+the size of files that is shown, from what size a file is kept on disk, an **Advanced** header inside the
+window which, clicked, shows the other eight (the window grows to 372 high for them and goes back when it is
+shut), Reset for a limit, Restore defaults for all nine, and at the foot the file they are kept in. The
+window explains nothing in writing: what a limit is for, and what it is by default, is a tooltip over its
+name. Beside the limits, the app remembers how it was left: the theme, whether
 autocomplete (💡) is on, the size of the window and whether it was maximized, and the size of the
 panes. What the file may hold, and why only what differs from the defaults is written, is in the
 app's `docs/settings.md`.
 
-These cases check what a person can see and what the file says: the window and its rows, a limit
-typed (a size such as `512 MB`, or what is no size), what is kept for the next start, what the
-limit on keeping a file on disk does to a file that is opened, and a file that has something wrong
-in it. Words are read by OCR; the file is read as it is (`Settings Value`, `Settings Value Should
+These cases check what a person can see and what the file says: the window and its rows, Advanced and
+the height of the window, a tooltip, a limit typed (a size such as `512 MB`, or what is no size), what is
+kept for the next start, what the limit on keeping a file on disk does to a file that is opened, and a
+file that has something wrong in it. Words are read by OCR; the file is read as it is (`Settings Value`, `Settings Value Should
 Be`), because it is what the app promises and OCR can not be trusted with a long path in small type.
 
 ## How the cases are isolated
@@ -42,6 +45,10 @@ written as the app ends is part of what is promised (TC-SET-021).
 | TC-SET-010 | The Limit On Keeping A File On Disk Decides How A File Opens | P1 |
 | TC-SET-011 | A Settings File With Something Wrong In It Does Not Stop The App | P1 |
 | TC-SET-012 | A File That Is Not JSON Does Not Stop The App Either | P2 |
+| TC-SET-013 | Advanced Is Closed At First And The Window Follows It | P1 |
+| TC-SET-014 | Hovering The Name Of A Limit Says What It Is For | P1 |
+| TC-SET-015 | Advanced Says How Many Of Its Limits Are Not The Default | P1 |
+| TC-SET-016 | A Window Opened With Many Complaints Is Tall Enough For Them | P2 |
 | TC-SET-020 | The Theme Is Kept For The Next Start | P1 |
 | TC-SET-021 | The Theme Is Kept Though The App Ends At Once | P2 |
 | TC-SET-022 | Autocomplete On Is Kept For The Next Start | P2 |
@@ -50,10 +57,12 @@ written as the app ends is part of what is promised (TC-SET-021).
 | TC-SET-025 | The Size Of The Panes Is Kept | P2 |
 | TC-SET-026 | The Panes Are As They Were Left | P2 |
 
-(TC-SET-013 to 019 are left free for more cases about the file and the limits.)
+(TC-SET-017 to 019 are left free for more cases about the file and the limits.)
 
 ## Mutation checks
 
+**This first table is of before the window was made small** (one limit, Advanced, tooltips): the cases
+were recalibrated afterwards, and the second table, below it, is what was run against the new window.
 Each case was run against builds of the app with one thing broken (a one-place source change); a
 case that cannot fail checks nothing. All 16 mutants below were killed, each at the intended
 assertion (the failure message is the difference the mutant makes: a value missing from the file,
@@ -78,7 +87,30 @@ assertion (the failure message is the difference the mutant makes: a value missi
 | M16 | the sizes of the panes are never written | TC-SET-025, 026 |
 | M17 | the usual sizes of the panes are written as well | TC-SET-025 |
 
-(M10 was never made. The ids are the ones of the mutation script, not a count.) What they found in the
+### The small window (2026-10-07)
+
+Nine more mutants, each applied alone or with others whose cases are not the same, and each run against
+only the cases meant for it. All nine were killed, each at the intended assertion.
+
+| Mutant | What is broken | Killed by (and how) |
+|---|---|---|
+| M18 | Advanced never opens | TC-SET-013, 002: the window stays 190 high |
+| M19 | the window never grows for what does not fit | TC-SET-013: the window stays 190 high |
+| M20 | the window does not go back when Advanced is shut | TC-SET-013: "The window is 372 high" |
+| M21 | Advanced stays open when the window is opened again | TC-SET-013: it opens 372 high |
+| M22 | there are no tooltips | TC-SET-014: no "indexed once" under the row |
+| M23 | Advanced never says how many of its limits are changed | TC-SET-011, 015: "Advanced" for "1 changed" and "2 changed" |
+| M24 | Advanced counts the limit that is shown as well | TC-SET-015: "Advanced (3 changed)" for 2 |
+| M25 | the window does not grow for the complaints it opens with | TC-SET-016: the window stays 190 high |
+| M28 | Restore defaults puts back only the limit that is shown | TC-SET-007 (the Copy limit stays 8 MB), 015 |
+
+M25 survived TC-SET-011 at first: its file has two things wrong, and two complaints do not cover the
+Advanced header in a window 190 high, so the case could not tell a window that grew from one that did not.
+TC-SET-016 has four, and was run against the clean build (passes) and M25 (fails: "The window is 190
+high"). The unit tests of the app (`layout_tests.rs`) check the same behaviour without a display: the
+`InnerSize` the window asks for, and that it is not asked for twice, nor on a window that is tall enough.
+
+(M10 was never made. The ids are the ones of the mutation scripts, not a count.) What they found in the
 cases, not the app: M9 survived TC-SET-023 at first, because its check that the usual size was not
 written ran before a late write could have happened (the three cases that look for a file at all
 killed it); the case now waits as TC-SET-003 does, and TC-SET-025 likewise (M17). And M6 survived
@@ -87,6 +119,21 @@ TC-SET-026 was added.
 
 ## Notes
 
+- **The window is small, so a few things are done on purpose.** The window manager of the suite (fluxbox)
+  opens a window where the pointer is, which for the ⚙ is the corner of the screen, and does not move it
+  when it grows; a desktop keeps it where there is room. `Open Settings` therefore moves the window clear
+  of the corner (`Move Window`), or the rows under Advanced would be off the display and OCR would read
+  nothing there. A box under the pointer has a bright outline, which at this size OCR takes for part of
+  "512 MB"; `Type In Box` takes the pointer off it, and the box is 90 px wide, not 78, to leave room.
+- TC-SET-013 reads the height of the window (`Get Window Size`), not a picture of it: at most 230 shut,
+  more than 300 open, and shut again after a click or after the window is closed and opened. TC-SET-011 and
+  012 first `Wait For Window To Settle`: a window opened with complaints in it grows once, a moment after it
+  opens, to hold them, and the foot (where the complaints are) is read from the bottom of the window
+  (`Foot Region`), wherever that is.
+- TC-SET-014 is the only case that reads a tooltip: the pointer is put on the name of the limit and left
+  still for a second and a half (egui shows a tooltip only for a pointer that is still), and the words
+  "indexed once" and "Default: 256 MB" are read in the region under the row. Away from it, over nothing,
+  they are gone. It then changes the limit and reads what Reset's tooltip says it puts back.
 - TC-SET-003 is the promise that the app does not leave a file in the home of someone who never
   changed a thing: starting, and opening the Settings window, write nothing. TC-SET-004 and 006 show
   the other side — only what differs from the default is in the file, and a limit put back to its

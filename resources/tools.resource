@@ -99,8 +99,24 @@ ${PREVIOUS_X}          460
 ${NEXT_X}              487
 ${COPY_PATCH_X}        765
 @{DIFF_BODY}           8      54     884    495
-@{SBS_LEFT}            8      76     425    470
-@{SBS_RIGHT}           445    76     425    470
+# The two columns of the side-by-side view, with the gutter between them (22 wide: the
+# strip that marks a difference, and the arrows of each, one over the other) left out.
+@{SBS_LEFT}            8      76     416    470
+@{SBS_RIGHT}           454    76     414    470
+# The arrows of a difference, in the gutter: the one at the top, at the difference's first
+# line, points to the Left document (it takes what Right has there), the one under it, a
+# line lower, to Right. And the Save… over each column.
+${ARROW_X}             439
+${DIFF_LEFT_SAVE_X}    403
+${DIFF_RIGHT_SAVE_X}   845
+# Where a click is a click on the text of a line of the Left column, and of the Right.
+${LEFT_TEXT_X}         120
+${RIGHT_TEXT_X}        600
+# The buttons of the command row that move what is picked (or the difference Next went
+# to) into Left and into Right, and the line over the two columns' headers.
+${MOVE_LEFT_X}         529
+${MOVE_RIGHT_X}        557
+@{SBS_HEADER}          8      54     884    18
 ${ONLY_DIFFERENCES_X}  765
 # The first row of the side-by-side view and the pitch of its rows.
 ${SBS_FIRST_ROW_Y}     83
@@ -255,6 +271,38 @@ Diff Should Read
     [Arguments]    ${text}
     Wait Until Keyword Succeeds    8x    0.5s
     ...    Region Should Contain Text    @{DIFF_BODY}    ${text}
+
+Sbs Row Y
+    [Documentation]    The height of row `n` (0 is the first line) of the side-by-side view.
+    [Arguments]    ${n}
+    ${y}=    Evaluate    int(${SBS_FIRST_ROW_Y}) + int(${n}) * int(${SBS_ROW_PITCH})
+    RETURN    ${y}
+
+Click Arrow To Left
+    [Documentation]    Press the arrow that points to the Left document, of the difference whose
+    ...    first line is row `row` of the side-by-side view.
+    [Arguments]    ${row}
+    ${y}=    Sbs Row Y    ${row}
+    Click At    ${ARROW_X}    ${y}
+
+Click Arrow To Right
+    [Documentation]    The arrow that points to the Right document: under the other, a line lower.
+    [Arguments]    ${row}
+    ${y}=    Sbs Row Y    ${row}
+    ${y}=    Evaluate    ${y} + int(${SBS_ROW_PITCH})
+    Click At    ${ARROW_X}    ${y}
+
+Patch Should Replace
+    [Documentation]    Copy patch gives exactly these replacements, in this order: each is
+    ...    `path=value` (a JSON Pointer, and the new value as JSON). It is the exact
+    ...    way to read what is left to differ after a move.
+    [Arguments]    @{replacements}
+    ${expected}=    Evaluate    (lambda items: '[' + chr(10) + (',' + chr(10)).join(chr(32) * 2 + '{"op": "replace", "path": "%s", "value": %s}' % tuple(r.split('=', 1)) for r in items) + chr(10) + ']')($replacements)
+    Copy Should Give    ${COPY_PATCH_X}    ${COMMAND_Y}    ${expected}
+
+Patch Should Be Empty
+    [Documentation]    Nothing is left to differ: the patch is `[]`.
+    Copy Should Give    ${COPY_PATCH_X}    ${COMMAND_Y}    []
 
 Compare Documents
     [Documentation]    Pastes two documents into Diff's boxes (on its Documents

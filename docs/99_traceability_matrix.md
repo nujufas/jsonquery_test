@@ -16,6 +16,29 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-09 (night): 24 suites, 640 test cases** — a line of the Diff page's side-by-side view is typed over with a
+double click now (a single click only picks, so that several lines can be picked), and after a move the view stays where it
+was and picks nothing, as it does after a line was typed over: `suites/tools/tools_diff.robot`, TC-DIF-040 and 041 added,
+`Type Over Line` and the cases that put a caret in a line double-click ([13_tools_window.md](13_tools_window.md)). The Diff file
+passes (42 cases); four more faults put into the app one at a time (J1 to J4) were killed by the case meant for them, and
+eleven more by the window tests of the app.
+
+**Status as of 2026-10-09 (later still): 24 suites, 638 test cases** — either column of the Diff page's side-by-side view can be typed
+over (a click puts a caret in the line; Enter puts in what was typed, Esc puts the line back; what is not JSON is said and
+stays to be put right), and the two arrows of a difference are one over the other in a narrower gutter:
+`suites/tools/tools_diff.robot`, TC-DIF-033 to 039 added, the constants and the arrow cases of 026 to 032 moved to the new
+gutter, TC-DIF-021 reads a band of the left column ([13_tools_window.md](13_tools_window.md)). The Diff file passes (40 cases);
+ten faults put into the app one at a time (H1 to H10) and eight of the old ones were killed by the case meant for them, and
+twenty-five more by the unit and window tests of the app.
+
+**Status as of 2026-10-09 (later): 24 suites, 631 test cases** — the Diff page of the Tools window now compares by itself when
+the tab of a view is pressed, has two arrows between the columns at every difference, lets lines be picked so that only
+they are moved, and has a Save… over each column for the document that a move changed: `suites/tools/tools_diff.robot`,
+TC-DIF-024 to 032 added, TC-DIF-010 rewritten (a click picks a line now; its menu copies the path), TC-TWIN-007 reads
+the columns apart ([13_tools_window.md](13_tools_window.md)). The Diff file passes (33 cases); thirteen faults put into the
+app one at a time were each killed by the case meant for it (one needed its case changed first), and twenty more by the unit
+and window tests of the app.
+
 **Status as of 2026-10-09: 24 suites, 622 test cases** — a Merge whose result is as big as a file is
 kept on disk from is written to a temporary file that has no name and kept there (the app, not the
 website): `suites/tools/tools_merge_big.robot`, TC-MRG-040 to TC-MRG-045 ([13_tools_window.md](13_tools_window.md)).
@@ -553,7 +576,7 @@ the sign that the text landed.
 | TC-DIF-007 | Walking The Differences | P1 | **Passing** (`Difference 2` is matched, not `2 of 5`, which OCR reads as `1o0f2`) | `suites/tools/` |
 | TC-DIF-008 | The Keyboard Walks The Differences Too | P2 | **Passing** | `suites/tools/` |
 | TC-DIF-009 | Differences Only Folds What Is The Same | P1 | **Passing** | `suites/tools/` |
-| TC-DIF-010 | Clicking A Difference Copies Its Path | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-010 | The Menu Of A Line Copies The Path Of Its Difference | P1 | **Passing** | `suites/tools/` |
 | TC-DIF-011 | Copy Patch Gives The Whole Patch | P1 | **Passing** | `suites/tools/` |
 | TC-DIF-012 | Copy Patch Works From Every View | P2 | **Passing** | `suites/tools/` |
 | TC-DIF-013 | Copy Patch Is Dim Until There Is A Patch | P2 | **Passing** | `suites/tools/` |
@@ -567,6 +590,24 @@ the sign that the text landed.
 | TC-DIF-021 | The Open Document Can Be One Of The Two | P1 | **Passing** | `suites/tools/` |
 | TC-DIF-022 | Clear Empties A Box | P2 | **Passing** | `suites/tools/` |
 | TC-DIF-023 | Ctrl+Enter Compares | P2 | **Passing** | `suites/tools/` |
+| TC-DIF-024 | A View Compares The Documents When It Is Asked For, Without Compare | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-025 | A View Has Nothing To Compare Until Both Documents Are There | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-026 | The Arrows In The Gutter Move A Difference Into The Document They Point At | P0 | **Passing** (what is left is read from Copy patch) | `suites/tools/` |
+| TC-DIF-027 | A Line That Is Picked Is Moved By Itself, And The Rest Of Its Difference Stays | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-028 | With Nothing Picked The Arrow Moves The Whole Difference | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-029 | Ctrl Adds A Line To Those Picked And Takes It Away, And Shift Picks A Run | P1 | **Passing** (the count is read loosely: OCR drops the spaces of text that small) | `suites/tools/` |
+| TC-DIF-030 | A Drag Over Lines Picks Them, And Escape Lets Them Go | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-031 | The Menu Of A Line Moves The Lines That Are Picked, In Every Difference | P2 | **Passing** | `suites/tools/` |
+| TC-DIF-032 | A Document That A Move Changed Says So, And Each Save Writes Its Own Document | P0 | **Passing** (the label that says "(changed)" is grey text OCR cannot read: its length is measured) | `suites/tools/` |
+| TC-DIF-033 | A Double Click Puts A Caret In A Line, And Enter Puts What Was Typed In | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-034 | The Right Column Is Typed Over Too, And Escape Puts The Line Back | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-035 | What Is Not JSON Is Said And Stays To Be Put Right | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-036 | A Line Is Taken Out By Typing Nothing, And Several Are Put In By Typing Them | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-037 | The Name Of A Line That Opens An Object Is Changed And What Is In It Stays | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-038 | A Line That Closes Something Has No Caret, And A Line Cut Short Says So | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-039 | A Click Elsewhere Puts In What Was Typed, And An Arrow Is Not Held Up By A Caret | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-040 | A Single Click Only Picks, So That More Lines Can Be Picked After It | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-041 | After A Move The View Stays Where It Was And Picks Nothing | P0 | **Passing** | `suites/tools/` |
 | TC-TWIN-008 | Patch JSON Applies A Patch And Opens The Result | P1 | **Passing** | `suites/tools/` |
 | TC-TWIN-009 | A Patch That Fails Names The Operation | P2 | **Passing** | `suites/tools/` |
 | TC-PAT-001 | Operations Apply In Order | P1 | **Passing** | `suites/tools/` |

@@ -625,6 +625,17 @@ class AppLibrary:
         ax, ay = self._to_absolute(int(x), int(y))
         pyautogui.click(ax, ay, button=button)
 
+    @keyword("Click At While Holding")
+    def click_at_while_holding(self, x, y, key):
+        """Clicks at (x, y) with `key` (ctrl, shift…) held down, as a person
+        picks a second line with Ctrl or a run of them with Shift."""
+        ax, ay = self._to_absolute(int(x), int(y))
+        pyautogui.keyDown(key)
+        try:
+            pyautogui.click(ax, ay)
+        finally:
+            pyautogui.keyUp(key)
+
     @keyword("Double Click At")
     def double_click_at(self, x, y):
         ax, ay = self._to_absolute(int(x), int(y))

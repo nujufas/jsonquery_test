@@ -99,14 +99,24 @@ reported as `Input: parsing JSON: … at line L column C`.
 
 Four views, as tabs in the command row: **Documents** (Left and Right next
 to each other), **Side by side**, **Changes** and **Patch**. **Compare**
-(Ctrl+Enter) runs it and opens Side by side; **Swap** exchanges the documents
-and goes back to Documents. Side by side shows the two documents line by line,
+(Ctrl+Enter) runs it and opens Side by side; the tab of any of the three views
+runs it too when both boxes are filled and nothing has been compared (with a box
+empty it says "Put a document in both boxes to see what differs"); **Swap**
+exchanges the documents and goes back to Documents. Side by side shows the two
+documents line by line,
 read-only, left and right, with a line only one has blank on the other side and
 the colours red (removed), green (added) and amber (changed, with the differing
 characters picked out); both sides scroll together; **⏶** / **⏷** (Alt+Up /
 Alt+Down) walk the differences, the status bar says "Difference 2 of 5";
-**Differences only** folds the same lines into "… 23 lines are the same";
-clicking a difference copies its path. The Changes tab lists each addition,
+**Differences only** folds the same lines into "… 23 lines are the same".
+Between the two columns, at the first line of every difference, are **two
+arrows** (◀ moves it into the Left document, ▶ into the Right); a click on a line
+**picks** it ("1 line picked" in the status bar; Ctrl adds or takes away, Shift
+picks a run, a drag runs over lines, Esc lets go) and then the arrows, **⏴** / **⏵**
+(Alt+Left / Alt+Right) and the right-click menu's **Move to the left / right** move
+only the lines that are picked; the menu also has **Copy path**. Each column has a
+**Save…** for its document, which a move changes ("(changed)" after its name until
+it is saved). The Changes tab lists each addition,
 removal and change with its JSON Pointer and value(s) — "Changes (3)" on the
 tab, "1 added · 1 removed · 1 changed" in the status bar — and "The documents
 are the same" when they are. The Patch tab shows the RFC 6902 patch, one
@@ -297,7 +307,7 @@ not exist, and a merge that made a file there would end in an error. The unit te
 | TC-DIF-007 | Walking The Differences | P1 |
 | TC-DIF-008 | The Keyboard Walks The Differences Too | P2 |
 | TC-DIF-009 | Differences Only Folds What Is The Same | P1 |
-| TC-DIF-010 | Clicking A Difference Copies Its Path | P1 |
+| TC-DIF-010 | The Menu Of A Line Copies The Path Of Its Difference | P1 |
 | TC-DIF-011 | Copy Patch Gives The Whole Patch | P1 |
 | TC-DIF-012 | Copy Patch Works From Every View | P2 |
 | TC-DIF-013 | Copy Patch Is Dim Until There Is A Patch | P2 |
@@ -311,6 +321,121 @@ not exist, and a merge that made a file there would end in an error. The unit te
 | TC-DIF-021 | The Open Document Can Be One Of The Two | P1 |
 | TC-DIF-022 | Clear Empties A Box | P2 |
 | TC-DIF-023 | Ctrl+Enter Compares | P2 |
+| TC-DIF-024 | A View Compares The Documents When It Is Asked For, Without Compare | P0 |
+| TC-DIF-025 | A View Has Nothing To Compare Until Both Documents Are There | P1 |
+| TC-DIF-026 | The Arrows In The Gutter Move A Difference Into The Document They Point At | P0 |
+| TC-DIF-027 | A Line That Is Picked Is Moved By Itself, And The Rest Of Its Difference Stays | P0 |
+| TC-DIF-028 | With Nothing Picked The Arrow Moves The Whole Difference | P1 |
+| TC-DIF-029 | Ctrl Adds A Line To Those Picked And Takes It Away, And Shift Picks A Run | P1 |
+| TC-DIF-030 | A Drag Over Lines Picks Them, And Escape Lets Them Go | P1 |
+| TC-DIF-031 | The Menu Of A Line Moves The Lines That Are Picked, In Every Difference | P2 |
+| TC-DIF-032 | A Document That A Move Changed Says So, And Each Save Writes Its Own Document | P0 |
+| TC-DIF-033 | A Double Click Puts A Caret In A Line, And Enter Puts What Was Typed In | P0 |
+| TC-DIF-034 | The Right Column Is Typed Over Too, And Escape Puts The Line Back | P0 |
+| TC-DIF-035 | What Is Not JSON Is Said And Stays To Be Put Right | P0 |
+| TC-DIF-036 | A Line Is Taken Out By Typing Nothing, And Several Are Put In By Typing Them | P1 |
+| TC-DIF-037 | The Name Of A Line That Opens An Object Is Changed And What Is In It Stays | P1 |
+| TC-DIF-038 | A Line That Closes Something Has No Caret, And A Line Cut Short Says So | P1 |
+| TC-DIF-039 | A Click Elsewhere Puts In What Was Typed, And An Arrow Is Not Held Up By A Caret | P1 |
+| TC-DIF-040 | A Single Click Only Picks, So That More Lines Can Be Picked After It | P0 |
+| TC-DIF-041 | After A Move The View Stays Where It Was And Picks Nothing | P0 |
+
+#### Comparing by itself, the arrows, picking lines and Save… (TC-DIF-024 to 032)
+
+The cases are made of what the window does: the tab of a view is pressed with nothing compared (024, 025); the two
+arrows in the gutter of a difference are pressed, one over the other at x=439: the upper (it points to Left) at the height
+of the difference's first line (`Sbs Row Y n`: 83 + 17 n), the lower (to Right) a line below it (`Click Arrow To Left`,
+`Click Arrow To Right`; 026, 027, 028); a line is clicked, clicked with Ctrl or Shift held
+(`Click At While Holding`), dragged over (`Drag Mouse`) and Esc pressed (029, 030); the right-click menu of a line is
+used (010, 031); and the Save… over a column is pressed with the file dialog answered by the stand-in portal (032).
+What is left to differ after a move is read from **Copy patch**, which is exact (`Patch Should Replace`, `Patch Should
+Be Empty`). What OCR cannot read is measured instead: the grey label over a column ("orders.json (changed) · 4
+lines") is told from the plain one by how far right its ink reaches (`Left Label Right Edge`), and the status bar's
+"2 lines picked" is matched loosely (`Status Should Say Picked`: the spaces are dropped from text that small).
+A line that is picked has the selection colour over it (TC-DIF-027 checks the pixels).
+
+#### Typing over a line (TC-DIF-033 to 039)
+
+A double click on the text of a line, on either side, puts a caret in it (`Type Over Line`: double-click at
+x=120 for the left column or x=600 for the right one, Ctrl+A, then the text; `Press Enter`; the first click of the
+double click has picked the line, a single click alone only picks). The status bar says
+"Editing line 3 of Left…" (`Status Should Say`, a loose regular expression: Tesseract drops the spaces of text that
+small). What is checked is what the window ends in, and read exactly: what is left to differ from **Copy patch**
+(`Patch Should Be Empty`, `Patch Should Replace`), "same" in the status bar, the label that says "(changed)" (its length
+is measured, as in 032), and the file that Save… writes (033). The cases are: Enter puts in what was typed and the
+other document is as it was (033); the right column the same, and Esc puts the line back (034); `"b":` and nothing after
+the colon is no JSON — the status bar says so, the line keeps its caret and the documents are as they were, and typing the
+rest and Enter puts it in (035); nothing typed takes a line out, and two members with a comma between them take the
+place of one (036); the name of a line that opens an object is changed, what is in it stays (037); the closing bracket has
+no caret, and a line of 600 characters, which the view cuts short, says it is too long to edit (038); a click on another
+line takes what was typed and is not a click on that line, and a caret in which nothing was typed does not hold up the
+arrow of its difference (039). The cut-short line, the closing bracket and the order of the right document's members are
+also checked in the window tests of the app (`cargo test`), where the numbers can be exact.
+
+#### Picking with single clicks, and the view after a move (TC-DIF-040, 041)
+
+A single click picks a line and puts no caret in it (the status bar never says "Editing"), so that more lines can be picked
+after it: Ctrl+click adds one, and a click followed by a drag over two other lines picks those two in its place; the arrow
+then moves what is picked (040). After a move the view stays where it was and picks nothing (041): the document is an
+array of 120 numbers with a difference at the sixth line and another a hundred lines down; the arrow of the first moves it,
+and then no amber row is in view (the second difference is far below and has not been scrolled to; the amber of a changed
+row is looked for in the left column before and after), the status bar names no difference ("Difference 1 of" is not
+read), and Alt+Down goes to the one that is left ("Difference 1 of 1", and the amber is in view). That the text stays
+where it was scrolled to, down or sideways, and where the caret goes in text scrolled sideways, are in the window tests of
+the app, where the offsets can be exact.
+
+#### Mutation checks of the moving cases
+
+One fault put into the app at a time, in a build of its own, and the case meant for it run against that build (`cargo
+build -p jsonquery_gui`; the suite takes `JQ_TEST_BINARY`):
+
+| Mutant | What is broken | Killed by |
+|---|---|---|
+| D1 | the two arrows point the wrong way (the left one moves into Right) | TC-DIF-026 |
+| D2 | an arrow moves the whole difference though lines of it are picked | TC-DIF-027 |
+| D3 | the tab of a view does not compare | TC-DIF-024 |
+| D4 | a move does not mark the document changed | TC-DIF-032 |
+| D5 | Save… writes the other document | TC-DIF-032 |
+| D6 | Save… is offered in no folder (the portal is asked for none) | TC-DIF-032 |
+| D7 | a click picks nothing | TC-DIF-027 |
+| D8 | Ctrl does not add a line | TC-DIF-029 |
+| D9 | Shift does not pick a run | TC-DIF-029 |
+| D10 | a drag picks nothing | TC-DIF-030 |
+| D11 | Esc does not let go of the lines | TC-DIF-030 |
+| D12 | Copy path in the menu copies nothing | TC-DIF-010 |
+| D13 | the menu moves the lines picked in its own difference only | TC-DIF-031 |
+
+D13 survived at first: TC-DIF-031 picked two lines of one difference, which an arrow's rule and the menu's rule treat
+alike. It now picks a line in each of two differences. Twenty more faults of the same kind (and of the engine's way of
+taking a set of differences) were put into the code and run against the unit tests and the window tests of the app
+(`cargo test`); two of them survived at first (a plain click that added to the picked lines instead of replacing them,
+and the menu moving only the difference it was opened in) and each got a test.
+
+The editing cases were checked the same way, after the gutter was made narrow (the arrows one over the other, which
+changed what D1, D7 and the other mutants of the arrows had to break):
+
+| Mutant | What is broken | Killed by |
+|---|---|---|
+| H1 | a double click puts no caret in the line | TC-DIF-033 |
+| H2 | Enter does not put what was typed in | TC-DIF-033 |
+| H3 | Esc puts in what was typed | TC-DIF-034 |
+| H4 | the line typed over is put in the other document | TC-DIF-034 |
+| H5 | what is not JSON closes the caret and says nothing | TC-DIF-035 |
+| H6 | taking a line out is said to be a change | TC-DIF-036 |
+| H7 | the name of a line that opens an object cannot be changed | TC-DIF-037 |
+| H8 | a line that was cut short has a caret | TC-DIF-038 |
+| H9 | a caret in a line holds up every arrow | TC-DIF-039 |
+| H10 | the two arrows are in one row | TC-DIF-026 |
+| J1 | a single click puts a caret in the line (the old behaviour) | TC-DIF-040 |
+| J2 | after a move the view goes on to the next difference (steps to it) | TC-DIF-041 |
+| J3 | after a move the view scrolls to the next difference, without picking it | TC-DIF-041 |
+| J4 | after a move the next difference is picked, without scrolling to it | TC-DIF-041 |
+
+D1 to D5, D7, D8 and D13 were run again against the new gutter and are killed. Twenty-five faults put into the editing
+code (where a line is, what is typed, how it is put in, how the view keeps its place) were run against the unit tests and
+the window tests of the app; three survived at first — Esc going through the same path as Enter (an equivalent mutant: its
+answer was thrown away, so the code was made simpler), a line scrolled out of view that is let go of instead of put in, and a
+fault that kept the text from scrolling back (each got a test).
 
 ### Patch JSON — `tools_patch.robot`
 

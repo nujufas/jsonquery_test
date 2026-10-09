@@ -65,7 +65,11 @@ how the save went. Each file in the list also says what it was ("array · 3 item
 A filter with several outputs (`.[]`) gives them as one array; one with none, a
 runtime error (adding an array to an object), a syntax error or a file that is
 not valid JSON is reported in the Result box. The files may add up to
-128 MB (a merge happens in memory); more is refused with a message.
+128 MB (a merge happens in memory); more is refused with a message. A result as
+big as a file is kept on disk from (a setting; 256 MB unless it was changed) is not
+kept in memory either: it is printed to a temporary file that has no name, the
+document is that file, mapped and indexed, and the status bar adds "result of
+612 MB kept in a temporary file".
 
 Dropping **several files on the main window** (instead of one, which opens) opens
 the Tools window with them listed. Drag-and-drop does not work on native
@@ -213,6 +217,41 @@ on the Tools window. Results are read as words (`platypus`, `echidna`, `koala`,
 | TC-MRG-032 | Ctrl+Enter Merges | P2 |
 | TC-MRG-033 | The Merge Button Is Bright With Files | P2 |
 | TC-MRG-034 | Big Numbers Keep Their Digits | P2 |
+
+### Merge with a big result — `tools_merge_big.robot`
+
+A result as big as a file is kept on disk from (the limit of the Settings window; 1 KB is the
+least a limit can be, which these cases set in the app's `settings.json`, so that a few lines
+are "big") is not a value in memory: the worker prints it, as Save… does, to a temporary file
+that has no name, and the document is that file, memory-mapped and indexed. The app is started
+with that limit and with a `TMPDIR` of its own to look into (`Launch Jsonquery App
+settings=… temp_dir=…`). Two lists of 60 words (`Make Lists Of Words`: `platypus` or
+`echidna` first, then `wombat`) merge to 120 items and 1.4 KB when printed. That a file is
+really held is read from the app's memory map (`/proc/<pid>/maps`: a mapped file whose name
+ends `merged.json (deleted)`, `App Should Have Mapped A Deleted File`).
+
+| ID | Title | Priority |
+|---|---|---|
+| TC-MRG-040 | A Result As Big As Files Are Kept On Disk From Is Kept In A Temporary File | P1 |
+| TC-MRG-041 | A Result Under That Size Stays In Memory | P1 |
+| TC-MRG-042 | A Big Result Opens In The Main Window As A File | P1 |
+| TC-MRG-043 | A Big Result Is Saved Whole | P1 |
+| TC-MRG-044 | The Temporary File Has No Name | P1 |
+| TC-MRG-045 | The Size Is The One In The Settings | P1 |
+
+#### Mutation checks of the big-result cases
+
+One fault put into the app's merge at a time, in a build of its own (the suite is run against that build; the unit
+tests of `worker.rs` are run against it too):
+
+| Mutant | What is broken | Killed by |
+|---|---|---|
+| G1 | a big result is never written to a file (always a value in memory) | TC-MRG-040, 042, 044 (041, 043 and 045 need no file); unit: the tests of `worker.rs` for a result kept in a file |
+| G2 | every result is written to a file, even one of a few bytes (and read back into memory, which looks the same from outside) | TC-MRG-041, whose temporary folder is one that is not there; unit: `a_merge_result_smaller_than_files_are_kept_on_disk_from_stays_in_memory` |
+
+G2 survived all six cases at first: a small result written to a file with no name and read back is a value
+in memory all the same, and nothing on the screen differs. TC-MRG-041 now starts the app with a `TMPDIR` that does
+not exist, and a merge that made a file there would end in an error. The unit test got the same missing folder.
 
 ### Format JSON — `tools_format.robot`
 
@@ -387,7 +426,8 @@ case for that button and by no other:
 
 What a person sees of the merge itself, the presets run against real files, the
 reordering and sorting, opening the result in the main window and the multi-file
-drop on the main window are all driven (TC-MRG-010 to TC-MRG-034). The details of
+drop on the main window are all driven (TC-MRG-010 to TC-MRG-034, and a result big
+enough to be a file, TC-MRG-040 to TC-MRG-045). The details of
 each tool — every error message, every option, every edge of the engines — are more
 than OCR of a window can check, so they are covered in depth headlessly by `cargo
 test`:
@@ -411,6 +451,14 @@ test`:
   taken from `$schema`, formats on and off, `$ref` inside the schema, that a
   reference outside it is an error (nothing fetched), exact numbers, the cap on
   problems, long values left out of messages, cancelling.
+- `crates/app/src/worker.rs`: a merge's result under, exactly at and one byte over the size
+  files are kept on disk from (a value in memory, and a mapped temporary file in a folder
+  that is left empty), what the page shows (the preview, the number of outputs) the same
+  either way, the file saved byte for byte as a result in memory is and numbers keeping
+  their digits, a folder to spill into that is not there, a merge cancelled before its
+  result is written, the count of the size stopping as soon as it knows, and the worker
+  answering for it. `crates/core/src/document.rs`: a file that has just been written is
+  read from its start, mapped or not.
 - `crates/app/src/tools/jobs.rs`: each job against text, a file and the open
   document, bad input named by its box, the size cap, cancelling, previews.
 - `crates/app/src/tools/operand.rs`, `shared.rs`, `side_by_side.rs` and the pages:

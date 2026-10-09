@@ -199,7 +199,9 @@ class AppLibrary:
     # -- app lifecycle (once per test) ---------------------------------------
 
     @keyword("Launch Jsonquery App")
-    def launch_jsonquery_app(self, timeout=10, settings=None, keep_home=False):
+    def launch_jsonquery_app(
+        self, timeout=10, settings=None, keep_home=False, temp_dir=None
+    ):
         """Starts a fresh jsonquery_gui process and waits for its window.
 
         The app keeps its settings in a folder of its own for this launch
@@ -207,7 +209,8 @@ class AppLibrary:
         case changes is not seen by the next, nor by the settings of whoever runs
         the suite. `settings`: the text of the settings.json it starts with. With
         `keep_home` the folder of the last launch is used again (see
-        `Close Jsonquery App`), as for the next run of the same user."""
+        `Close Jsonquery App`), as for the next run of the same user. `temp_dir`:
+        the folder the app makes its temporary files in (TMPDIR), to look into it."""
         if not os.path.exists(BINARY_PATH):
             raise AssertionError(
                 f"{BINARY_PATH} not found -- run `cargo build -p jsonquery_gui` first."
@@ -221,6 +224,8 @@ class AppLibrary:
         env = dict(os.environ)
         env["DISPLAY"] = XVFB_DISPLAY
         env["JSONQUERY_HOME"] = self._app_home
+        if temp_dir:
+            env["TMPDIR"] = temp_dir
         env.pop("WAYLAND_DISPLAY", None)
         # The app talks to the private bus, whose portal answers its file dialogs;
         # with no bus it gets none at all. It must never see the session bus of the
@@ -1258,6 +1263,60 @@ class AppLibrary:
         path = tempfile.mkdtemp(prefix="jq-test-")
         self._temp_dirs.append(path)
         return path
+
+    @keyword("Make Lists Of Words")
+    def make_lists_of_words(self, files=2, words=60):
+        """`files` JSON files in a new temp directory (which goes when the display
+        stops), each a list of `words` words: the first of the file `n` is
+        platypus, echidna, ... (an animal OCR reads well, in the order of the
+        files), and the rest is wombat. Returns the paths, in that order. Merged
+        with `add` they are one list of files x words items, about 12 bytes a line
+        printed, so 60 words in two files are 1.4 KB -- over the 1 KB from which a
+        file can be set to be kept on disk, with room to spare."""
+        firsts = ["platypus", "echidna", "quokka", "dingo", "wallaby", "numbat"]
+        directory = self.make_temp_directory()
+        paths = []
+        for number in range(int(files)):
+            path = os.path.join(directory, f"words{number + 1}.json")
+            items = [firsts[number % len(firsts)]] + ["wombat"] * (int(words) - 1)
+            with open(path, "w", encoding="ascii") as out:
+                json.dump(items, out)
+            paths.append(path)
+        return paths
+
+    @keyword("App Should Have Mapped A Deleted File")
+    def app_should_have_mapped_a_deleted_file(self, name_part):
+        """Linux: the running app has a file mapped whose name has `name_part` and
+        which is no longer in its folder -- the temporary file of a download or
+        of a merge, which has no name from the moment it is made but is held open
+        and mapped. It is how to see that a document really is a file."""
+        mapped = self._mapped_deleted_files(name_part)
+        if not mapped:
+            raise AssertionError(
+                f"the app has no deleted file with {name_part!r} mapped: "
+                f"{self._read_maps()!r}"
+            )
+
+    @keyword("App Should Not Have Mapped A Deleted File")
+    def app_should_not_have_mapped_a_deleted_file(self, name_part):
+        mapped = self._mapped_deleted_files(name_part)
+        if mapped:
+            raise AssertionError(f"the app has {mapped!r} mapped, deleted")
+
+    def _read_maps(self):
+        if self._app_proc is None:
+            raise AssertionError("no app is running")
+        with open(f"/proc/{self._app_proc.pid}/maps") as maps:
+            return maps.read().splitlines()
+
+    def _mapped_deleted_files(self, name_part):
+        return sorted(
+            {
+                line.split(None, 5)[5]
+                for line in self._read_maps()
+                if name_part in line and line.rstrip().endswith("(deleted)")
+            }
+        )
 
     @keyword("Make Heavy File")
     def make_heavy_file(self, mebibytes=270, head=None):

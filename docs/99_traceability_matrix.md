@@ -16,6 +16,16 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-09: 24 suites, 622 test cases** — a Merge whose result is as big as a file is
+kept on disk from is written to a temporary file that has no name and kept there (the app, not the
+website): `suites/tools/tools_merge_big.robot`, TC-MRG-040 to TC-MRG-045 ([13_tools_window.md](13_tools_window.md)).
+All six passed at the first run of the debug build. Two faults put into the app on purpose (a result never
+written to a file, a result always written to one) were each caught by the cases for them, the second only after
+TC-MRG-041 was given a temporary folder that is not there: it survived all six at first (table in
+[13_tools_window.md](13_tools_window.md)). The rest of `suites/tools/` was run again with them (146 of 146 passed,
+a debug build); of the other suites only the case that reads the tooltip of the limit the merge now shares
+(TC-SET-014) was.
+
 **Status as of 2026-10-07: 23 suites, 616 test cases** — the Settings window was made small: one limit
 shown (from what size a file is kept on disk), the other eight under an Advanced header that opens inside the
 window (which grows to hold them), the explanations as tooltips. `suites/settings/` was recalibrated for it
@@ -502,6 +512,12 @@ the sign that the text landed.
 | TC-MRG-032 | Ctrl+Enter Merges | P2 | **Passing** | `suites/tools/` |
 | TC-MRG-033 | The Merge Button Is Bright With Files | P2 | **Passing** | `suites/tools/` |
 | TC-MRG-034 | Big Numbers Keep Their Digits | P2 | **Passing** | `suites/tools/` |
+| TC-MRG-040 | A Result As Big As Files Are Kept On Disk From Is Kept In A Temporary File | P1 | **Passing** | `suites/tools/tools_merge_big.robot` |
+| TC-MRG-041 | A Result Under That Size Stays In Memory | P1 | **Passing** | `suites/tools/tools_merge_big.robot` |
+| TC-MRG-042 | A Big Result Opens In The Main Window As A File | P1 | **Passing** | `suites/tools/tools_merge_big.robot` |
+| TC-MRG-043 | A Big Result Is Saved Whole | P1 | **Passing** | `suites/tools/tools_merge_big.robot` |
+| TC-MRG-044 | The Temporary File Has No Name | P1 | **Passing** | `suites/tools/tools_merge_big.robot` |
+| TC-MRG-045 | The Size Is The One In The Settings | P1 | **Passing** | `suites/tools/tools_merge_big.robot` |
 | TC-TWIN-006 | Format JSON Pretty-Prints Pasted Text | P1 | **Passing** | `suites/tools/` |
 | TC-FMT-001 | The Layout Is Two Spaces To A Level By Default | P1 | **Passing** | `suites/tools/` |
 | TC-FMT-002 | Four Spaces To A Level | P1 | **Passing** | `suites/tools/` |

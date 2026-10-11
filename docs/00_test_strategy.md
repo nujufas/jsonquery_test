@@ -203,6 +203,16 @@ when the app is closed. A case that needs the app to start as it was left says s
 and one that needs a file in it gives its text (`settings=<text>`); see [21_settings.md](21_settings.md).
 The folder is made with a short path, in `/tmp` (or the folder `JQ_TEST_HOME_ROOT` names; under `TMPDIR` when that cannot be written): the Settings window names the file at its foot and wraps a long path onto lines of their own, and a lane of `run_parallel.sh` has a `TMPDIR` of 60 characters or more.
 
+**The browser.** A link in the app, and the 🌐 in the status bar, hand an address to the person's browser
+(the app's browser crate runs `$BROWSER`, else `xdg-open`, else the desktop's own opener), and a browser that
+is already running takes it as a new tab: a suite that clicked one would open pages on the desk of whoever runs
+it. So `Launch Jsonquery App` gives the app a `BROWSER` that is a stand-in script, which writes down the
+address and opens nothing, and a `PATH` with nothing but links to that script named like every opener the
+crate could try (the same kind of isolation as the settings folder and the portal above); a case asks what was
+opened (`Opened Addresses Should Be`, `Nothing Should Have Been Opened`). The crate skips a `$BROWSER` that is
+not executable without a word, so `Start Test Display` runs the stand-in once and stops the suite when it does
+not work. See [23_website.md](23_website.md) and [writing_tests.md](writing_tests.md).
+
 **Room in `/tmp`.** The X server needs a little room in `/tmp` to start: the compiler of its keyboard
 map writes `/tmp/server-<n>.xkm`, and when that fails ("Cannot close … (not enough space?)" in its
 output) the server exits. `run.sh` then goes on without a display and the first thing that fails is

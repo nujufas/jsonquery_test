@@ -18,6 +18,6 @@ TOOLS_WINDOW = "JsonQuery"
 # for the 🛠 button: 130 is the middle of "Merge JSON", and so on.
 TAB_X = {"merge": 130, "format": 221, "diff": 304, "patch": 383, "validate": 480}
 
-# What the status bar of the page says is at its left end; the icons are at x 815-892.
-TOOLS_STATUS = [0, 558, 800, 22]
-STATUS_LINE = [0, 560, 800, 18]
+# What the status bar of the page says is at its left end; the icons (🗗 ⚙ 🌐 ⓘ) are at x 786-892.
+TOOLS_STATUS = [0, 558, 770, 22]
+STATUS_LINE = [0, 560, 770, 18]

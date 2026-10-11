@@ -179,7 +179,12 @@ TC-OPEN-036 A Query That Needs All Of A Long List As A Value Says So
     Open The Long Strings
     Run Query    to_entries
     Status Bar Should Say    needs all of an array of 1500 items
-    Status Bar Should Say    0 result(s)
+    # The count is on the first line of the status bar, after "Indexed in 1.0s |" and before a long
+    # error in orange that runs under the icons. OCR of the whole line misreads the count ("0O
+    # result{s)" at a width of 1100, "resulkt{s)" from x = 0), and of the part with the count alone
+    # it still reads the t as a k now and then ("resulk(s)", it depends on the digits of the time):
+    # so that part is read, and "0 resul" followed by a t or a k is the count, not the 0 of a 10.
+    Wait Until Region Matches    100    764    270    19    (?<![0-9])[0O]O? ?resul[tk]    timeout=5    psm=7
 
 TC-OPEN-037 JSONPath And JMESPath Read A File Kept On Disk
     [Documentation]    Both engines read the query as they do for any document and walk

@@ -17,12 +17,14 @@ ${DOCKED}            {"tools": "docked"}
 # The row of tabs (y 0-22): Json Query, the five tools; the 🗗 is not here but in the status bar.
 @{DT_TAB_ROW}        0      0      640    22
 ${DT_TAB_Y}          11
-# The status bar, y 778-800: the buttons from the right are the info, the settings and the
-# undock; the text of the page in front is at the left.
+# The status bar, y 778-800: the buttons from the right are the info, the website (the 🌐),
+# the settings and the undock; the text of the page in front is at the left. The first three
+# are where they are with the Tools in a window too, the 🗗 is the one the docking adds.
 ${SB_Y}              789
 ${SB_INFO_X}         1181
-${SB_SETTINGS_X}     1152
-${SB_UNDOCK_X}       1124
+${SB_WEBSITE_X}      1152
+${SB_SETTINGS_X}     1123
+${SB_UNDOCK_X}       1095
 
 *** Keywords ***
 Without Layout Shift

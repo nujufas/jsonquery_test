@@ -58,8 +58,15 @@ ${LOAD_DATA_X}         465
 ${COPY_QUERY_X}        543
 ${FIRST_EXAMPLE_Y}     321
 ${SECOND_EXAMPLE_Y}    552
-# The About window.
-@{ABOUT_TEXT}          0      0      380    230
+# The About window (380x300 when it opens, 320x300 at the least): the whole of it, the row of
+# the website (between the source and the issues), and the foot with the last link (at 320
+# wide the text above wraps further, so the foot is lower).
+@{ABOUT_TEXT}          0      0      380    300
+@{ABOUT_WEBSITE_ROW}   0      80     380    28
+@{ABOUT_FOOT}          0      250    380    30
+@{ABOUT_FOOT_NARROW}   0      265    320    30
+# What a click on a link to the site hands to the browser (the app's browser crate writes the slash).
+${WEBSITE_ADDRESS}     https://jsonquery.dev/
 
 *** Keywords ***
 Open Tutorial
@@ -81,6 +88,15 @@ Window Should Read
     Wait Until Keyword Succeeds    6x    0.5s
     ...    Region Should Contain Text    @{region}    ${text}
     Switch To Main Window
+
+Get Window Size For
+    [Documentation]    The size of the named window, from wherever the test is; the window
+    ...    the test was in is current again afterwards.
+    [Arguments]    ${title}
+    Switch To Window    ${title}
+    ${width}    ${height}=    Get Window Size
+    Switch To Main Window
+    RETURN    ${width}    ${height}
 
 Pick Language
     [Arguments]    ${x}
@@ -310,6 +326,53 @@ TC-SAT-023 The Main Window Works With About Open
     Load Fixture Via Paste    {"members":[{"name":"Ann"}],"team":"platypus"}
     Wait Until Keyword Succeeds    8x    0.5s
     ...    Region Should Contain Text    @{SOURCE_PANEL}    platypus    flatten_tints=${True}
+
+TC-SAT-024 About Has A Website Row And Nothing More About The Site
+    [Documentation]    A "Website:" row with the name of the site, jsonquery.dev, between the
+    ...    source and the issues, and no text about the site under the rows (what is there is
+    ...    said by the hover of the 🌐).
+    [Tags]    p1
+    Open About
+    Window Should Read    ${ABOUT_WINDOW}    Website:    @{ABOUT_WEBSITE_ROW}
+    Window Should Read    ${ABOUT_WINDOW}    jsonquery.dev    @{ABOUT_WEBSITE_ROW}
+    Switch To Window    ${ABOUT_WINDOW}
+    Region Should Not Contain Text    @{ABOUT_TEXT}    nothing to install
+    Region Should Not Contain Text    @{ABOUT_TEXT}    query engine
+    ${x}    ${source}=    Find Text In Region    @{ABOUT_TEXT}    Source:
+    ${x}    ${website}=    Find Text In Region    @{ABOUT_TEXT}    Website:
+    ${x}    ${issues}=    Find Text In Region    @{ABOUT_TEXT}    Issues
+    Should Be True    ${source} < ${website} < ${issues}
+    ...    msg=The rows are not in order, Source ${source}, Website ${website}, Issues ${issues}
+
+TC-SAT-025 The Website In About Is A Link That Opens The Site
+    [Documentation]    A click on "jsonquery.dev" in the Website row hands the address of the
+    ...    site to the browser (a stand-in, which writes it down), once.
+    [Tags]    p1
+    Open About
+    Switch To Window    ${ABOUT_WINDOW}
+    Nothing Should Have Been Opened    settle=0.3
+    ${x}    ${y}=    Find Text In Region    @{ABOUT_WEBSITE_ROW}    jsonquery.dev
+    Click At    ${x}    ${y}
+    Opened Addresses Should Be    ${WEBSITE_ADDRESS}
+
+TC-SAT-026 About Shows All It Says Down To The Last Link
+    [Documentation]    The window opens 380 by 300 with the last link, "More in the README", at
+    ...    its foot; at 320 by 300, the least the app lets it be, the link is still there. (The
+    ...    window manager keeps a window from being dragged smaller; `xdotool` does not ask it,
+    ...    so the case sets the smallest size itself and does not try for a smaller one.)
+    [Tags]    p2
+    Open About
+    ${width}    ${height}=    Get Window Size For    ${ABOUT_WINDOW}
+    Should Be Equal As Integers    ${width}    380
+    Should Be Equal As Integers    ${height}    300
+    Window Should Read    ${ABOUT_WINDOW}    More in the README    @{ABOUT_FOOT}
+    Resize Window    ${ABOUT_WINDOW}    320    300
+    Sleep    0.8s
+    ${width}    ${height}=    Get Window Size For    ${ABOUT_WINDOW}
+    Should Be Equal As Integers    ${width}    320
+    Should Be Equal As Integers    ${height}    300
+    Window Should Read    ${ABOUT_WINDOW}    More in the README    @{ABOUT_FOOT_NARROW}
+    Window Should Read    ${ABOUT_WINDOW}    Known limitations    @{ABOUT_TEXT}
 
 TC-SAT-030 All The Windows Can Be Open Together
     [Documentation]    The Tools window, the tutorial and About open at once, each

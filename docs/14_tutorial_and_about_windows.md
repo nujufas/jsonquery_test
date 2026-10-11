@@ -11,7 +11,10 @@ lesson on the right with its sample data and its examples. Each example has
 **▶ Try it** (loads the sample data and the query into the main window and runs
 it), **Load query**, **Load data** and **Copy query**, and shows its live result.
 The **ⓘ** button at the right end of the status bar opens About ("JsonQuery —
-About"): the name and version, the license, links, the known limitations.
+About", 380×300): the name and version, the license, links (the source, the
+**website** — a "Website:" row with a link to jsonquery.dev between Source and Issues —
+the issues, the privacy policy), the known limitations and a last link to the README. The 🌐 button beside the ⓘ is in
+[23_website.md](23_website.md).
 
 Both are *deferred* viewports (`satellites.rs`): eframe redraws each by itself and
 the app answers through a lock, so they keep working when the main window is not
@@ -41,11 +44,26 @@ that bug broke, on real windows (open, use, hand an example over, maximize, clos
 | TC-SAT-021 | About says the version of the build | P1 |
 | TC-SAT-022 | Closing About and pressing the button again reopens it | P1 |
 | TC-SAT-023 | The main window works with About open | P2 |
+| TC-SAT-024 | About has a Website row and nothing more about the site | P1 |
+| TC-SAT-025 | The website in About is a link that opens the site | P1 |
+| TC-SAT-026 | About shows all it says down to the last link | P2 |
 | TC-SAT-030 | All the windows can be open together | P1 |
 | TC-SAT-031 | Closing one window leaves the others | P2 |
 
 TC-SAT-021 reads the version from the workspace `Cargo.toml` and compares it with
 what About says, so a release that forgets one of them fails here.
+
+TC-SAT-024 to 026 are about the website: the row is read over the whole window (OCR,
+`@{ABOUT_TEXT}` and the strip of it), and the text of a paragraph is looked for in the
+whole window and must not be there; the order of the rows by where
+OCR finds their labels, and the link by clicking it: the address goes to a stand-in for
+the browser, which writes it down and opens nothing ([23_website.md](23_website.md), "How
+the cases keep the browser away"; every app the suite starts has it). TC-SAT-026 reads
+the window's size when it opens (380×300) and after it is set to the least the app lets
+it be (320×300), and both times reads the last link, "More in the README". It does not
+try for a smaller window: `xdotool windowsize` asks no window manager, so a window can
+be made 300×300 that a hand on its edge could not (the first version of the case tried,
+and found it); that the app asks for that minimum is in its layout tests.
 
 ## Lessons from writing them
 

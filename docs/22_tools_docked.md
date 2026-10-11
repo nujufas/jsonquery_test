@@ -21,9 +21,10 @@ in the **main** window as tabs —
   query's, on the Json Query tab);
 - the window is gone, and the page that was in front in it is the one in front now; a page keeps what it
   holds;
-- the **🗗** button in the status bar, beside the ⚙ (the status bar reads, from the right, ⓘ ⚙ 🗗 — and
-  nothing of the three on the row of tabs), takes the Tools out into a window again, on the page that was in
-  front, and is on every tab while the Tools are docked and never when they are a window;
+- the **🗗** button in the status bar, beside the ⚙ (the status bar reads, from the right, ⓘ 🌐 ⚙ 🗗 — and
+  nothing of the four on the row of tabs; the 🌐 is the website's, [23_website.md](23_website.md)), takes the
+  Tools out into a window again, on the page that was in front, and is on every tab while the Tools are docked
+  and never when they are a window;
 - where the Tools are is kept in `settings.json` (`"tools": "docked"`; the window is the default, so nothing
   is written for it), and a docked start has the Json Query tab in front.
 
@@ -50,7 +51,7 @@ shift for the tab it goes to. The row, the buttons and the status bar are read b
 | TC-DOCK-003 | The Tool That Was In Front In The Window Is In Front Docked | P1 |
 | TC-DOCK-004 | What Was Typed In A Page Is Still There Docked | P1 |
 | TC-DOCK-005 | The Theme And The Tutorial Are At The Right End Of The Row Of Tabs | P1 |
-| TC-DOCK-006 | The Status Bar Has The Info, The Settings And The Undock Buttons | P1 |
+| TC-DOCK-006 | The Status Bar Has The Info, The Website, The Settings And The Undock Buttons | P1 |
 | TC-DOCK-007 | The Undock Button Is In The Status Bar Whichever Tab Is In Front | P1 |
 | TC-DOCK-008 | The Window Has No Undock Button | P1 |
 | TC-DOCK-009 | The Undock Button Takes The Tools Out Into A Window | P1 |
@@ -85,6 +86,7 @@ shift for the tab it goes to. The row, the buttons and the status bar are read b
 | TC-DOCK-038 | The Document Open In The Json Query Tab Is Patched | P1 |
 | TC-DOCK-039 | A Double-Click On A Problem Shows It In The Json Query Tab | P1 |
 | TC-DOCK-040 | A Big Merge Result Opened In The Main Window Is A File In The Json Query Tab | P1 |
+| TC-DOCK-041 | The Website Button Opens The Site From Whichever Tab Is In Front | P2 |
 
 ## The other suites, docked
 
@@ -96,11 +98,11 @@ runs two passes (each through `run_parallel.sh`, so a pass has lanes and a merge
 
 | Pass | What runs | How |
 |---|---|---|
-| **tools** | the cases of the Tools suites (`suites/tools/`), and the few cases of other suites that use the Tools (tag `uses-tools`) | `JQ_TOOLS_PLACE=docked` starts every app with `"tools": "docked"` in its settings, and `JQ_WINDOW_SIZE=900x580` gives the main window the Tools window's size, so a docked page is the window's own **pixel for pixel** (measured: no differing pixel between y 23 and 557, on any of the five pages); `resources/docked_tools.py` gives the tab positions, the title the cases look for (the main window's) and the status line without the three buttons at its right end |
+| **tools** | the cases of the Tools suites (`suites/tools/`), and the few cases of other suites that use the Tools (tag `uses-tools`) | `JQ_TOOLS_PLACE=docked` starts every app with `"tools": "docked"` in its settings, and `JQ_WINDOW_SIZE=900x580` gives the main window the Tools window's size, so a docked page is the window's own **pixel for pixel** (measured: no differing pixel between y 23 and 557, on any of the five pages); `resources/docked_tools.py` gives the tab positions, the title the cases look for (the main window's) and the status line without the four buttons at its right end |
 | **main view** | every other suite, with the Json Query tab in front | `JQ_DOCKED_DY=23` has the library move what the suites place under the toolbar down by the row of tabs (`AppLibrary._profile_y`: a point or region that reaches the foot of the window, the status bar and what is anchored to it, stays), and `resources/docked_main.py` says what the move does not make right: the row of tabs is *above* the suites' origin (so its y is negative), the 📖 and 🌙 are in it, the 💡 is in the source row, the source row's buttons are 90 px to the right, the search dialog and the list of hits are where they were (so DY *higher* in the suites' coordinates) |
 
-Of the 640 cases that are not the dock's own, **612 run docked** (151 in the tools pass, 461 in the main-view pass;
-`./run_docked.sh --dryrun` prints the counts), and 28 are tagged and left out, each for a stated reason:
+Of the 648 cases that are not the dock's own, **619 run docked** (151 in the tools pass, 468 in the main-view pass;
+`./run_docked.sh --dryrun` prints the counts), and 29 are tagged and left out, each for a stated reason:
 
 - **`window-only`**: the case is about the Tools *window* — the 🛠 button, closing or maximizing the window,
   its default size, several windows open together, a drop on the main window that opens the window (7 cases of
@@ -112,9 +114,10 @@ Of the 640 cases that are not the dock's own, **612 run docked** (151 in the too
   `TC-DOCK-024` to `TC-DOCK-030` and `TC-DOCK-037` to `TC-DOCK-039` docked;
 - **`uses-tools`** is not a reason to leave a case out but a way to find the cases of other suites that the
   tools pass runs (`TC-DND-006` to `TC-DND-015`, `TC-HDR-010`);
-- **`undocked-only`**: the case is about the toolbar or the settings file as they are with no tabs (2 cases:
-  TC-SET-003 and TC-SET-005 read that no settings file is written by a start, which a docked start does: it
-  writes `"tools": "docked"`). Added where a docked pass showed it.
+- **`undocked-only`**: the case is about the toolbar, the status bar or the settings file as they are with no tabs
+  (3 cases: TC-SET-003 and TC-SET-005 read that no settings file is written by a start, which a docked start does:
+  it writes `"tools": "docked"`; TC-WEB-001 reads that there is nothing left of the ⚙, which docked is the 🗗's
+  place — TC-DOCK-006 reads the docked bar). Added where a docked pass showed it.
 
 ## What these cases do not reach
 
@@ -166,9 +169,10 @@ to the pixel, and every case that is not about the window itself passes in a tab
 matrix's coverage summary). Two things about the app's behaviour are worth knowing, and were left alone:
 
 - the line of the status bar that says what a query did wraps at the full width of the window and the buttons
-  at the right end (ⓘ ⚙, and docked the 🗗) are drawn over the end of a long message (a refused `to_entries`
-  on a file of 270 MB: the error runs under the three icons). It is as it was with two icons: the status text
-  is laid out first so that it wraps as it always did, and the 🗗 widens the covered corner by 28 px;
+  at the right end (ⓘ 🌐 ⚙, and docked the 🗗) are drawn over the end of a long message (a refused `to_entries`
+  on a file of 270 MB: the error runs under the icons). It is as it was with two icons: the status text
+  is laid out first so that it wraps as it always did, and the 🗗 widens the covered corner by 28 px (the 🌐
+  by 29);
 - docking from the window keeps the position of the line between the two panes that the window had (450 from
   the left: half of the Tools window), while a docked start has two panes of 600; the pages of a docked start
   are as `DT_*` says and those of a window docked while the app runs are the window's, until the line is

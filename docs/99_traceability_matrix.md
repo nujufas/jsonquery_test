@@ -16,6 +16,13 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-11 (night): 27 suites, 689 test cases, run two ways** — the status bar has a 🌐 between the ⓘ and
+the ⚙ that opens https://jsonquery.dev, and the About window has a Website row with a link to it. `suites/website/website.robot`
+(TC-WEB-001 to 005, [23_website.md](23_website.md)), TC-SAT-024 to 026 and TC-DOCK-041 are the new cases; the ones that were
+there moved with the icons (the ⚙ is at x = 1123 now, the 🗗 at 1095, and the status line that OCR reads stops at 1100). The test
+library starts every app with a stand-in for the browser and fails a case whose app handed it an address the case did not ask
+about, so no case can reach the browser of whoever runs the suite.
+
 **Status as of 2026-10-11: 26 suites, 680 test cases, run two ways** — the Tools can be docked in the main window as tabs
 (Json Query first, then the five tools; ⚓ in the Tools window docks them, 🗗 in the status bar undocks them), and the whole
 suite is run with them in their window (the default) and with them docked. `suites/tools/tools_docked.robot` (38 cases)
@@ -698,6 +705,9 @@ engine edge) are covered by `cargo test`.
 | TC-SAT-021 | About Says The Version Of The Build | P1 | **Passing** | `suites/satellites/` |
 | TC-SAT-022 | Closing About And Pressing The Button Again Reopens It | P1 | **Passing** | `suites/satellites/` |
 | TC-SAT-023 | The Main Window Works With About Open | P2 | **Passing** | `suites/satellites/` |
+| TC-SAT-024 | About Names The Website And Says What Is There | P1 | **Passing** | `suites/satellites/` |
+| TC-SAT-025 | The Website In About Is A Link That Opens The Site | P1 | **Passing** | `suites/satellites/` |
+| TC-SAT-026 | About Shows All It Says Down To The Last Link | P2 | **Passing** | `suites/satellites/` |
 | TC-SAT-030 | All The Windows Can Be Open Together | P1 | **Passing** | `suites/satellites/` |
 | TC-SAT-031 | Closing One Window Leaves The Others | P2 | **Passing** | `suites/satellites/` |
 
@@ -960,7 +970,7 @@ engine edge) are covered by `cargo test`.
 | TC-DOCK-003 | The Tool That Was In Front In The Window Is In Front Docked | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-004 | What Was Typed In A Page Is Still There Docked | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-005 | The Theme And The Tutorial Are At The Right End Of The Row Of Tabs | P1 | **Passing** | `suites/tools/` |
-| TC-DOCK-006 | The Status Bar Has The Info, The Settings And The Undock Buttons | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-006 | The Status Bar Has The Info, The Website, The Settings And The Undock Buttons | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-007 | The Undock Button Is In The Status Bar Whichever Tab Is In Front | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-008 | The Window Has No Undock Button | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-009 | The Undock Button Takes The Tools Out Into A Window | P1 | **Passing** | `suites/tools/` |
@@ -995,8 +1005,32 @@ engine edge) are covered by `cargo test`.
 | TC-DOCK-038 | The Document Open In The Json Query Tab Is Patched | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-039 | A Double-Click On A Problem Shows It In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-040 | A Big Merge Result Opened In The Main Window Is A File In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-041 | The Website Button Opens The Site From Whichever Tab Is In Front | P2 | **Passing** | `suites/tools/` |
+
+## The website — [23_website.md](23_website.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-WEB-001 | The Status Bar Has A Globe Between The Info And The Settings Buttons | P1 | **Passing** | `suites/website/` |
+| TC-WEB-002 | Hovering The Globe Says What The Site Is And Where A Click Goes | P1 | **Passing** | `suites/website/` |
+| TC-WEB-003 | Clicking The Globe Opens The Website In The Browser | P1 | **Passing** | `suites/website/` |
+| TC-WEB-004 | Every Click On The Globe Opens The Site Once | P2 | **Passing** | `suites/website/` |
+| TC-WEB-005 | The Info And The Settings Buttons Work Beside The Globe And Open Nothing In The Browser | P1 | **Passing** | `suites/website/` |
 
 ## Coverage summary
+
+**2026-10-11 night, the website button:** 680 → 689 cases in 27 suites (TC-WEB-001 to 005, TC-SAT-024 to 026, TC-DOCK-041).
+The last full runs (the debug build): `run_parallel.sh -j 5`, 688 of 689; `run_docked.sh -j 5`, the tools pass 151 of 151 and
+the main-view pass 467 of 468. The one failure, TC-OPEN-036 in both profiles, was OCR reading `0 result(s)` as `0O result{s)` in a
+status line that goes on with a long error under the icons (the app did what it should); it reads the part with the count now
+and passed 3 of 3 undocked and 2 of 2 docked. Twenty-three one-place faults put into the app (M01 to M21, N01 and N02,
+[23_website.md](23_website.md)): the 21 meant to be seen were killed, the two that are not (N01, N02) survive as said. The
+stand-in browser and the check in the teardown came out of it: the ⚙ pixel had become the 🌐's, and a stand-in that was not
+executable let one click through to a real browser. The app had no defect to fix; the one thing seen is that a long status error
+runs under the icons at the right end of the bar, as it did before the 🌐.
+The paragraph about the site that the About window had during those runs was taken out afterwards, on request: TC-SAT-024
+now fails if the paragraph is there (it did, against the build that still had it), TC-SAT-024 to 026 passed 3 of 3 on the new
+build (380 × 300 when it opens, 320 × 300 the least), and M17 and M19, the two faults about the paragraph, are retired.
 
 **2026-10-11 evening, the Tools docked, run both ways:** 640 → 680 cases in 26 suites (TC-DOCK-001 to 040, the
 rest unchanged). The last full runs: `run_parallel.sh -j 5`, 679 of 680 (TC-DIF-029, a Ctrl+click that was not

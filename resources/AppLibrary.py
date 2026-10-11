@@ -79,9 +79,94 @@ BINARY_PATH = os.environ.get(
 XVFB_DISPLAY = os.environ.get("JQ_TEST_DISPLAY", ":99")
 XVFB_SCREEN_SIZE = "1280x900x24"
 
+# A click on a link, or on the 🌐, hands an address to the person's browser: the app's browser
+# crate runs $BROWSER, else xdg-open, else the desktop's own opener, else x-www-browser. The
+# suite must never reach the browser of whoever runs it (a Chrome that is already running takes
+# the address as a new tab), so every app is started with a $BROWSER that is a stand-in and a
+# PATH that holds nothing but stand-ins named like all of those. The stand-in writes the address
+# it was given (the last argument: `gio open <address>` and `kfmclient newTab <address>` end in it)
+# and the name it was run under into a log, and opens nothing.
+BROWSER_OPENERS = (
+    "xdg-open",
+    "gio",
+    "gvfs-open",
+    "gnome-open",
+    "kde-open",
+    "kde-open5",
+    "kfmclient",
+    "mate-open",
+    "exo-open",
+    "x-www-browser",
+    "www-browser",
+    "sensible-browser",
+    "wslview",
+    "wsl-open",
+    "firefox",
+    "google-chrome",
+    "google-chrome-stable",
+    "chromium",
+    "chromium-browser",
+    "brave-browser",
+    "microsoft-edge",
+    "epiphany",
+    "falkon",
+    "konqueror",
+)
+BROWSER_STAND_IN = "jq-test-browser"
+
 
 def _run(cmd, **kwargs):
     return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+
+
+class _BrowserStandIn:
+    """The stand-in for the person's browser (see BROWSER_OPENERS): a folder with the logging
+    script, a `bin/` of links to it named like every program that could open an address, and
+    the log."""
+
+    def __init__(self):
+        self.root = tempfile.mkdtemp(prefix="jq-browser-")
+        self.bin = os.path.join(self.root, "bin")
+        self.log = os.path.join(self.root, "opened.log")
+        self.command = os.path.join(self.bin, BROWSER_STAND_IN)
+        os.makedirs(self.bin)
+        with open(self.command, "w") as f:
+            f.write(
+                "#!/bin/sh\n"
+                'for last; do :; done\n'
+                f"printf '%s\\t%s\\n' \"$last\" \"${{0##*/}}\" >> '{self.log}'\n"
+            )
+        os.chmod(self.command, 0o755)
+        for name in BROWSER_OPENERS:
+            os.symlink(self.command, os.path.join(self.bin, name))
+        self.reset()
+        self._prove_it_works()
+
+    def reset(self):
+        open(self.log, "w").close()
+
+    def opened(self):
+        """[(address, the name the stand-in was run under)] since the last reset."""
+        with open(self.log) as f:
+            return [tuple(line.rstrip("\n").split("\t")) for line in f if line.strip()]
+
+    def _prove_it_works(self):
+        """Runs the stand-in the way the app's browser crate does. A script that is not
+        executable (or on a mount that does not allow it) is skipped by the crate WITHOUT a
+        word, and the address goes on to the real browser: so the suite stops here."""
+        for name in (BROWSER_STAND_IN, "xdg-open", "x-www-browser"):
+            path = os.path.join(self.bin, name)
+            if not os.access(path, os.X_OK):
+                raise AssertionError(f"The browser stand-in {path} is not executable")
+        subprocess.run([self.command, "https://stand-in.invalid/self-test"], check=True)
+        if self.opened() != [("https://stand-in.invalid/self-test", BROWSER_STAND_IN)]:
+            raise AssertionError(
+                f"The browser stand-in {self.command} did not write its log: {self.opened()}"
+            )
+        self.reset()
+
+    def remove(self):
+        shutil.rmtree(self.root, ignore_errors=True)
 
 
 @library(scope="GLOBAL")
@@ -113,6 +198,17 @@ class AppLibrary:
         # The docked profile (see the module's docstring): how far the main window's
         # content is moved down in the suites' coordinates; 0 is no profile.
         self._docked_dy = int(os.environ.get("JQ_DOCKED_DY", "0") or 0)
+        # The stand-in for the person's browser every app is started with (BROWSER_OPENERS), and
+        # how many of the addresses it was given the case has asked about (`Opened Addresses
+        # Should Be`): the rest are a click that landed on a link by mistake, which `Close
+        # Jsonquery App` reports.
+        self._browser = None
+        self._addresses_asked_about = 0
+
+    def _stand_in_browser(self):
+        if self._browser is None:
+            self._browser = _BrowserStandIn()
+        return self._browser
 
     # -- display lifecycle (once per suite run) -----------------------------
 
@@ -143,6 +239,7 @@ class AppLibrary:
         """
         os.environ["DISPLAY"] = XVFB_DISPLAY
         self._ensure_fluxbox_no_decoration_rule()
+        self._stand_in_browser()  # before any app: a link must never reach a real browser
         if not os.path.exists(f"/tmp/.X11-unix/X{XVFB_DISPLAY.lstrip(':')}"):
             self._xvfb_proc = subprocess.Popen(
                 ["Xvfb", XVFB_DISPLAY, "-screen", "0", XVFB_SCREEN_SIZE, "-nolisten", "tcp"],
@@ -193,6 +290,9 @@ class AppLibrary:
         """Stops the window manager and, if this run started it, Xvfb too."""
         self._stop_portal()
         self._forget_app_home()
+        if self._browser is not None:
+            self._browser.remove()
+            self._browser = None
         for path in self._temp_dirs:
             shutil.rmtree(path, ignore_errors=True)
         self._temp_dirs = []
@@ -242,6 +342,13 @@ class AppLibrary:
         if temp_dir:
             env["TMPDIR"] = temp_dir
         env.pop("WAYLAND_DISPLAY", None)
+        # An address the app hands to a browser (a link, the 🌐) goes to the stand-in's log:
+        # $BROWSER is the stand-in and the PATH holds nothing else the app could run to open one.
+        browser = self._stand_in_browser()
+        browser.reset()
+        self._addresses_asked_about = 0
+        env["BROWSER"] = browser.command
+        env["PATH"] = browser.bin
         # The app talks to the private bus, whose portal answers its file dialogs;
         # with no bus it gets none at all. It must never see the session bus of the
         # person running the tests (a Save... would ask their own desktop).
@@ -375,6 +482,37 @@ class AppLibrary:
     def settings_file_exists(self):
         return os.path.exists(os.path.join(self._app_home or "", "settings.json"))
 
+    @keyword("Opened Addresses")
+    def opened_addresses(self):
+        """The addresses the running app has handed to a browser since it was launched, in
+        order: a click on a link or on the 🌐 does. Nothing opens, the stand-in every app is
+        started with (BROWSER_OPENERS) only writes them down."""
+        return [address for address, _ in self._stand_in_browser().opened()]
+
+    @keyword("Opened Addresses Should Be")
+    def opened_addresses_should_be(self, *expected, timeout=5, settle=0.6):
+        """Waits until the app has handed exactly these addresses to the browser, in this order
+        (the stand-in is run in the background), then waits `settle` seconds more and checks
+        that nothing else came after them (a click that opens the site twice). With no
+        address: nothing has been opened."""
+        want = list(expected)
+        deadline = time.time() + float(timeout)
+        while self.opened_addresses() != want and time.time() < deadline:
+            time.sleep(0.1)
+        time.sleep(float(settle))
+        got = self._stand_in_browser().opened()
+        if [address for address, _ in got] != want:
+            raise AssertionError(
+                f"The app handed {[address for address, _ in got]} to the browser, not {want} "
+                f"(run as {[how for _, how in got]})"
+            )
+        self._addresses_asked_about = len(want)
+
+    @keyword("Nothing Should Have Been Opened")
+    def nothing_should_have_been_opened(self, settle=1.0):
+        """Fails if the app has handed an address to a browser since it was launched."""
+        self.opened_addresses_should_be(timeout=0, settle=settle)
+
     @keyword("Quit Jsonquery App")
     def quit_jsonquery_app(self, timeout=10):
         """Asks the window manager to close the main window, as the close button
@@ -459,6 +597,23 @@ class AppLibrary:
         self._main_window_id = None
         if not keep_home:
             self._forget_app_home()
+        self._no_address_should_be_left_over()
+
+    def _no_address_should_be_left_over(self):
+        """Fails the case if the app handed the browser an address that nothing in the case asked
+        about. The stand-in swallows it, so without this a click that lands on a link or on the 🌐
+        by mistake -- a point that a button moved away from, as the ⚙ was moved by the 🌐 -- would
+        go unseen. Runs after everything is cleaned up, so a failure leaves nothing behind."""
+        if self._browser is None:
+            return
+        stray = [a for a, _ in self._browser.opened()[self._addresses_asked_about:]]
+        self._browser.reset()
+        self._addresses_asked_about = 0
+        if stray:
+            raise AssertionError(
+                f"The app handed {stray} to the browser and the case did not ask for it "
+                "(a click on a link or on the 🌐 that was not meant?)"
+            )
 
     def _find_window_id(self):
         result = _run(

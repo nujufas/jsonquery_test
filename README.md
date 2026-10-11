@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (October 2026): **680 test cases in 26 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
+touches your desktop. Status (October 2026): **689 test cases in 27 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
 
 Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
 app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
@@ -180,6 +180,10 @@ All optional; unset, nothing changes.
   and read the dialog log that a failed dialog case prints.
 - **A case fails once and passes when run again**: the app works asynchronously and the suite reads pixels and
   OCR, so a few cases are timing-sensitive. Run that case alone with `--test` before suspecting the app.
+- **A case fails in its teardown with "The app handed [...] to the browser and the case did not ask for it"**:
+  a click landed on a link or on the 🌐 (nothing was opened: the browser is a stand-in that writes the address down).
+  A button moved, so the point the case clicks is another button's now; see
+  [docs/23_website.md](docs/23_website.md) and the status bar's points in `resources/docked.resource`.
 - **Everything is off by a few pixels**: the click points are calibrated for the app's default 1200x800 window in
   the Dark theme; see [docs/writing_tests.md](docs/writing_tests.md) for recalibrating after a layout change.
 
@@ -197,6 +201,14 @@ All optional; unset, nothing changes.
   the text must be exact, through the app's Copy buttons and the clipboard. The app is drawn with egui, which
   has no accessibility tree to query; [docs/00_test_strategy.md](docs/00_test_strategy.md) has the
   investigation behind these choices.
+- **The browser is a stand-in too.** A link in the app, and the 🌐 in its status bar, hand an address to the
+  person's browser, and a browser that is already running takes it as a new tab. So every app the suite launches
+  gets a `$BROWSER` that is a script writing the address down and opening nothing, and a `PATH` of nothing but links
+  to it (`resources/AppLibrary.py`, `BROWSER_OPENERS`); a case asks what the app opened (`Opened Addresses Should
+  Be`, `Nothing Should Have Been Opened`). A case that opened an address it did not ask about fails
+  in its teardown (a click that landed on a link by mistake would otherwise go unseen). It is made in `TMPDIR` and
+  removed at the end, and the suite stops at its set-up if the script cannot run, because the crate that opens the
+  address skips a `$BROWSER` that is not executable without a word ([docs/23_website.md](docs/23_website.md)).
 - **The file dialogs are answered by a stand-in.** The app asks the desktop's file-chooser portal over D-Bus, which
   does not work with a window that is not GTK's and has nobody to answer under Xvfb. So every app the suite
   launches is pointed at a private `dbus-daemon` with a small portal of the suite's own on it
@@ -239,6 +251,7 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `tutorial_pages` | the eight tutorial pages for those functions: every example run, the buttons, the cheat sheet | [19](docs/19_tutorial_pages.md) |
 | `workflows` | whole journeys: a file chosen in the dialog, a lesson, a query, rows or JSON saved to disk | [20](docs/20_workflows.md) |
 | `settings` | the ⚙ Settings window (the limit on keeping a file on disk, the other eight under Advanced, the explanations as tooltips) and what the app keeps for the next start: the theme, 💡, the size of the window and of the panes | [21](docs/21_settings.md) |
+| `website` | the 🌐 button between the ⓘ and the ⚙: where it is, its two-line hover, what a click hands to the browser (a stand-in that writes it down); the About window's Website row and link are in `satellites` | [23](docs/23_website.md) |
 
 [11_error_and_edge_cases.md](docs/11_error_and_edge_cases.md) cross-references every error string in the app.
 

@@ -97,6 +97,40 @@ the other `… Suggested In` keywords are the save ones. A few rules, all learne
   a few hundred lines a second) instead of a fixed budget.
 - The dialogs themselves — their look, the folder they open in — belong to the desktop and are not tested.
 
+## Writing a case about a link (or the 🌐)
+
+A link in the app, and the 🌐 in the status bar, hand an address to the person's browser. The app's browser
+crate runs `$BROWSER`, else `xdg-open`, else the desktop's own opener, and a browser that is already running
+takes the address as a new tab: a case that clicks one on a real desktop would open a page on the desk of whoever
+ran the suite. So every app the suite launches gets a stand-in (`BROWSER_OPENERS` in `resources/AppLibrary.py`):
+`$BROWSER` is a script that writes the address and opens nothing, and the app's `PATH` holds only links to it,
+named like each program the crate could try ([23_website.md](23_website.md), "How the cases keep the browser
+away"). A case says what it expects the app to have opened:
+
+```robot
+Click At    ${GLOBE_X}    ${BAR_Y}
+Opened Addresses Should Be    https://jsonquery.dev/              # exactly this, once, in this order
+Nothing Should Have Been Opened                                  # after a hover, a click beside the link...
+```
+
+- **The address has a slash at the end**: the crate normalises `https://jsonquery.dev` to `https://jsonquery.dev/`.
+- **The stand-in runs after the click**, in the background; `Opened Addresses Should Be` waits for the addresses
+  and then a little longer (`settle`, 0.6 s) for one that should not come (a click that opens the site twice), and
+  `Nothing Should Have Been Opened` waits too, before it says that nothing came. Read the list (`Opened
+  Addresses`) only when a case needs it to be exact at an instant.
+- **The list is the launch's**: it is emptied by every `Launch Jsonquery App`, so a case sees what its own app
+  opened. It counts everything: two clicks are two addresses.
+- **A case must ask about every address its app opened**: `Close Jsonquery App` (the teardown) fails the case
+  when the stand-in was given one that no `Opened Addresses Should Be` looked for. A case about something else
+  therefore fails, with the address, if one of its clicks lands on a link or on the 🌐 by mistake; a case that
+  clicks one on purpose asks (the count is what it asked for last, so ask again after the next click).
+- **A pixel that moves is a link or a button that is not the one meant**: the 🌐 took the ⚙'s place (x = 1152),
+  and a case that still clicked there opened the site, not Settings. Before a click near the right end of the
+  status bar, read the constants in `resources/docked.resource` (`SB_*`), not an older case.
+- The stand-in is checked when the display starts (executable, runs, writes its log), because the crate skips a
+  `$BROWSER` that is not executable **without a word** and falls through to the real default browser; a suite
+  whose stand-in does not work stops at its set-up.
+
 ## Writing a case about what the app keeps (settings)
 
 The app keeps `settings.json` in a folder of its own, and every `Launch Jsonquery App` gives it a new

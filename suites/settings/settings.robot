@@ -23,8 +23,9 @@ Test Teardown     Close Jsonquery App
 *** Variables ***
 ${SETTINGS_WINDOW}     JsonQuery — Settings
 ${MAIN_WINDOW}         JsonQuery
-# The ⚙ in the status bar, just left of the ⓘ (icon only: a fixed point).
-${GEAR_X}              1152
+# The ⚙ in the status bar, just left of the 🌐 that is left of the ⓘ (icon only: a fixed
+# point; a click at 1152 is the 🌐's).
+${GEAR_X}              1123
 ${GEAR_Y}              789
 # The Settings window (430x190 when it opens): the heading and, on its row, Restore
 # defaults; the one limit -- its name, the box and Reset; the Advanced header; and at

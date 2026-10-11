@@ -54,9 +54,9 @@ LOAD_BUTTON_X = 957
 CLEAR_BUTTON_X = 1001
 STATUS_AREA = [790, 0, 380, 20]
 
-# The status bar has the 🗗 as well, at x 1112-1136: with it in the region OCR misreads the text
-# beside it (as it did with the ⚙ and the ⓘ, see keywords.resource).
-STATUS_BAR = [0, 705, 1100, 95]
+# The status bar has the 🗗 as well, at x 1086-1105 (left of the ⚙, the 🌐 and the ⓘ): with it in
+# the region OCR misreads the text beside it (as it did with the ⚙ and the ⓘ, see keywords.resource).
+STATUS_BAR = [0, 705, 1070, 95]
 
 # The "..." button that opens the file dialog is in the source row too: 90 px to the right.
 BROWSE_X = 920

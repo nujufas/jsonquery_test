@@ -68,11 +68,12 @@ Library           AppLibrary.py
 # clip, hiding the very text a query-outcome wait is polling for). A single
 # short status line still reads fine inside the extra headroom.
 # It stops just short of the icons at the right end of the status bar (the ⚙ at x
-# 1143-1162 and the ⓘ at 1171-1191, which are click points, not text): OCR reads them as
-# noise, and with both there it read "[JSONPath" as "SSONPath" (TC-QRY-012, found by
-# replaying the failed screenshot with and without them; either icon alone was harmless).
-# The status text itself wraps at the full width, so a line of it that long is cut here.
-@{STATUS_BAR}             0      705    1140    95
+# 1114-1132, the 🌐 at 1141-1162 and the ⓘ at 1171-1191, which are click points, not text):
+# OCR reads them as noise, and with two of them there it read "[JSONPath" as "SSONPath"
+# (TC-QRY-012, found by replaying the failed screenshot with and without them; one icon
+# alone was harmless). The status text itself wraps at the full width, so a line of it
+# that long is cut here.
+@{STATUS_BAR}             0      705    1100    95
 # Icon-only controls OCR can't read -- fixed click points, not regions.
 ${THEME_TOGGLE_X}         1183
 ${THEME_TOGGLE_Y}         10

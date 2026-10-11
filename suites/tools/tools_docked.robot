@@ -62,6 +62,9 @@ ${DT_DIFF_HEADER_Y}  71
 @{DT_STATUS}         0      779    1000   20
 ${SETTINGS_WINDOW}   JsonQuery — Settings
 ${ABOUT_WINDOW}      JsonQuery — About
+# What the 🌐 hands to the browser: the website's address, as the app's browser crate writes it
+# (it adds the slash).
+${WEBSITE_ADDRESS}   https://jsonquery.dev/
 ${MEMBERS_JSON}      {"members":[{"name":"Ann","age":31},{"name":"Bob","age":25}],"team":"platypus"}
 ${FIXTURES}          ${CURDIR}/../../resources/fixtures
 
@@ -133,30 +136,34 @@ TC-DOCK-005 The Theme And The Tutorial Are At The Right End Of The Row Of Tabs
     Nothing Should Be At    ${NO_TOOLS_X}    ${DT_TAB_Y}
     Nothing Should Be At    ${NO_UNDOCK_X}    ${DT_TAB_Y}
 
-TC-DOCK-006 The Status Bar Has The Info, The Settings And The Undock Buttons
-    [Documentation]    From the right: ⓘ, ⚙, then 🗗, and nothing beside it.
+TC-DOCK-006 The Status Bar Has The Info, The Website, The Settings And The Undock Buttons
+    [Documentation]    From the right: ⓘ, 🌐, ⚙, then 🗗, and nothing beside it.
     [Tags]    p1
     [Setup]    Launch Docked
     Icon Should Be At    ${SB_INFO_X}    ${SB_Y}
+    Icon Should Be At    ${SB_WEBSITE_X}    ${SB_Y}
     Icon Should Be At    ${SB_SETTINGS_X}    ${SB_Y}
     Icon Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
-    Nothing Should Be At    1096    ${SB_Y}
+    Nothing Should Be At    1066    ${SB_Y}
 
 TC-DOCK-007 The Undock Button Is In The Status Bar Whichever Tab Is In Front
-    [Documentation]    The Json Query tab and each tool's tab have it, in the same place.
+    [Documentation]    The Json Query tab and each tool's tab have it, in the same place,
+    ...    with the 🌐 and the ⚙ between it and the ⓘ.
     [Tags]    p1
     [Setup]    Launch Docked
     FOR    ${tab}    IN    json    merge    format    diff    patch    validate
         Show Docked Tab    ${tab}
         Icon Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
         Icon Should Be At    ${SB_SETTINGS_X}    ${SB_Y}
+        Icon Should Be At    ${SB_WEBSITE_X}    ${SB_Y}
     END
 
 TC-DOCK-008 The Window Has No Undock Button
     [Documentation]    With the Tools in a window of their own there is nothing to undock:
-    ...    the status bar has the ⚙ and the ⓘ only.
+    ...    the status bar has the ⚙, the 🌐 and the ⓘ only.
     [Tags]    p1
     Icon Should Be At    ${SB_INFO_X}    ${SB_Y}
+    Icon Should Be At    ${SB_WEBSITE_X}    ${SB_Y}
     Icon Should Be At    ${SB_SETTINGS_X}    ${SB_Y}
     Nothing Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
     Open Tools Window
@@ -679,6 +686,24 @@ TC-DOCK-040 A Big Merge Result Opened In The Main Window Is A File In The Json Q
     App Should Have Mapped A Deleted File    merged.json
     ${names}=    List Directory    ${TMP}    pattern=*merged.json
     Should Be Empty    ${names}
+
+TC-DOCK-041 The Website Button Opens The Site From Whichever Tab Is In Front
+    [Documentation]    The 🌐 in the status bar, between the ⓘ and the ⚙, works with the Json
+    ...    Query tab in front and with each tool's tab: every click hands the address of the site
+    ...    to the browser (a stand-in, which writes it down) once.
+    [Tags]    p2
+    [Setup]    Launch Docked
+    Nothing Should Have Been Opened    settle=0.3
+    ${clicks}=    Set Variable    ${0}
+    FOR    ${tab}    IN    json    merge    format    diff    patch    validate
+        Show Docked Tab    ${tab}
+        Click At    ${SB_WEBSITE_X}    ${SB_Y}
+        ${clicks}=    Evaluate    ${clicks} + 1
+        ${expected}=    Evaluate    ['${WEBSITE_ADDRESS}'] * ${clicks}
+        Opened Addresses Should Be    @{expected}
+    END
+    ${windows}=    Count Windows    ${TOOLS_WINDOW}
+    Should Be Equal As Integers    ${windows}    0
 
 *** Keywords ***
 Launch Docked With A Low Limit

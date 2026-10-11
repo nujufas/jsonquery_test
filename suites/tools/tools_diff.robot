@@ -177,7 +177,7 @@ TC-DIF-001 Compare Needs Both Documents
     Compare Button Should Be Disabled
     Press Main Button
     Diff View Should Be Selected    documents
-    Region Should Be Plain    0    560    900    18
+    Region Should Be Plain    @{STATUS_LINE}
     Paste Into Box    ${DIFF_RIGHT_X}    ${DIFF_BOX_Y}    ${RIGHT_DOC}
     Compare Button Should Be Enabled
 
@@ -218,7 +218,7 @@ TC-DIF-004 Swap After A Comparison Goes Back To The Documents
     Sleep    0.5s
     Diff View Should Be Selected    documents
     Tab Row Should Not Offer Changes
-    Region Should Be Plain    0    560    900    18
+    Region Should Be Plain    @{STATUS_LINE}
 
 TC-DIF-005 The Changes List Names Each Difference
     [Documentation]    Each change is a row: its kind (Changed, Removed, Added), its
@@ -380,7 +380,7 @@ TC-DIF-014 Editing A Document Drops The Comparison
     Sleep    0.5s
     Diff View Should Be Selected    documents
     Tab Row Should Not Offer Changes
-    Region Should Be Plain    0    560    900    18
+    Region Should Be Plain    @{STATUS_LINE}
 
 TC-DIF-015 A Second Comparison Replaces The First
     [Documentation]    Compare can be pressed again after an edit: the page
@@ -465,7 +465,7 @@ TC-DIF-020 The Two Columns Scroll As One
 TC-DIF-021 The Open Document Can Be One Of The Two
     [Documentation]    "Open document" in the Left header takes the document open
     ...    in the main window as Left, and the comparison runs on it.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Load Fixture Via Paste    {"x":1,"y":"platypus"}
     Open Tool    diff
     Click At    ${OPEN_DOCUMENT_X}    ${DIFF_HEADER_Y}

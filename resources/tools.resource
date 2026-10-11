@@ -20,7 +20,10 @@ Documentation     Layout constants and keywords shared by the Tools-window suite
 Resource          keywords.resource
 
 *** Variables ***
-${TOOLS_WINDOW}        jsonquery — Tools
+# Where the Tools are in this run: `window` (the default) or `docked`, which
+# resources/docked_tools.py says, with the title that goes with it (the main window's).
+${TOOLS_PLACE}         window
+${TOOLS_WINDOW}        JsonQuery — Tools
 # The 🛠 button in the main window's toolbar: icon only, so a fixed point (the first
 # button left of the 📖 tutorial button).
 ${TOOLS_X}             1094
@@ -35,6 +38,8 @@ ${COMMAND_Y}           34
 # The page's main button (Merge, Format, Compare, Apply, Validate), first in the command row.
 ${RUN_X}               34
 @{TOOLS_STATUS}        0      558    900    22
+# The line of the status bar over the pages' own text (what a case that wants it plain looks at).
+@{STATUS_LINE}         0      560    900    18
 # The headers of the two panes (a title, then buttons pinned at the right), and what
 # is under them.
 ${HEADER_Y}            63
@@ -134,11 +139,25 @@ ${MERGE_HEADER_Y}      120
 @{MERGE_FILES}         8      130    433    410
 @{MERGE_RESULT}        456    130    440    410
 
+# The ⚓ that docks the Tools in the main window, at the right end of the window's row of
+# tabs (900 wide: 19 from the edge). The Tools docked are in suites/tools/tools_docked.robot
+# and resources/docked.resource.
+${WINDOW_DOCK_X}       881
+${WINDOW_DOCK_Y}       11
+
 *** Keywords ***
 Open Tools Window
+    [Documentation]    The Tools window is open on its Merge page. Docked (a run with
+    ...    `--variablefile resources/docked_tools.py`, see there) there is no window to
+    ...    open: the Tools are tabs of the main window and Merge's is the one picked, as it
+    ...    is when the window opens.
     Switch To Main Window
-    Click At    ${TOOLS_X}    ${TOOLS_Y}
-    Wait Until Window Exists    ${TOOLS_WINDOW}
+    IF    '${TOOLS_PLACE}' == 'docked'
+        Pick Tool    merge
+    ELSE
+        Click At    ${TOOLS_X}    ${TOOLS_Y}
+        Wait Until Window Exists    ${TOOLS_WINDOW}
+    END
 
 Pick Tool
     [Documentation]    Clicks a tool's tab (merge, format, diff, patch or

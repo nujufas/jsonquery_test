@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (October 2026): **640 test cases in 24 suites**.
+touches your desktop. Status (October 2026): **680 test cases in 26 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
 
 Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
 app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
@@ -57,6 +57,7 @@ libegl1 mesa-vulkan-drivers libvulkan1` (the [CI job](#continuous-integration) i
 ```sh
 ./run.sh                                                      # every suite (over an hour on one display)
 ./run_parallel.sh                                             # every suite, in 6 lanes at once (about 15 minutes)
+./run_docked.sh                                               # the other half: the same suites with the Tools docked in the main window
 ./run.sh suites/query_engines/                                # one suite (the target path comes FIRST)
 ./run.sh suites/tools/tools_diff.robot                        # one file
 ./run.sh suites/tools/tools_diff.robot --test 'TC-DIF-007*'   # one case
@@ -66,6 +67,24 @@ libegl1 mesa-vulkan-drivers libvulkan1` (the [CI job](#continuous-integration) i
 Everything after the target path goes to Robot, so its other options work too (`--exclude`, `--loglevel`, ...).
 Every case is tagged with its priority, `p1` (core correctness, must pass before a release), `p2` or `p3`, and
 every suite file with the name of its area (`search`, `popout`, `tools`, `diff`, ...).
+
+### With the Tools docked in the main window
+
+The app's Tools open in a window of their own, and can be docked in the main window as tabs
+([docs/22_tools_docked.md](docs/22_tools_docked.md)). The suite tests both: the cases of
+`suites/tools/tools_docked*.robot` dock and undock by themselves and run with everything else, and
+`./run_docked.sh` runs the other suites a second time with the Tools docked, in two passes:
+
+```sh
+./run_docked.sh                    # both passes, 6 lanes each; results in results/docked/tools/ and results/docked/main/
+./run_docked.sh -j 4 tools         # the Tools suites, docked (their pages are the window's pages, pixel for pixel)
+./run_docked.sh main               # the suites of the main view, with the Json Query tab in front
+```
+
+No case is changed for it: the test library starts every app docked and moves the main view's points by the
+height of the row of tabs (`JQ_TOOLS_PLACE`, `JQ_WINDOW_SIZE`, `JQ_DOCKED_DY`, see
+[Configuration](#configuration)), and a case that cannot be the same case docked is tagged `window-only`,
+`main-layout` or `undocked-only` and left out of it ([docs/writing_tests.md](docs/writing_tests.md)).
 
 ### Choosing the build to test
 
@@ -129,7 +148,11 @@ All optional; unset, nothing changes.
 | `JQ_TEST_DISPLAY` | `:99` | The X display to start (or to reuse, if an Xvfb is already running there). |
 | `JQ_TEST_RESULTS` | `results/` | Where Robot writes its output. |
 | `JQ_TEST_APP_LOG` | unset | File that receives the app's stderr (the tracing of a debug build). |
+| `JQ_TEST_HOME_ROOT` | `/tmp` | Where each launch's settings folder is made (a short path matters: the Settings window wraps a long one). |
 | `JQ_PARALLEL_DISPLAY_BASE` | `120` | `run_parallel.sh` only: the first display; lane *n* uses base + *n* - 1. |
+| `JQ_TOOLS_PLACE` | unset | `docked` starts every app with the Tools docked in the main window (set by `run_docked.sh`). |
+| `JQ_WINDOW_SIZE` | unset | `<width>x<height>`: the size the main window starts at (`run_docked.sh` gives it the Tools window's, `900x580`). |
+| `JQ_DOCKED_DY` | unset | How many pixels lower than the suites say the main window's content under the toolbar is: the height of the row of tabs, `23`, with the Tools docked (`run_docked.sh`). |
 
 ## Troubleshooting
 
@@ -207,7 +230,7 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `saving` | the Save... buttons and menu items through the file dialog: default names, file types, the file written, errors, Ctrl+S | [09](docs/09_saving.md) |
 | `keyboard_shortcuts` | Ctrl+F, Ctrl+Enter, Enter | [10](docs/10_keyboard_shortcuts.md) |
 | `popout` | the Query, Source and Results panes in windows of their own | [12](docs/12_popout_panes.md) |
-| `tools` | the Tools window: Merge, Format, Diff, Patch, Validate, and their file dialogs (seven files) | [13](docs/13_tools_window.md) |
+| `tools` | the Tools window: Merge, Format, Diff, Patch, Validate, and their file dialogs; and the Tools docked in the main window as tabs: the move both ways, the row of tabs, the Json Query tab, the keys, the drops, what is kept (ten files) | [13](docs/13_tools_window.md), [22](docs/22_tools_docked.md) |
 | `satellites` | the tutorial and About windows | [14](docs/14_tutorial_and_about_windows.md) |
 | `pane_headers` | the panes' titles and headers, checked in pixels | [15](docs/15_pane_headers.md) |
 | `drag_and_drop` | files dropped on the main window, the Source window and the Tools pages | [16](docs/16_drag_and_drop.md) |
@@ -240,6 +263,7 @@ python3 performance/perf.py compare performance/runs/<before>.json performance/r
 ```
 run.sh                  the entry point: builds the app, sets up .venv/, starts Xvfb and fluxbox, runs Robot
 run_parallel.sh         the same for every suite at once, in lanes, with the results merged
+run_docked.sh           the suites again with the Tools docked in the main window (two passes, through run_parallel.sh)
 requirements.txt        the Python dependencies
 suites/<area>/          the Robot test cases, one directory per area
 resources/
@@ -247,6 +271,9 @@ resources/
   fake_portal.py        the stand-in for the desktop's file-chooser portal (a private D-Bus), which answers the file dialogs
   keywords.resource     shared layout constants and keywords
   tools.resource        layout constants and keywords of the Tools window
+  docked.resource       the row of tabs and the status bar of the main window with the Tools docked, and the keywords that go to a tab
+  docked_tools.py       a variable file: the Tools suites run with the Tools docked (tab positions, the title, the status line)
+  docked_main.py        a variable file: the main view with the row of tabs over it (the points that moving the view down does not make right)
   results.resource      the Results pane, the CSV/TSV note, the file dialogs
   tutorial.resource     the tutorial window's lessons and buttons
   xdnd.py               an XDND source, for dropping files on the app
@@ -264,7 +291,7 @@ results/, .venv/        generated, and ignored by git
   the tooling and the environment findings.
 - [docs/99_traceability_matrix.md](docs/99_traceability_matrix.md): every test case ID with its status
   (`Passing`, `Blocked` or `Not implemented`, each with its reason; nothing is blocked now).
-- `docs/01_*.md` to `docs/20_*.md`: the requirements of each area, linked from the table above.
+- `docs/01_*.md` to `docs/22_*.md`: the requirements of each area, linked from the table above.
 
 ## Continuous integration
 

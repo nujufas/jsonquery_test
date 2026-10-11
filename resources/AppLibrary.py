@@ -24,6 +24,13 @@ confirmed environment findings that shaped this):
   and lets a test say what the next dialog returns (`Portal Will Save To`,
   `Portal Will Cancel`, ...) and read what the app asked for
   (`Get Portal Requests`). The app's side of the dialog is the real thing.
+- The suites run twice over: with the Tools in a window of their own (the default) and with
+  them docked in the main window, as tabs. The environment says which, and every app the run
+  starts is set up that way (see `_profile_settings` and `_profile_point`):
+  JQ_TOOLS_PLACE=docked starts it docked, JQ_WINDOW_SIZE=900x580 gives the main window the
+  size of the Tools window (a docked page is then the window's own, pixel for pixel), and
+  JQ_DOCKED_DY=23 moves what is under the row of tabs of the main window down by its height
+  (the suites of the main view, whose coordinates are those of the window with no row of tabs).
 """
 
 import collections
@@ -103,6 +110,9 @@ class AppLibrary:
         # launch -- the person running the tests keeps their own, and so does each
         # case -- unless a case asks to start again from the same one.
         self._app_home = None
+        # The docked profile (see the module's docstring): how far the main window's
+        # content is moved down in the suites' coordinates; 0 is no profile.
+        self._docked_dy = int(os.environ.get("JQ_DOCKED_DY", "0") or 0)
 
     # -- display lifecycle (once per suite run) -----------------------------
 
@@ -217,7 +227,12 @@ class AppLibrary:
             )
         if not (keep_home and self._app_home and os.path.isdir(self._app_home)):
             self._forget_app_home()
-            self._app_home = tempfile.mkdtemp(prefix="jq-home-")
+            self._app_home = self._make_app_home()
+        # Every app starts as the run's profile says, whatever the case before it set.
+        self._docked_dy = int(os.environ.get("JQ_DOCKED_DY", "0") or 0)
+        # With `keep_home` and no text of its own the file is the one the last launch left.
+        if settings is not None or not keep_home:
+            settings = self._profile_settings(settings)
         if settings is not None:
             with open(os.path.join(self._app_home, "settings.json"), "w") as f:
                 f.write(settings)
@@ -268,6 +283,46 @@ class AppLibrary:
             env={**os.environ, "DISPLAY": XVFB_DISPLAY},
         )
         time.sleep(0.5)
+
+    @staticmethod
+    def _make_app_home():
+        """A new empty folder for the settings of one launch, with a SHORT path: the Settings
+        window names the file at its foot and wraps a long path onto lines of their own, which the
+        cases that read that foot do not expect. A lane of `run_parallel.sh` has a TMPDIR of its own
+        under the results (60 characters or more), so the folder is made in /tmp (or in the folder
+        JQ_TEST_HOME_ROOT names) when it can be, and under TMPDIR when it cannot."""
+        root = os.environ.get("JQ_TEST_HOME_ROOT", "/tmp")
+        try:
+            return tempfile.mkdtemp(prefix="jq-home-", dir=root)
+        except OSError:
+            return tempfile.mkdtemp(prefix="jq-home-")
+
+    @staticmethod
+    def _profile_settings(settings):
+        """The text of the settings.json a launch starts with, with what the run's profile
+        asks for added to what the case gave (the case's own choices win): JQ_TOOLS_PLACE=docked
+        starts the app with the Tools docked, JQ_WINDOW_SIZE=<width>x<height> at that size. With
+        neither set the text is the case's (None: no file). A text that is not JSON (a case that
+        damages the file on purpose) is left alone."""
+        place = os.environ.get("JQ_TOOLS_PLACE", "")
+        size = os.environ.get("JQ_WINDOW_SIZE", "")
+        if place != "docked" and not size:
+            return settings
+        try:
+            data = json.loads(settings) if settings else {}
+        except ValueError:
+            return settings
+        if not isinstance(data, dict):
+            return settings
+        if place == "docked":
+            data.setdefault("tools", "docked")
+        if size:
+            width, height = (int(part) for part in size.lower().split("x"))
+            window = data.setdefault("window", {})
+            if isinstance(window, dict):
+                window.setdefault("width", width)
+                window.setdefault("height", height)
+        return json.dumps(data)
 
     def _forget_app_home(self):
         if self._app_home:
@@ -407,7 +462,7 @@ class AppLibrary:
 
     def _find_window_id(self):
         result = _run(
-            ["xdotool", "search", "--name", "^jsonquery$"],
+            ["xdotool", "search", "--name", "^JsonQuery$"],
             env={**os.environ, "DISPLAY": XVFB_DISPLAY},
         )
         ids = [line for line in result.stdout.splitlines() if line.strip()]
@@ -445,7 +500,7 @@ class AppLibrary:
     def _title_pattern(title):
         """A regex for `xdotool search --name` matching exactly `title`.
         xdotool reads the legacy (Latin-1) window name, in which the em dash of
-        "jsonquery — Query" is three odd characters that a literal pattern
+        "JsonQuery — Query" is three odd characters that a literal pattern
         never matches -- so each run of non-ASCII characters in the title
         becomes a wildcard."""
         parts = re.split(r"[^\x00-\x7f]+", title)
@@ -613,9 +668,59 @@ class AppLibrary:
         values = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
         return int(values["WIDTH"]), int(values["HEIGHT"])
 
+    # The strip at the foot of a window that stays where it is when the docked profile moves
+    # the rest down: the status bar, and what is anchored to the bottom (a hit list).
+    _FOOT = 30
+
+    def _profile_y(self, y, height=0):
+        """The y, in the window, of a point (`height` 0) or of the top of a region of that
+        height, given in the suites' coordinates. In the docked profile the main window has a
+        row of tabs above the source field, so what the suites place under the toolbar is
+        JQ_DOCKED_DY lower; a point or a region that reaches into the foot of the window is
+        not moved, for the foot does not move. Other windows (the tutorial, a popped-out
+        pane) and a run without the profile are as the suites give them."""
+        dy = self._docked_dy
+        if not dy or not self._window_id or self._window_id != self._main_window_id:
+            return y
+        _, window_height = self.get_window_size()
+        if y + height >= window_height - self._FOOT:
+            return y
+        return y + dy
+
+    def _suite_y(self, window_y):
+        """The y, in the suites' coordinates, of a point of the window: the one that a click
+        at it (`_profile_y`) puts on the window's `window_y`. What a word found by OCR is
+        reported as, so that a later click lands on it whether or not the region was moved."""
+        dy = self._docked_dy
+        if not dy or not self._window_id or self._window_id != self._main_window_id:
+            return window_y
+        _, window_height = self.get_window_size()
+        if window_y >= window_height - self._FOOT:
+            return window_y
+        return window_y - dy
+
+    def _suite_y_in(self, y, height, offset):
+        """The suites' y of a point `offset` pixels under the top of the region (y, height)."""
+        return self._suite_y(self._profile_y(int(y), int(height)) + offset)
+
+    @keyword("Set Layout Shift")
+    def set_layout_shift(self, dy):
+        """From now on the main window's content under the toolbar is `dy` lower than the
+        suites place it (see `_profile_y`), until the next launch; 0 is as the suites say. For
+        a case that has the Tools docked and goes between the Json Query tab, whose layout is
+        the suites' moved down by the row of tabs, and the page of a tool, whose layout is the
+        window's own."""
+        self._docked_dy = int(dy)
+
+    @keyword("Get Layout Shift")
+    def get_layout_shift(self):
+        """What `Set Layout Shift` set (or the run's JQ_DOCKED_DY): how far down the main
+        window's content is moved."""
+        return self._docked_dy
+
     def _to_absolute(self, x, y):
         ox, oy = self._window_origin()
-        return ox + x, oy + y
+        return ox + x, oy + self._profile_y(y)
 
     # -- mouse / keyboard, relative to the app window ------------------------
 
@@ -805,7 +910,8 @@ class AppLibrary:
         `_embed_screenshot`) -- callers that only need a throwaway capture
         (e.g. `Get Pixel Color`'s 1x1 probe) pass `log=False` to skip this.
         `path`, if given, is an *additional* save location."""
-        ax, ay = self._to_absolute(int(x), int(y))
+        ox, oy = self._window_origin()
+        ax, ay = ox + int(x), oy + self._profile_y(int(y), int(height))
         img = pyautogui.screenshot(region=(ax, ay, int(width), int(height)))
         if path:
             img.save(path)
@@ -990,7 +1096,7 @@ class AppLibrary:
             if target_l in w["text"].lower():
                 return (
                     int(x) + w["left"] + w["width"] / 2,
-                    int(y) + w["top"] + w["height"] / 2,
+                    self._suite_y_in(y, height, w["top"] + w["height"] / 2),
                 )
         lines = {}
         for w in words:
@@ -1003,7 +1109,7 @@ class AppLibrary:
                 right = max(w["left"] + w["width"] for w in line_words)
                 top = min(w["top"] for w in line_words)
                 bottom = max(w["top"] + w["height"] for w in line_words)
-                return (int(x) + (left + right) / 2, int(y) + (top + bottom) / 2)
+                return (int(x) + (left + right) / 2, self._suite_y_in(y, height, (top + bottom) / 2))
         raise AssertionError(
             f"Text {target!r} not found in region ({x},{y},{width},{height}); "
             f"OCR saw: {[w['text'] for w in words]}"
@@ -1029,7 +1135,7 @@ class AppLibrary:
         for w in words:
             if target_l in w["text"].lower():
                 hits.append(
-                    (int(x) + w["left"] + w["width"] / 2, int(y) + w["top"] + w["height"] / 2)
+                    (int(x) + w["left"] + w["width"] / 2, self._suite_y_in(y, height, w["top"] + w["height"] / 2))
                 )
         lines = {}
         for w in words:
@@ -1049,7 +1155,7 @@ class AppLibrary:
                             top = min(w["top"] for w in run)
                             bottom = max(w["top"] + w["height"] for w in run)
                             hits.append(
-                                (int(x) + (left + right) / 2, int(y) + (top + bottom) / 2)
+                                (int(x) + (left + right) / 2, self._suite_y_in(y, height, (top + bottom) / 2))
                             )
                         break
                     if len(joined) > len(target_l) + 12:
@@ -1212,7 +1318,7 @@ class AppLibrary:
                 continue
             xs = [xx for yy in range(top, bottom + 1) for xx in per_row[yy]]
             found.append(
-                (int(x) + (min(xs) + max(xs)) / 2, int(y) + (top + bottom) / 2)
+                (int(x) + (min(xs) + max(xs)) / 2, self._suite_y_in(y, height, (top + bottom) / 2))
             )
         return found
 

@@ -24,7 +24,7 @@ ${PEOPLE_CSV}          .[] | [.name, .age] | @csv
 ${PEOPLE_TSV}          .[] | [.name, .age] | @tsv
 ${PEOPLE_CSV_ROWS}     "Alice",34\n"Bob",19\n"Carol",45
 ${PEOPLE_TSV_ROWS}     Alice\t34\nBob\t19\nCarol\t45
-${RESULTS_WINDOW}      jsonquery — Results
+${RESULTS_WINDOW}      JsonQuery — Results
 # In the Results pane's window (600 wide) everything of the pane is 600 left of and 125
 # above where it is in the main window: the header at y=17, Save... at x=543, the root row
 # at y=39, the first result at y=60, and the note at x 148-200.

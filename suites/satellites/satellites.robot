@@ -1,8 +1,8 @@
 *** Settings ***
 Documentation     The tutorial window (📖) and the About window (ⓘ) -- see
 ...               docs/14_tutorial_and_about_windows.md. Both are native
-...               windows of their own (titled "jsonquery — Tutorial" and
-...               "jsonquery — About"), like the Tools window: eframe redraws
+...               windows of their own (titled "JsonQuery — Tutorial" and
+...               "JsonQuery — About"), like the Tools window: eframe redraws
 ...               each by itself and the app answers through a lock, so they keep
 ...               working when the main window is not being redrawn (see "Not
 ...               reachable" in 13_tools_window.md for the Wayland bug that
@@ -23,9 +23,9 @@ Test Teardown     Close Jsonquery App
 *** Variables ***
 # The app is its own repository (jsonquery_gui), beside this one; run.sh exports JQ_APP_DIR.
 ${APP_DIR}             %{JQ_APP_DIR=${CURDIR}/../../../jsonquery_gui}
-${TUTORIAL_WINDOW}     jsonquery — Tutorial
-${ABOUT_WINDOW}        jsonquery — About
-${TOOLS_WINDOW}        jsonquery — Tools
+${TUTORIAL_WINDOW}     JsonQuery — Tutorial
+${ABOUT_WINDOW}        JsonQuery — About
+${TOOLS_WINDOW}        JsonQuery — Tools
 # The icon buttons of the main window's toolbar (icon only, so fixed points).
 ${TUTORIAL_X}          1122
 ${TUTORIAL_Y}          11
@@ -95,7 +95,7 @@ Cargo Version
 
 *** Test Cases ***
 TC-SAT-001 The Tutorial Button Opens The Tutorial Window
-    [Documentation]    One click on 📖 opens a window titled "jsonquery — Tutorial"
+    [Documentation]    One click on 📖 opens a window titled "JsonQuery — Tutorial"
     ...    with a tab for each query language and the lessons of the first.
     [Tags]    p1
     Open Tutorial
@@ -275,7 +275,7 @@ TC-SAT-014 The Tutorial Follows The Main Window's Theme
 
 TC-SAT-020 The Info Button Opens The About Window
     [Documentation]    The ⓘ button at the right end of the status bar opens a window
-    ...    titled "jsonquery — About": the name and version, the license, and the
+    ...    titled "JsonQuery — About": the name and version, the license, and the
     ...    links.
     [Tags]    p1
     Open About
@@ -315,7 +315,7 @@ TC-SAT-030 All The Windows Can Be Open Together
     [Documentation]    The Tools window, the tutorial and About open at once, each
     ...    a window of its own, and the main window still takes a query and
     ...    shows its result.
-    [Tags]    p1
+    [Tags]    p1    window-only
     Click At    ${TOOLS_X}    ${TUTORIAL_Y}
     Wait Until Window Exists    ${TOOLS_WINDOW}    timeout=8
     Open Tutorial
@@ -323,6 +323,7 @@ TC-SAT-030 All The Windows Can Be Open Together
     Switch To Main Window
     ${windows}=    List Windows
     ${names}=    Evaluate    [w[1] for w in $windows]
+    Should Contain    ${names}    JsonQuery
     Should Contain    ${names}    ${TOOLS_WINDOW}
     Should Contain    ${names}    ${TUTORIAL_WINDOW}
     Should Contain    ${names}    ${ABOUT_WINDOW}
@@ -334,7 +335,7 @@ TC-SAT-030 All The Windows Can Be Open Together
 TC-SAT-031 Closing One Window Leaves The Others
     [Documentation]    Closing the tutorial leaves About and the Tools window as
     ...    they were.
-    [Tags]    p2
+    [Tags]    p2    window-only
     Click At    ${TOOLS_X}    ${TUTORIAL_Y}
     Wait Until Window Exists    ${TOOLS_WINDOW}    timeout=8
     Open Tutorial

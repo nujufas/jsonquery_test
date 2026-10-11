@@ -54,7 +54,7 @@ TC-TWIN-008 Patch JSON Applies A Patch And Opens The Result
     [Documentation]    A JSON Patch applied to a document shows the patched
     ...    document; "Open in main window" makes it the loaded one, named
     ...    "(patched)" in the toolbar.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Open Tool    patch
     Fill Patch Page    ${DOC}    ${OPS}
     Apply Patch
@@ -201,7 +201,7 @@ TC-PAT-012 The Patched Document Becomes The Main Window's Document
     [Documentation]    After "Open in main window" the main window's toolbar names
     ...    the document "(patched)" and its tree shows the patched document: the
     ...    array "b" now has three items.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Open Tool    patch
     Fill Patch Page    ${DOC}    ${OPS}
     Apply Patch
@@ -243,7 +243,7 @@ TC-PAT-014 Clear Empties A Box
 TC-PAT-015 The Open Document Is Patched
     [Documentation]    "Open document" in the Document header uses the document
     ...    open in the main window, and the patch is applied to it.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Load Fixture Via Paste    {"x":"platypus"}
     Open Tool    patch
     Click At    ${OPEN_DOCUMENT_X}    ${HEADER_Y}

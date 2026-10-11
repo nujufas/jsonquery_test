@@ -201,7 +201,7 @@ settings. So `Launch Jsonquery App` points the app at a folder of its own, a new
 it is an absolute path), empty — the first start of a new user, in the app's defaults — and removes it
 when the app is closed. A case that needs the app to start as it was left says so (`keep_home=${TRUE}`),
 and one that needs a file in it gives its text (`settings=<text>`); see [21_settings.md](21_settings.md).
-The folder is made under `TMPDIR`.
+The folder is made with a short path, in `/tmp` (or the folder `JQ_TEST_HOME_ROOT` names; under `TMPDIR` when that cannot be written): the Settings window names the file at its foot and wraps a long path onto lines of their own, and a lane of `run_parallel.sh` has a `TMPDIR` of 60 characters or more.
 
 **Room in `/tmp`.** The X server needs a little room in `/tmp` to start: the compiler of its keyboard
 map writes `/tmp/server-<n>.xkm`, and when that fails ("Cannot close … (not enough space?)" in its
@@ -212,6 +212,28 @@ filesystem with a quota (this dev machine's is a RAM-backed one every session of
 it is sometimes full), free it, or run the suite where `/tmp` is on disk — a mount namespace in which a
 folder on disk is bound over `/tmp` is enough, and nothing in the suite needs the real one. The
 files the suite itself makes go to `TMPDIR` (`run_parallel.sh` gives each lane its own).
+
+## Two ways to run: the Tools in a window, and docked in the main window
+
+The Tools open in a window of their own, and that is the default; they can also be docked in the main
+window as tabs ([22_tools_docked.md](22_tools_docked.md)). The suite is run both ways, so that every
+tool, and the main view with a row of tabs over it, is exercised through the real window in each place.
+
+- **`./run_parallel.sh`** (or `./run.sh`) is the default way, and runs everything, including the cases that
+  dock and undock by themselves (`suites/tools/tools_docked*.robot`).
+- **`./run_docked.sh`** runs the other suites with the Tools docked, in two passes. The test library reads
+  the environment to start every app docked (`JQ_TOOLS_PLACE=docked`: the settings file it is given says
+  so), at the Tools window's size (`JQ_WINDOW_SIZE=900x580`: a docked page is the window's page *pixel for
+  pixel*, measured on all five, so the Tools suites are the same cases with a different tab row and status
+  bar, `resources/docked_tools.py`), or with what the suites place under the toolbar moved down by the row of
+  tabs (`JQ_DOCKED_DY=23`, `AppLibrary._profile_y`, with `resources/docked_main.py` for what a move does not
+  make right). Neither changes a case; where a case cannot be the same case docked it is tagged
+  (`window-only`, `main-layout`, `undocked-only`) and left out of the docked pass, and the docked suite has the
+  case that is its counterpart.
+
+Nothing of this is needed to write an ordinary case: a case that is about the main view, or a tool, is
+written once, with the suites' coordinates, and runs both ways. [writing_tests.md](writing_tests.md) says
+what to do when a new point is not where the move puts it.
 
 ## Tooling
 

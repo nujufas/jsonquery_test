@@ -2,7 +2,7 @@
 Documentation     The tutorial window (the 📖 button), for the suites that read its pages:
 ...               tutorial_pages (the lessons that teach the jq functions the app adds) and
 ...               any other that needs a lesson open. The window is a native window of its
-...               own, titled "jsonquery — Tutorial"; once `Switch To Window` has made it
+...               own, titled "JsonQuery — Tutorial"; once `Switch To Window` has made it
 ...               current, every coordinate here is relative to it. (satellites.robot has
 ...               the same constants for the cases about the window itself.)
 ...
@@ -14,7 +14,7 @@ Documentation     The tutorial window (the 📖 button), for the suites that rea
 Resource          keywords.resource
 
 *** Variables ***
-${TUTORIAL_WINDOW}     jsonquery — Tutorial
+${TUTORIAL_WINDOW}     JsonQuery — Tutorial
 ${TUTORIAL_BUTTON_X}   1122
 ${TUTORIAL_BUTTON_Y}   11
 @{LANGUAGE_TABS}       0      6      420    32

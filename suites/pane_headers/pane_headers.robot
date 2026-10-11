@@ -21,7 +21,7 @@ Test Teardown     Close Jsonquery App
 
 *** Variables ***
 ${PEOPLE}            [{"name":"Alice","age":34},{"name":"Bob","age":19}]
-${SOURCE_WINDOW}     jsonquery — Source
+${SOURCE_WINDOW}     JsonQuery — Source
 # The titles: the glyphs of "Source" at x 8-49, y 138-147 and of "Results" at x 609-652,
 # y 137-147. A box just around each, clear of the Tree/Text tabs that follow them.
 @{SOURCE_TITLE}      0      128    64     28
@@ -154,6 +154,6 @@ TC-HDR-009 The Source Window Has The Same Small Title And No Line
 TC-HDR-010 The Tools Window's Panes Have The Same Titles
     [Documentation]    The Tools window's headers are built from the same parts as
     ...    the main window's: its "Result" title is as small.
-    [Tags]    p1
+    [Tags]    p1    uses-tools
     Open Tool    format
     Ink Height Should Be At Most    11    @{TOOLS_RESULT_TITLE}

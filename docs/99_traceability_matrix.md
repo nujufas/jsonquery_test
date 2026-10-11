@@ -16,6 +16,16 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-11: 26 suites, 680 test cases, run two ways** — the Tools can be docked in the main window as tabs
+(Json Query first, then the five tools; ⚓ in the Tools window docks them, 🗗 in the status bar undocks them), and the whole
+suite is run with them in their window (the default) and with them docked. `suites/tools/tools_docked.robot` (38 cases)
+and `tools_docked_tutorial.robot` (2) are the dock's own, TC-DOCK-001 to 040 ([22_tools_docked.md](22_tools_docked.md)); the
+other suites run docked through `./run_docked.sh` without a case changed: the Tools suites with their pages in the tabs of
+a main window of the Tools window's size, and every suite of the main view with the Json Query tab in front, the
+library moving the points under the toolbar down by the row of tabs. The window titles are `JsonQuery` and `JsonQuery — …`
+now (TC-WIN-001, TC-POP-001, TC-SAT-030 and TC-SET-001 pin the spelling), and the five Tools pictures of the app's README
+show the ⚓.
+
 **Status as of 2026-10-09 (night): 24 suites, 640 test cases** — a line of the Diff page's side-by-side view is typed over with a
 double click now (a single click only picks, so that several lines can be picked), and after a move the view stays where it
 was and picks nothing, as it does after a line was typed over: `suites/tools/tools_diff.robot`, TC-DIF-040 and 041 added,
@@ -941,7 +951,63 @@ engine edge) are covered by `cargo test`.
 | TC-SET-025 | The Size Of The Panes Is Kept | P2 | **Passing** | `suites/settings/` |
 | TC-SET-026 | The Panes Are As They Were Left | P2 | **Passing** | `suites/settings/` |
 
+## Tools docked — [22_tools_docked.md](22_tools_docked.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-DOCK-001 | The Tools Window Has A Button That Docks It In The Main Window | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-002 | The Row Of Tabs Has Json Query First And A Tab For Each Tool | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-003 | The Tool That Was In Front In The Window Is In Front Docked | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-004 | What Was Typed In A Page Is Still There Docked | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-005 | The Theme And The Tutorial Are At The Right End Of The Row Of Tabs | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-006 | The Status Bar Has The Info, The Settings And The Undock Buttons | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-007 | The Undock Button Is In The Status Bar Whichever Tab Is In Front | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-008 | The Window Has No Undock Button | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-009 | The Undock Button Takes The Tools Out Into A Window | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-010 | Docking And Undocking Again Leaves A Page As It Was | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-011 | The Tools Start As A Window | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-012 | Docked Is Kept For The Next Start | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-013 | A Window Again Is Kept Too | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-014 | A Place The App Does Not Know Starts The Tools As A Window | P2 | **Passing** | `suites/tools/` |
+| TC-DOCK-015 | Started Docked The Json Query Tab Is In Front | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-016 | The Json Query Tab Is The Main View With The Source Field Under The Row Of Tabs | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-017 | A Document Is Loaded And Queried In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-018 | The Source Field Loads A File In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-019 | A Visit To A Tool And Back Leaves The Json Query Tab As It Was | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-020 | Each Tool's Tab Shows Its Page | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-021 | Ctrl+Enter On A Tool's Tab Runs The Tool, Not The Query | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-022 | Ctrl+F And Ctrl+S Do Nothing On A Tool's Tab | P2 | **Passing** | `suites/tools/` |
+| TC-DOCK-023 | The Status Bar Says What The Tab In Front Has To Say | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-024 | Format Takes The Document Open In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-025 | A Merged Document Opened In The Main Window Is Shown In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-026 | A Patched Document Opened In The Main Window Is Shown In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-027 | A Problem Shown In The Main Window Is Shown In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-028 | A File Dropped On The Json Query Tab Is Opened As The Document | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-029 | A File Dropped On A Tool's Tab Goes Into That Tool's Box | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-030 | Several Files Dropped On The Json Query Tab Go To Merge's Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-031 | The Theme Button In The Row Of Tabs Changes The Theme Of The Page In Front | P2 | **Passing** | `suites/tools/` |
+| TC-DOCK-032 | The Settings And The Info Buttons Open Their Windows From A Tool's Tab | P2 | **Passing** | `suites/tools/` |
+| TC-DOCK-033 | A Tools Window Maximized Over The Main Window Docks Into It | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-034 | A Docked Diff Compares Two Documents | P2 | **Passing** | `suites/tools/` |
+| TC-DOCK-035 | The Tutorial Button In The Row Of Tabs Opens The Tutorial | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-036 | An Example Tried From A Tool's Tab Runs In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-037 | Diff Takes The Document Open In The Json Query Tab As One Of The Two | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-038 | The Document Open In The Json Query Tab Is Patched | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-039 | A Double-Click On A Problem Shows It In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-040 | A Big Merge Result Opened In The Main Window Is A File In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
+
 ## Coverage summary
+
+**2026-10-11 evening, the Tools docked, run both ways:** 640 → 680 cases in 26 suites (TC-DOCK-001 to 040, the
+rest unchanged). The last full runs: `run_parallel.sh -j 5`, 679 of 680 (TC-DIF-029, a Ctrl+click that was not
+delivered, failed in that run and passed three times in a row alone); `run_docked.sh`, the tools pass 151 of 151 and the
+main-view pass 460 of 461 (TC-SET-001: the foot of the Settings window wrapped because the lane's folder was a long
+path; the settings folder is made with a short path now, and the settings suite, run again in a lane folder that deep,
+docked and not, passed 23 of 23). A first docked pass of the main view had 54 failures, every one a point that the row of
+tabs moves differently or that the app places by the window (the Search dialog and its list of hits, the source row's
+buttons and labels, the 🗗 in the status bar): each is named in `resources/docked_main.py`. Twenty one-place faults put into
+the app (E01 to E20, [22_tools_docked.md](22_tools_docked.md)) were all killed; the one that survived at first (Ctrl+F on a
+tool's tab) showed a negative check that looked outside the window, and was fixed. The app had no defect to fix.
 
 **2026-10-06, heavy files, in two steps.** The first (a file is memory-mapped only from 64 MiB, a pipe is read,
 a download leaves nothing behind): 578 → 582 cases, TC-OPEN-029 to 032 in `suites/opening_sources/heavy_files.robot`;

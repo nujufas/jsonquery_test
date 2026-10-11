@@ -18,12 +18,13 @@ Test Teardown     Close Jsonquery App
 
 *** Test Cases ***
 TC-WIN-001 App Launches To A Known Default State
-    [Documentation]    1200x800 window, titled "jsonquery", Dark theme, no
+    [Documentation]    1200x800 window, titled "JsonQuery", Dark theme, no
     ...    document loaded -- see 01_launch_and_window.md.
     [Tags]    p1
     ${w}    ${h}=    Get Window Size
     Should Be Equal As Integers    ${w}    1200
     Should Be Equal As Integers    ${h}    800
+    Window Names Should Include    JsonQuery
     Region Should Contain Text    @{SOURCE_PANEL}    Paste JSON here
 
 TC-WIN-003 Empty State Placeholder Text

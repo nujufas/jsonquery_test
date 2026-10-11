@@ -14,11 +14,11 @@ Test Setup        Launch Jsonquery App
 Test Teardown     Close Jsonquery App
 
 *** Variables ***
-${TOOLS_WINDOW_TITLE}    jsonquery — Tools
+${TOOLS_WINDOW_TITLE}    JsonQuery — Tools
 ${TOOLS_BUTTON_X}        1094
 ${ABOUT_BUTTON_X}        1181
 ${ABOUT_BUTTON_Y}        789
-${ABOUT_WINDOW_TITLE}    jsonquery — About
+${ABOUT_WINDOW_TITLE}    JsonQuery — About
 
 *** Test Cases ***
 TC-WF-001 From A File To A CSV File
@@ -141,7 +141,7 @@ TC-WF-008 Saved JSON Can Be Opened Again
 TC-WF-009 Every Window Open And A Save Still Works
     [Documentation]    The Tools window, the tutorial and About are open beside the main
     ...    window; a query run there and saved still gives its file.
-    [Tags]    p2
+    [Tags]    p2    window-only
     Click At    ${TOOLS_BUTTON_X}    ${TUTORIAL_BUTTON_Y}
     Wait Until Window Exists    ${TOOLS_WINDOW_TITLE}    timeout=8
     Open Tutorial

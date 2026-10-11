@@ -119,6 +119,35 @@ Wrap the read in `Wait Until Keyword Succeeds` (the suite does, as `Setting Shou
 [TC-SET-001](21_settings.md), shows opening the window; the regions and rows of the Settings window are
 variables at the top of `suites/settings/settings.robot`.
 
+## Writing a case that also runs with the Tools docked
+
+`./run_docked.sh` runs the suites a second time with the Tools docked in the main window as tabs
+([22_tools_docked.md](22_tools_docked.md), "The other suites, docked"), without a word changed in a case.
+What a case has to do for that is little:
+
+- **Say where a point is by a variable** when it is a button of the toolbar (the theme, the tutorial, the 💡, the
+  source row's `…`, Load and Clear, the loaded source's label), a point of a dialog the app puts by the window
+  (the Search dialog, the list of hits at the foot) or a region of the status bar: the docked pass overrides the
+  variable (`resources/docked_main.py`, `resources/docked_tools.py`), and a number written into a case cannot be
+  overridden. A new constant is a variable in the suite that owns it (`${BROWSE_X}`, `@{STATUS_LINE}`).
+- **Do not read the window's content under the toolbar from the first row of the window**: the library moves a
+  point by the height of the row of tabs for the main window and for no other window, and does not move one in
+  the strip at the foot (30 px), or a region that reaches into it. So `Click At 100 58` is the query box in both
+  places, and `Get Pixel Color 1181 789` is the ⓘ in both.
+- **Tag the case when it cannot be the same case docked**: `window-only` (it is about the Tools *window*: the 🛠
+  button, closing or maximizing the window, its size, several windows at once), `main-layout` (it reads the main
+  window's own layout in the middle of a tool's case: a document opened in the main window, the toolbar's
+  status area), `undocked-only` (it is about the toolbar or about a settings file that is not there before
+  something changes), `uses-tools` (a case of another suite that the *tools* pass runs). A tag is a promise
+  that the docked suite has the counterpart.
+- **A case of `tools_docked*.robot`** goes between the Json Query tab and a tool's page, which have different
+  layouts: `Show Docked Tab    <json|merge|format|diff|patch|validate>` clicks the tab and says which layout
+  the points are in from then on (`Set Layout Shift 0` for a page, the shift for the Json Query tab), and
+  `Without Layout Shift` runs a keyword with the shift off for a point of the row of tabs or the status bar.
+
+The shift is a test-library setting of one run (`JQ_DOCKED_DY`) or of a case (`Set Layout Shift`), and every app the
+library starts begins with the run's. It is not in the app: the app has no test mode.
+
 ## Gotchas
 
 The OCR- and coordinate-based interaction technique that works, and a growing list of sharp,
@@ -160,7 +189,7 @@ non-obvious findings, worth reading before extending any suite:
   close button to click); `Maximize Window` maximizes one, and its icon in
   the corner is then at `Get Window Size` width − 16, not at a fixed pixel.
   `xdotool search --name` can't match the em dash in
-  "jsonquery — Query" literally — `AppLibrary` wildcards non-ASCII runs.
+  "JsonQuery — Query" literally — `AppLibrary` wildcards non-ASCII runs.
 - Keep the header rows out of OCR regions that read *content*: the Source
   and Results headers each have a small icon button, and with it inside a
   600x600 crop Tesseract's `--psm 6` layout analysis flipped for some

@@ -2,7 +2,7 @@
 Documentation     Tools window, its shell and the Merge page -- see
 ...               docs/13_tools_window.md. The dim 🛠 button beside the 📖
 ...               tutorial button opens the Tools window (a second native window,
-...               titled "jsonquery — Tools") with a tab for each tool: Merge
+...               titled "JsonQuery — Tools") with a tab for each tool: Merge
 ...               JSON, Format JSON, Diff JSON, Patch JSON and Validate schema.
 ...               The pages other than Merge are in tools_format.robot,
 ...               tools_diff.robot, tools_patch.robot and tools_validate.robot;
@@ -27,7 +27,6 @@ Test Teardown     Close Jsonquery App
 # The Merge page: the dropdown's current preset (its label), and the text of the
 # filter box under the command row.
 @{PRESET_LABEL}      120    24     225    20
-@{MERGE_STATUS_BAR}    0    560    900    18
 # The strip between the Result pane's header and its content: nothing is drawn
 # there (no line under a header).
 @{UNDER_RESULT_HEADER}    520    73     270    3
@@ -39,7 +38,7 @@ TC-TWIN-001 The Tools Button Opens A Window Of Its Own
     [Documentation]    One click on 🛠 opens the window with a tab for each tool
     ...    and the Merge tool's page under them: its "Merge as" choice, the
     ...    files and the Result.
-    [Tags]    p1
+    [Tags]    p1    window-only
     Open Tools Window
     Tools Window Should Read    Format JSON    @{TAB_ROW}
     Tools Window Should Read    Merge as    @{COMMAND_ROW}
@@ -50,7 +49,7 @@ TC-TWIN-001 The Tools Button Opens A Window Of Its Own
 TC-TWIN-002 The Main Window Keeps Working With The Tools Window Open
     [Documentation]    The Tools window is separate from the main window: with
     ...    it open, a document still loads in the main window.
-    [Tags]    p1
+    [Tags]    p1    window-only
     Open Tools Window
     Load Fixture Via Paste    {"members":[{"name":"Ann"}],"team":"platypus"}
     Wait Until Keyword Succeeds    8x    0.5s
@@ -60,7 +59,7 @@ TC-TWIN-003 Closing The Window And Pressing The Button Again Reopens It
     [Documentation]    Closing the window (through the window manager -- it is
     ...    undecorated, like the others) and pressing 🛠 again gives a fresh
     ...    one.
-    [Tags]    p1
+    [Tags]    p1    window-only
     Open Tools Window
     Close Window    ${TOOLS_WINDOW}
     Wait Until Window Closes    ${TOOLS_WINDOW}
@@ -70,7 +69,7 @@ TC-TWIN-003 Closing The Window And Pressing The Button Again Reopens It
 TC-TWIN-004 Pressing The Button With The Window Open Brings It Forward
     [Documentation]    A second press doesn't open a second window: the one
     ...    window is still there, and still shows its content.
-    [Tags]    p2
+    [Tags]    p2    window-only
     Open Tools Window
     Click At    ${TOOLS_X}    ${TOOLS_Y}
     Sleep    0.5s
@@ -104,7 +103,7 @@ TC-TWIN-012 A Maximized Tools Window Still Responds And Closes
     ...    redraw callbacks, so a Tools window maximized over the main window
     ...    used to stop responding: that cannot be seen under X, but this is the
     ...    flow it broke -- see "Not reachable" in 13_tools_window.md).
-    [Tags]    p1
+    [Tags]    p1    window-only
     Open Tool    format
     Maximize Window    ${TOOLS_WINDOW}
     Switch To Window    ${TOOLS_WINDOW}
@@ -154,7 +153,7 @@ TC-TWIN-014 The Selected Tab Is Marked
 TC-TWIN-015 The Window Opens At Its Default Size
     [Documentation]    900 by 580 -- the size every region of these suites is
     ...    measured at, and room for the two panes side by side.
-    [Tags]    p2
+    [Tags]    p2    window-only
     Open Tools Window
     ${x}    ${y}    ${width}    ${height}=    Get Window Geometry    ${TOOLS_WINDOW}
     Should Be Equal As Integers    ${width}    900
@@ -164,7 +163,7 @@ TC-TWIN-016 The Tools Window Follows The Main Window's Theme
     [Documentation]    One theme for all the windows: with the Tools window open,
     ...    the main window's ☀ button turns it light too (and its pane
     ...    backgrounds from dark to light).
-    [Tags]    p2
+    [Tags]    p2    window-only
     Open Tool    format
     ${dark}=    Get Pixel Color    600    300
     Should Be True    max(${dark}) < 80    msg=Expected the dark theme to start with: ${dark}
@@ -194,7 +193,7 @@ TC-MRG-001 Merge Has Nothing To Run Until There Are Files
     Press Main Button
     Press Keys    ctrl    enter
     Sleep    0.5s
-    Region Should Be Plain    @{MERGE_STATUS_BAR}
+    Region Should Be Plain    @{STATUS_LINE}
 
 TC-MRG-002 The Presets Are Listed
     [Documentation]    The "Merge as" dropdown lists the four ready-made

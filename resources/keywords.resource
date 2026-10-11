@@ -150,6 +150,15 @@ ${AUTOCOMPLETE_ICON_PROBE_Y}   10
 ${HTTP_FIXTURES_DIR}      ${CURDIR}/fixtures/http
 
 *** Keywords ***
+Window Names Should Include
+    [Documentation]    The window manager's names for the app's windows include this one, in its
+    ...    capitals: `Window Exists` and the other keywords that find a window by its title match
+    ...    without regard to the case (xdotool does), which is not what a title is.
+    [Arguments]    ${title}
+    ${windows}=    List Windows
+    ${names}=    Evaluate    [w[1] for w in $windows]
+    Should Contain    ${names}    ${title}    msg=The windows are ${names}
+
 Load Fixture Via Paste
     [Documentation]    Loads a JSON fixture by pasting its text -- avoids the
     ...    native file dialog behind the toolbar's "..." button entirely

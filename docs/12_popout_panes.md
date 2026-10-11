@@ -66,7 +66,7 @@ are checked to be smaller than a heading, with no line under their headers.
 real X windows. The fluxbox rule that strips decoration matches the app's window
 class, so they are undecorated like the main window — a window is closed through
 the window manager (`wmctrl -c`, the `Close Window` keyword), not a title-bar
-button. `xdotool search --name` can't match the em dash in "jsonquery — Query"
+button. `xdotool search --name` can't match the em dash in "JsonQuery — Query"
 literally (it reads the Latin-1 name), so the library matches it with a wildcard.
 `Switch To Window` / `Switch To Main Window` retarget every click and read.
 
@@ -75,7 +75,7 @@ literally (it reads the Latin-1 name), so the library matches it with a wildcard
 ### TC-POP-001 — The Query pane opens in a window of its own
 Priority: P1
 Steps: click the ⬈ icon at the right end of the query header.
-Expected: a window titled `jsonquery — Query` holds the pane (its header reads
+Expected: a window titled `JsonQuery — Query` holds the pane (its header reads
 `Query:`); in the main window the Source heading is at the top, where the query
 bar was.
 

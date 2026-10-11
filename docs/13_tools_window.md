@@ -11,10 +11,11 @@ in `crates/app/src/worker.rs`, and `App::apply_tools_request` and
 
 A small, dim **🛠** button in the toolbar, just left of the 📖 tutorial button,
 opens the **Tools window**: a second native window (an egui viewport that eframe
-redraws by itself, as it does the panes' windows) titled "jsonquery — Tools".
+redraws by itself, as it does the panes' windows) titled "JsonQuery — Tools".
 Across its top are the tabs of the tools — **Merge JSON**, **Format JSON**,
-**Diff JSON**, **Patch JSON** and **Validate schema** — and the selected tool's
-page fills the rest.
+**Diff JSON**, **Patch JSON** and **Validate Schema** — and the selected tool's
+page fills the rest. A **⚓** button at the right end of the row docks the Tools in the
+main window as tabs, which is [22_tools_docked.md](22_tools_docked.md)'s.
 
 Every page is built from the parts of the main window, in the main window's
 sizes (stock egui buttons, text, spacing and margins — nothing is bigger):
@@ -136,7 +137,7 @@ main window** shows the result as the loaded document ("(patched)" in the
 toolbar, `patched.json` suggested for a save), **Save…** writes it and **Copy**
 copies it.
 
-## Validate schema
+## Validate Schema
 
 **Document** and **Schema** → **Problems**. **Check formats** (on by default,
 in the command row).
@@ -150,6 +151,16 @@ the main window. **Copy report** copies the list. A schema that can't be used
 be used: …`; nothing is ever fetched.
 
 ## Cases
+
+The suites below run with the Tools in their window, which is how the app starts. The same cases run again
+with the Tools docked in the main window (`./run_docked.sh`, pass *tools*): the page of a tool is then the
+window's own, pixel for pixel, in a tab of a main window of the Tools window's size, and nothing of a case
+changes but `Open Tool` clicking a tab and the points of the tab row and the status bar (`resources/
+docked_tools.py`). 144 of the 164 cases run docked; 20 are tagged and left out — `window-only` for the 7 of
+`tools.robot` about the window itself (TC-TWIN-001 to 004, 012, 015, 016) and `main-layout` for the 13 that read
+the main window's own layout in the middle of a tool's case (TC-TWIN-008, TC-TWIN-011, TC-PAT-012, TC-PAT-015,
+TC-VAL-014, TC-VAL-015, TC-DIF-021, TC-FMT-021, TC-FMT-080, TC-MRG-011, TC-MRG-029, TC-MRG-042, TC-MRG-044) — and
+[22_tools_docked.md](22_tools_docked.md) has each one's docked counterpart.
 
 Six suites in `suites/tools/` share `resources/tools.resource` (every measured
 region and click point of the window, and the keywords that use them). The pages
@@ -462,7 +473,7 @@ fault that kept the text from scrolling back (each got a test).
 | TC-PAT-017 | Copy Says So In The Status Bar | P2 |
 | TC-PAT-018 | Numbers Keep Their Digits Through A Patch | P2 |
 
-### Validate schema — `tools_validate.robot`
+### Validate Schema — `tools_validate.robot`
 
 | ID | Title | Priority |
 |---|---|---|

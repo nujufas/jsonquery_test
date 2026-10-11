@@ -11,8 +11,8 @@ Documentation     Pop-out panes -- see docs/12_popout_panes.md. The Query,
 ...               Window`. The windows are undecorated, like the main one (the
 ...               fluxbox rule matches the app's class), so a window is closed
 ...               through the window manager (`Close Window`), not by a title
-...               bar button. The titles are "jsonquery — Query", "jsonquery —
-...               Source" and "jsonquery — Results" (an em dash, which
+...               bar button. The titles are "JsonQuery — Query", "JsonQuery —
+...               Source" and "JsonQuery — Results" (an em dash, which
 ...               `xdotool` can't match literally -- AppLibrary handles that).
 Resource          ../../resources/keywords.resource
 Force Tags        popout
@@ -22,9 +22,9 @@ Test Setup        Launch Jsonquery App
 Test Teardown     Close Jsonquery App
 
 *** Variables ***
-${QUERY_WINDOW}      jsonquery — Query
-${SOURCE_WINDOW}     jsonquery — Source
-${RESULTS_WINDOW}    jsonquery — Results
+${QUERY_WINDOW}      JsonQuery — Query
+${SOURCE_WINDOW}     JsonQuery — Source
+${RESULTS_WINDOW}    JsonQuery — Results
 # "team" holds a string long enough to read: string values are drawn in colour,
 # which OCR reads, unlike the dim grey of the keys and counts.
 ${MEMBERS_JSON}      {"members":[{"name":"Ann","age":31},{"name":"Bob","age":25}],"team":"platypus"}
@@ -114,12 +114,13 @@ Window Should Read
 *** Test Cases ***
 TC-POP-001 The Query Pane Opens In A Window Of Its Own
     [Documentation]    The pop-out button in the query header opens a window
-    ...    titled "jsonquery - Query" holding the pane, and the panes it left
+    ...    titled "JsonQuery — Query" holding the pane, and the panes it left
     ...    behind move up into its room: the Source heading is at the top of
     ...    the main window, no longer 100px down.
     [Tags]    p1
     Wait For Main Layout
     Pop Out Query
+    Window Names Should Include    ${QUERY_WINDOW}
     Wait Until Keyword Succeeds    8x    0.5s
     ...    Region Should Contain Text    @{SOURCE_HEADER_UP}    Source
     Window Should Read    ${QUERY_WINDOW}    Query    @{WINDOW_HEADER}

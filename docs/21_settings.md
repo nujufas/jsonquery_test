@@ -2,7 +2,7 @@
 
 The app keeps one small file of settings, `settings.json` in the folder `.jsonquery` of the
 person's home (`%USERPROFILE%\.jsonquery` on Windows), and a window to change part of it: the ⚙ at the
-right end of the status bar opens "jsonquery — Settings", a small window (430 × 190) with the one limit on
+right end of the status bar opens "JsonQuery — Settings", a small window (430 × 190) with the one limit on
 the size of files that is shown, from what size a file is kept on disk, an **Advanced** header inside the
 window which, clicked, shows the other eight (the window grows to 372 high for them and goes back when it is
 shut), Reset for a limit, Restore defaults for all nine, and at the foot the file they are kept in. The

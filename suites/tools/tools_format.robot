@@ -305,7 +305,7 @@ TC-FMT-021 The Open Document Can Be Formatted
     [Documentation]    With a document open in the main window, "Open document"
     ...    puts it in the Input box (as a note, not as text) and Format prints
     ...    it; the boxes of the two windows are one document, not copies.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Load Fixture Via Paste    {"members":[{"name":"Ann"}],"team":"platypus"}
     Open Tool    format
     Click At    ${OPEN_DOCUMENT_X}    ${HEADER_Y}
@@ -330,7 +330,7 @@ TC-FMT-080 A Document Kept On Disk Is Formatted As It Is Saved
     [Documentation]    A file of 256 MiB or more is not text in memory: Format shows the
     ...    start of it, says that it is written from its file when saved, and Copy is
     ...    off. (Save… writes all of it from the file, a piece at a time.)
-    [Tags]    p2
+    [Tags]    p2    main-layout
     ${file}=    Make Heavy File    270    {"members": [{"name": "Ann"}], "team": "platypus"}
     Load Via Url    ${file}
     Wait Until Region Contains Text    @{SOURCE_PANEL}    platypus    timeout=30

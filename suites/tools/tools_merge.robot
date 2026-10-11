@@ -119,7 +119,7 @@ TC-MRG-010 Files Dropped On The Main Window Open The Merge Page
 TC-MRG-011 One File Dropped On The Main Window Is Opened
     [Documentation]    A single dropped file is a document: it loads in the main
     ...    window and the Tools window does not open.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Drop Files On Window    400    400    ${MERGE_FIXTURES}/platypus.json
     Wait Until Keyword Succeeds    8x    0.5s
     ...    Region Should Contain Text    @{SOURCE_PANEL}    1 item
@@ -322,7 +322,7 @@ TC-MRG-029 Open In Main Window Makes It The Document
     [Documentation]    "Open in main window" loads the merged document into the main
     ...    window: the toolbar says "(merged from 2 files)" and the Source tree
     ...    has it (an array of two items).
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Open Merge With    platypus.json    echidna.json
     Merge Files
     Click At    ${OPEN_IN_MAIN_X}    ${MERGE_HEADER_Y}

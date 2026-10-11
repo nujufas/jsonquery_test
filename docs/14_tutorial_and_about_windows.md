@@ -5,12 +5,12 @@ Source: `crates/app/src/tutorial.rs` (the tutorial's content and window),
 (how both, and the Tools window, are shown).
 
 The **📖** button in the toolbar opens the tutorial in a window of its own (titled
-"jsonquery — Tutorial", 1040×720): a tab for each query language (jq, JSON
+"JsonQuery — Tutorial", 1040×720): a tab for each query language (jq, JSON
 Pointer, JSONPath, JMESPath), a lesson list with a filter box on the left, the
 lesson on the right with its sample data and its examples. Each example has
 **▶ Try it** (loads the sample data and the query into the main window and runs
 it), **Load query**, **Load data** and **Copy query**, and shows its live result.
-The **ⓘ** button at the right end of the status bar opens About ("jsonquery —
+The **ⓘ** button at the right end of the status bar opens About ("JsonQuery —
 About"): the name and version, the license, links, the known limitations.
 
 Both are *deferred* viewports (`satellites.rs`): eframe redraws each by itself and

@@ -23,7 +23,7 @@ Test Teardown     Close Jsonquery App
 *** Variables ***
 ${DROPPED}           ${CURDIR}/../../resources/fixtures/merge
 ${FIXTURES}          ${CURDIR}/../../resources/fixtures
-${SOURCE_WINDOW}     jsonquery — Source
+${SOURCE_WINDOW}     JsonQuery — Source
 # The top of the page's boxes: a crop of a whole box (220px) round a line of text reads
 # as noise.
 @{FIRST_BOX_TOP}     8      76     433    40
@@ -95,7 +95,7 @@ TC-DND-006 Several Files Open The Tools Window On Merge
     [Documentation]    Dropping two files on the main window opens the Tools window
     ...    with them listed on the Merge page ("Files (2)"), and loads nothing
     ...    in the main window.
-    [Tags]    p1
+    [Tags]    p1    uses-tools    main-layout
     Drop Files On Window    ${DROP_X}    ${DROP_Y}    ${DROPPED}/platypus.json    ${DROPPED}/echidna.json
     Wait Until Window Exists    ${TOOLS_WINDOW}    timeout=8
     Switch To Window    ${TOOLS_WINDOW}
@@ -107,7 +107,7 @@ TC-DND-006 Several Files Open The Tools Window On Merge
 TC-DND-007 Several Files Bring The Merge Page Up From Another Page
     [Documentation]    With the Tools window open on Format, dropping several files
     ...    on the main window still adds them to Merge and shows that page.
-    [Tags]    p2
+    [Tags]    p2    uses-tools    window-only
     Open Tools On Page    format
     Switch To Main Window
     Drop Files On Window    ${DROP_X}    ${DROP_Y}    ${DROPPED}/platypus.json    ${DROPPED}/echidna.json
@@ -118,7 +118,7 @@ TC-DND-007 Several Files Bring The Merge Page Up From Another Page
 TC-DND-008 A File Dropped On Format Goes Into The Input Box
     [Documentation]    A small file is read into the box, where it can be edited;
     ...    Format then prints it.
-    [Tags]    p1
+    [Tags]    p1    uses-tools
     Open Tools On Page    format
     Drop Files On Window    200    300    ${DROPPED}/platypus.json
     Wait Until Keyword Succeeds    8x    0.5s
@@ -130,7 +130,7 @@ TC-DND-008 A File Dropped On Format Goes Into The Input Box
 TC-DND-009 A Second File Dropped On Format Replaces The First
     [Documentation]    Format has one box: a file dropped on it replaces what is
     ...    there.
-    [Tags]    p2
+    [Tags]    p2    uses-tools
     Open Tools On Page    format
     Drop Files On Window    200    300    ${DROPPED}/platypus.json
     Wait Until Keyword Succeeds    8x    0.5s
@@ -143,7 +143,7 @@ TC-DND-009 A Second File Dropped On Format Replaces The First
 TC-DND-010 Two Files Fill The Two Boxes Of Diff
     [Documentation]    The first goes to Left and the second to Right (each into the
     ...    first box still empty); Compare then finds the one difference.
-    [Tags]    p1
+    [Tags]    p1    uses-tools
     Open Tools On Page    diff
     Drop Files On Window    200    300    ${DROPPED}/platypus.json    ${DROPPED}/echidna.json
     Wait Until Keyword Succeeds    8x    0.5s
@@ -155,7 +155,7 @@ TC-DND-010 Two Files Fill The Two Boxes Of Diff
 TC-DND-011 Two Files Fill The Document And The Patch
     [Documentation]    On Patch the first file is the Document and the second the
     ...    Patch: applying gives the patched document (a: 2, keep: platypus).
-    [Tags]    p1
+    [Tags]    p1    uses-tools
     Open Tools On Page    patch
     Drop Files On Window    200    300    ${DROPPED}/patch_doc.json    ${DROPPED}/patch_ops.json
     Wait Until Keyword Succeeds    8x    0.5s
@@ -168,7 +168,7 @@ TC-DND-011 Two Files Fill The Document And The Patch
 TC-DND-012 Two Files Fill The Document And The Schema
     [Documentation]    On Validate the first file is the Document and the second the
     ...    Schema: validating finds that age is below its minimum.
-    [Tags]    p1
+    [Tags]    p1    uses-tools
     Open Tools On Page    validate
     Drop Files On Window    200    300    ${DROPPED}/validate_doc.json    ${DROPPED}/validate_schema.json
     Wait Until Keyword Succeeds    8x    0.5s
@@ -191,7 +191,7 @@ TC-DND-013 A File Dropped On The Source Window Opens In It
 TC-DND-014 A Folder Is Not Added To The Merge List
     [Documentation]    A folder dropped with a file is left out: the list has the
     ...    file only ("Files (1)").
-    [Tags]    p2
+    [Tags]    p2    uses-tools
     Open Tools On Page    merge
     Drop Files On Window    200    300    ${DROPPED}    ${DROPPED}/platypus.json
     Wait Until Keyword Succeeds    8x    0.5s
@@ -200,7 +200,7 @@ TC-DND-014 A Folder Is Not Added To The Merge List
 TC-DND-015 Files Dropped On The Tools Window Do Not Open In The Main Window
     [Documentation]    A drop on the Tools window is the Tools window's: the main
     ...    window under it stays empty.
-    [Tags]    p2
+    [Tags]    p2    uses-tools    main-layout
     Open Tools On Page    format
     Drop Files On Window    200    300    ${DROPPED}/platypus.json
     Wait Until Keyword Succeeds    8x    0.5s

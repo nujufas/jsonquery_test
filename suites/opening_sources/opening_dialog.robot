@@ -21,7 +21,7 @@ ${JSON_EXTENSIONS}    ${{ ["*.json", "*.ndjson", "*.jsonl", "*.log", "*.txt"] }}
 TC-OPEN-001 Open A Valid JSON File Through The Dialog
     [Documentation]    The file chosen is loaded: the field shows its path, the toolbar its
     ...    size, the status bar the parse time and the Source pane the content; and the
-    ...    window is still titled "jsonquery".
+    ...    window is still titled "JsonQuery".
     [Tags]    p1
     Browse And Choose    ${FIXTURES}/simple_object.json
     Wait Until Region Contains Text    @{STATUS_BAR}    Parsed    timeout=8

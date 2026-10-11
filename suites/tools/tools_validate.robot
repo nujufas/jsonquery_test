@@ -73,7 +73,7 @@ TC-TWIN-011 A Problem Can Be Shown In The Main Window
     ...    one to check, picking a problem and pressing "Show in main window"
     ...    puts its JSON Pointer in the main window's query box and runs it, so
     ...    the value at fault is what the results show.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Load Fixture Via Paste    {"age": -1, "name": "Ann"}
     Open Tool    validate
     Click At    ${OPEN_DOCUMENT_X}    ${HEADER_Y}
@@ -238,7 +238,7 @@ TC-VAL-013 Picking A Row Marks It
 TC-VAL-014 Show In Main Window Needs The Open Document
     [Documentation]    With the main window's document as the one checked and a
     ...    row picked, "Show in main window" is bright; without a row it is dim.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Load Fixture Via Paste    {"age": -1, "name": "Ann"}
     Open Tool    validate
     Click At    ${OPEN_DOCUMENT_X}    ${HEADER_Y}
@@ -254,7 +254,7 @@ TC-VAL-014 Show In Main Window Needs The Open Document
 TC-VAL-015 A Double-Click Shows The Problem
     [Documentation]    A double-click on a row of the open document's report does
     ...    what "Show in main window" does: the pointer runs in the main window.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Load Fixture Via Paste    {"age": -1, "name": "Ann"}
     Open Tool    validate
     Click At    ${OPEN_DOCUMENT_X}    ${HEADER_Y}

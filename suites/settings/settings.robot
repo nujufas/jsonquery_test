@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation     The Settings window (the ⚙ at the right end of the status bar) and
 ...               what the app remembers of how it was left -- see docs/21_settings.md.
-...               A small window of its own, titled "jsonquery — Settings", with one
+...               A small window of its own, titled "JsonQuery — Settings", with one
 ...               limit on the size of files, from what size a file is kept on disk,
 ...               and under Advanced (closed until it is clicked) the other eight; one
 ...               small file, settings.json in the folder .jsonquery of the home (here
@@ -21,8 +21,8 @@ Test Setup        Launch Jsonquery App
 Test Teardown     Close Jsonquery App
 
 *** Variables ***
-${SETTINGS_WINDOW}     jsonquery — Settings
-${MAIN_WINDOW}         jsonquery
+${SETTINGS_WINDOW}     JsonQuery — Settings
+${MAIN_WINDOW}         JsonQuery
 # The ⚙ in the status bar, just left of the ⓘ (icon only: a fixed point).
 ${GEAR_X}              1152
 ${GEAR_Y}              789
@@ -187,10 +187,11 @@ Make Small File
 *** Test Cases ***
 TC-SET-001 The Gear Opens The Settings Window
     [Documentation]    One click on ⚙ in the status bar opens a small window titled
-    ...    "jsonquery — Settings" with the limit on keeping a file on disk and the
+    ...    "JsonQuery — Settings" with the limit on keeping a file on disk and the
     ...    Advanced header; the file the settings are kept in is named at its foot.
     [Tags]    p1
     Open Settings
+    Window Names Should Include    ${SETTINGS_WINDOW}
     Wait Until Keyword Succeeds    6x    0.5s
     ...    Region Should Contain Text    @{HEADING}    File size limits
     Row Should Read    ${KEEP_Y}    Keep a file on disk from
@@ -220,7 +221,7 @@ TC-SET-002 Every Limit Is There With Its Default
 
 TC-SET-003 Nothing Is Written Until Something Is Changed
     [Documentation]    Starting the app, and looking at the settings, writes no file.
-    [Tags]    p1
+    [Tags]    p1    undocked-only
     Sleep    1.5s
     ${exists}=    Settings File Exists
     Should Not Be True    ${exists}    The settings file was written by the app starting
@@ -244,7 +245,7 @@ TC-SET-004 A Limit Typed And Confirmed Is Kept In The File
 TC-SET-005 What Is Not A Size Is Said So And Not Kept
     [Documentation]    "banana" over the Tools limit (under Advanced): a complaint under
     ...    it, in words, the limit stays what it was, and nothing is written.
-    [Tags]    p1
+    [Tags]    p1    undocked-only
     Open Settings
     Open Advanced
     Type In Box    ${TOOLS_Y}    banana

@@ -93,7 +93,7 @@ TC-MRG-042 A Big Result Opens In The Main Window As A File
     [Documentation]    Open in main window gives the main window the file: its toolbar says
     ...    "(merged from 2 files)", the Source pane has all of it (120 items), and its status
     ...    bar says Indexed, not Parsed, as for a file of that size opened from disk.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Merge Two Lists Of Words
     Click At    ${OPEN_IN_MAIN_X}    ${MERGE_HEADER_Y}
     Switch To Main Window
@@ -127,7 +127,7 @@ TC-MRG-044 The Temporary File Has No Name
     ...    is nothing in the temporary folder with the merge's name: the file was unlinked as
     ...    it was made, so that whatever happens to the app, nothing of it is left. The
     ...    app's memory map is the proof that the file is there all the same.
-    [Tags]    p1
+    [Tags]    p1    main-layout
     Merge Two Lists Of Words
     App Should Have Mapped A Deleted File    merged.json
     ${names}=    List Directory    ${TMP}    pattern=*merged.json

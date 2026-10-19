@@ -378,3 +378,140 @@ TC-JQX-098 A Value Nested Far Deeper Than An Ordinary Thread Can Write Is Writte
     ...    has the room.
     [Tags]    p1
     Give    people.json    reduce range(50000) as $i ([]; [.]) | "\\(.)" | length    [100002]
+
+# --- writes, deletes, scan, join, from_entries and @base64d, as jq has them -------------------
+
+TC-JQX-099 Assigning Into A Key That Is Not There Makes The Objects
+    [Documentation]    `.metadata.labels.env = "prod"` where `labels` is not there: the usual way to add a field. jaq failed on the `null` under
+    ...    the missing key; jq makes the objects, and so does the app now.
+    [Tags]    p0
+    Give    people.json    {"metadata": {"name": "web"}} | .metadata.labels.env = "prod"    [{"metadata":{"name":"web","labels":{"env":"prod"}}}]
+    Give    people.json    null | .a.b.c = 1    [{"a":{"b":{"c":1}}}]
+    Give    people.json    {"name": "a"} | .counts[.name] += 1    [{"name":"a","counts":{"a":1}}]
+
+TC-JQX-100 A reduce That Starts From null Builds An Object Or An Array
+    [Documentation]    Counting words, and filling an array by index, from `null`: both failed before.
+    [Tags]    p0
+    Give    people.json    reduce ("a", "b", "a") as $w (null; .[$w] += 1)    [{"a":2,"b":1}]
+    Give    people.json    reduce range(3) as $i (null; .[$i] = $i * 2)    [[0,2,4]]
+    Give    people.json    reduce range(5) as $i ([]; .[$i * 2] = $i)    [[0,null,1,null,2,null,3,null,4]]
+
+TC-JQX-101 An Index Past The End Makes The Array Longer With nulls
+    [Documentation]    `[0] | .[2] = 1` is `[0,null,1]`; with nothing to put (`|= empty`) the array stays.
+    [Tags]    p1
+    Give    people.json    [0] | .[2] = 1    [[0,null,1]]
+    Give    people.json    [1, 2, 3] | .[5] = 9    [[1,2,3,null,null,9]]
+    Give    people.json    [] | .[1] = 9    [[null,9]]
+    Give    people.json    [0, 1] | .[2] = 5    [[0,1,5]]
+    Give    people.json    [1, 2, 3] | .[5] |= empty    [[1,2,3]]
+
+TC-JQX-102 setpath And pick Go Through null
+    [Documentation]    `setpath` makes the levels (it did not); `pick`, which jq writes with it, gives an array for the indexes of an array.
+    [Tags]    p1
+    Give    people.json    null | setpath(["a", "b"]; 1)    [{"a":{"b":1}}]
+    Give    people.json    [0] | setpath([2]; 1)    [[0,null,1]]
+    Give    people.json    [1, 2, 3] | pick(.[0])    [[1]]
+    Give    people.json    {"a": {"b": 1, "c": 2}, "d": 3} | pick(.a.b)    [{"a":{"b":1}}]
+
+TC-JQX-103 An Index Far Past The End Is An Error And The Window Answers The Next Query
+    [Documentation]    An index meant as a key (a timestamp, an id) must not make an array of that many items and use up the memory:
+    ...    from 16,777,216 on it is an error (jq: 536,870,912).
+    [Tags]    p0
+    Load Fixture    people.json
+    Run Query By Paste    [] | .[1700000000] = 1
+    Status Bar Should Say    item error
+    Status Bar Should Say    Array index too large
+    Run Query By Paste    [1, 2] | length
+    Results Should Be Json    [2]
+
+TC-JQX-104 del Takes Several Items Of An Array At Once
+    [Documentation]    `del(.[1,2])` failed on the item that was no longer there; `del(.a[0], .a[1])` took the wrong item (`[2]`, jq: `[3]`).
+    [Tags]    p0
+    Give    people.json    [1, 2, 3] | del(.[1, 2])    [[1]]
+    Give    people.json    {"a": [1, 2, 3]} | del(.a[0], .a[1])    [{"a":[3]}]
+    Give    people.json    [1, 2, 3] | del(.[0, 2])    [[2]]
+    Give    people.json    [1, 2, 3] | del(.[5])    [[1,2,3]]
+    Give    people.json    [1, 2, 3] | del(.[-1])    [[1,2]]
+
+TC-JQX-105 delpaths Takes All The Paths As The Value Was
+    [Documentation]    The paths are not taken one after the other: `[[0],[0]]` is the first item, once, and the paths may come in any order (`[[3],[0],[2]]`).
+    [Tags]    p1
+    Give    people.json    [1, 2, 3] | delpaths([[0], [0]])    [[2,3]]
+    Give    people.json    [1, 2, 3] | delpaths([[0], [1]])    [[3]]
+    Give    people.json    [1, 2, 3, 4] | delpaths([[3], [0], [2]])    [[2]]
+    Give    people.json    {"a": [1, 2, 3]} | delpaths([["a", 2], ["a", 0]])    [{"a":[2]}]
+    Give    people.json    {"a": [1, 2, 3], "b": 1} | delpaths([["a", 0], ["b"], ["a", 1]])    [{"a":[3]}]
+    Give    people.json    [1] | del(.)    [null]
+    Give    people.json    [1] | delpaths([])    [[1]]
+
+TC-JQX-106 del Keeps The Other Keys In Their Order
+    [Documentation]    jaq took a key out by moving the last one into its place: `{a,b,c}` without `a` was `{c,b}`.
+    [Tags]    p1
+    Give    people.json    {"a": 1, "b": 2, "c": 3, "d": 4} | del(.a) | keys_unsorted    [["b","c","d"]]
+    Give    people.json    {"a": 1, "b": 2, "c": 3, "d": 4} | del(.b, .c) | keys_unsorted    [["a","d"]]
+    Give    people.json    {"a": 1, "b": 2, "c": 3} | .a |= empty | keys_unsorted    [["b","c"]]
+
+TC-JQX-107 del Of What A Condition Selects
+    [Tags]    p1
+    Give    people.json    [1, 2, 3, 4, 5] | del(.[] | select(. % 2 == 0))    [[1,3,5]]
+    Give    people.json    [1, 2, 3] | del(first(.[] | select(. > 1)))    [[1,3]]
+    Give    people.json    [1, 2, 3] | del(limit(2; .[]))    [[3]]
+    Give    people.json    {"a": 1, "b": {"c": 2, "d": 3}} | del(.b.c)    [{"a":1,"b":{"d":3}}]
+    Give    people.json    {"x": 1} | del(.a.b)    [{"x":1}]
+
+TC-JQX-108 scan Finds Every Match
+    [Documentation]    `scan` found the first match only (jaq's `scan` had no `g` flag).
+    [Tags]    p0
+    Give    people.json    "a1b22c333" | [scan("[0-9]+")]    [["1","22","333"]]
+    Give    people.json    "hello world" | [scan("[a-z]+")]    [["hello","world"]]
+    Give    people.json    "aA" | [scan("a"; "i")]    [["a","A"]]
+
+TC-JQX-109 scan Gives The Groups Of Each Match As An Array
+    [Tags]    p1
+    Give    people.json    "ab ab" | [scan("(a)(b)")]    [[["a","b"],["a","b"]]]
+    Give    people.json    "1a 2b" | [scan("([0-9])([a-z])")]    [[["1","a"],["2","b"]]]
+
+TC-JQX-110 join Writes null As Nothing
+    [Documentation]    jaq wrote `null` as the text null: `["a",null,"b"] | join(",")` was `a,null,b`.
+    [Tags]    p0
+    Give    people.json    ["a", null, "b"] | join(",")    ["a,,b"]
+    Give    people.json    [1, true, false, null, "x"] | join("-")    ["1-true-false--x"]
+    Give    people.json    [] | join(",")    [""]
+
+TC-JQX-111 join Refuses An Array Or An Object
+    [Tags]    p2
+    Give    people.json    [[1]] | try join(",") catch "no"    ["no"]
+    Give    people.json    [{"a": 1}] | try join(",") catch "no"    ["no"]
+
+TC-JQX-112 from_entries Reads The Names AWS Tags And Kubernetes Lists Have
+    [Documentation]    `{"Key": ..., "Value": ...}` and `{"name": ..., "value": ...}`: jaq knew only `key` and `value`, and gave an object with the key null.
+    [Tags]    p0
+    Give    people.json    [{"Key": "env", "Value": "prod"}, {"Key": "team", "Value": "x"}] | from_entries    [{"env":"prod","team":"x"}]
+    Give    people.json    [{"name": "A", "value": "1"}, {"name": "B", "value": "2"}] | from_entries    [{"A":"1","B":"2"}]
+    Give    people.json    [{"key": "a", "value": 1}, {"Name": "b", "Value": 2}] | from_entries    [{"a":1,"b":2}]
+
+TC-JQX-113 with_entries Uses The Same Names
+    [Tags]    p2
+    Give    people.json    {"a": 1} | with_entries(.Key = .key | del(.key))    [{"a":1}]
+    Give    people.json    {"a": 1, "b": 2} | with_entries(.value += 1)    [{"a":2,"b":3}]
+
+TC-JQX-114 from_entries Refuses A Key That Is Not Text
+    [Documentation]    jaq made an object with the key 1 and showed it as text.
+    [Tags]    p2
+    Give    people.json    [{"key": 1, "value": 2}] | try from_entries catch "no"    ["no"]
+    Give    people.json    [{"value": 2}] | try from_entries catch "no"    ["no"]
+
+TC-JQX-115 @base64d Decodes A JWT Segment Without Padding
+    [Documentation]    The payload of a JWT has no `=` at the end, and jaq refused it.
+    [Tags]    p0
+    Give    people.json    "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4ifQ" | @base64d | fromjson | .name    ["John"]
+    Give    people.json    "aGVsbG8" | @base64d    ["hello"]
+    Give    people.json    "aGVsbG8=" | @base64d    ["hello"]
+    Give    people.json    "YQ" | @base64d    ["a"]
+
+TC-JQX-116 @base64d Refuses What Is Not Base64 And Replaces Bytes That Are Not Text
+    [Documentation]    A lone character left over, and a character outside the alphabet (a URL-safe `-` or `_`) are errors; bytes that are not UTF-8 become U+FFFD.
+    [Tags]    p2
+    Give    people.json    "a" | try @base64d catch "no"    ["no"]
+    Give    people.json    "a-b_" | try @base64d catch "no"    ["no"]
+    Give    people.json    "/w==" | @base64d | explode    [[65533]]

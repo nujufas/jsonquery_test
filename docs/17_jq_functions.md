@@ -1,6 +1,7 @@
 # The jq functions the app adds — test requirements
 
-Source: `crates/query/src/jq_ext.rs` and `jq_ext/{prelude.jq,tabular.rs,tostream.rs,json_text.rs}` in
+Source: `crates/query/src/jq_ext.rs` and `jq_ext/{prelude.jq,tabular.rs,tostream.rs,json_text.rs,paths.rs,base64.rs}`
+(and `third_party/jaq-json`, the copy of jaq's JSON values that writes through `null`) in
 [jsonquery_gui](https://github.com/nujufas/jsonquery_gui); `run_query_with_vars` in
 `crates/query/src/lib.rs` is the one place a jq program is compiled, and chains the
 definitions in.
@@ -94,6 +95,24 @@ the rows as text. The error cases wrap the call in `try … catch .`, which ends
 | TC-JQX-096 | A result nested 5,000 levels deep is cut where it gets too deep (`<skipped: too deep>`) and the window stays | P0 |
 | TC-JQX-097 | `tojson` stops where jq stops: 256 levels are written in full, a deeper value is cut | P1 |
 | TC-JQX-098 | A value 50,000 levels deep is written as text by string interpolation without the app closing | P1 |
+| TC-JQX-099 | Assigning into a key that is not there makes the objects (`.metadata.labels.env = "prod"`) | P0 |
+| TC-JQX-100 | A `reduce` that starts from `null` builds an object or an array | P0 |
+| TC-JQX-101 | An index past the end makes the array longer, with `null`s | P1 |
+| TC-JQX-102 | `setpath` and `pick` go through `null` | P1 |
+| TC-JQX-103 | An index far past the end is an error (`Array index too large`), and the window answers the next query | P0 |
+| TC-JQX-104 | `del` takes several items of an array at once (`del(.[1, 2])`, `del(.a[0], .a[1])`) | P0 |
+| TC-JQX-105 | `delpaths` takes all the paths as the value was (`[[0],[0]]` is the first item, once) | P1 |
+| TC-JQX-106 | `del` keeps the other keys in their order | P1 |
+| TC-JQX-107 | `del` of what a condition selects (`del(.[] \| select(…))`, `del(first(…))`) | P1 |
+| TC-JQX-108 | `scan` finds every match | P0 |
+| TC-JQX-109 | `scan` gives the groups of each match as an array | P1 |
+| TC-JQX-110 | `join` writes `null` as nothing | P0 |
+| TC-JQX-111 | `join` refuses an array or an object | P2 |
+| TC-JQX-112 | `from_entries` reads the names AWS tags and Kubernetes lists have (`Key`/`Value`, `name`/`value`) | P0 |
+| TC-JQX-113 | `with_entries` uses the same names | P2 |
+| TC-JQX-114 | `from_entries` refuses a key that is not text | P2 |
+| TC-JQX-115 | `@base64d` decodes a JWT segment without padding | P0 |
+| TC-JQX-116 | `@base64d` refuses what is not base64 and replaces bytes that are not text | P2 |
 
 ## Related
 
@@ -120,6 +139,26 @@ One thing broken at a time in a build of the app; each mutant fails the cases th
 | M8 | `tostream` leaves out its closing events | TC-JQX-040, 041, 045, 046, 050, 051, 052, 053 |
 | M9 | `INDEX` keeps the first of several elements with one key | TC-JQX-023 (and nothing else: no other example repeats a key) |
 | M17 | after an `@`, no `@tsv` is offered | TC-AC-072 |
+| M18 | a key makes an array out of `null` (`null \| .a = 1`) | TC-JQX-099, 100, 102 |
+| M19 | an index just past the end of an array is taken as an item that is there | TC-JQX-101 |
+| M20 | `delpaths` does not sort its paths | TC-JQX-105 |
+| M21 | a key taken out of an object moves the last key into its place | TC-JQX-106 |
+| M22 | `del` takes the first path only | TC-JQX-104, 107 |
+| M23 | `scan` finds the first match only | TC-JQX-108 |
+| M24 | `scan` gives the offsets of the groups, not their text | TC-JQX-109 |
+| M25 | `join` starts with a separator | TC-JQX-110 |
+| M26 | `from_entries` does not know `Value` | TC-JQX-112 |
+| M27 | `with_entries` calls the old `from_entries` | TC-JQX-113 |
+| M28 | `from_entries` takes any value as a key | TC-JQX-114 |
+| M29 | `@base64d` refuses a text without padding that leaves two characters | TC-JQX-115 |
+| M30 | `@base64d` ignores a lone character left over | TC-JQX-116 |
+
+M18 to M30 are the second round: 13 of them were made, and two (M19, M20) were not seen at first: the
+cases wrote past the end of an array and deleted unsorted paths in ways that come out the same without the
+fix. TC-JQX-101 now writes exactly at the end (`[0, 1] | .[2] = 5`) and TC-JQX-105 deletes paths into
+one value in two goes (`delpaths([["a", 0], ["b"], ["a", 1]])`), and both now fail on their mutant. The
+Rust crate has 62 more of its own for the same changes (`jq_ext/`, `third_party/jaq-json`): 61 are caught by
+its tests, and one changes nothing that can be seen (a variable that is cleared and then shifted out).
 
 ## Findings
 
@@ -129,6 +168,15 @@ One thing broken at a time in a build of the app; each mutant fails the cases th
   help. The app has its own `fromjson`, `tonumber` and `tojson` now (`jq_ext/json_text.rs`): one value or one error, jq's
   own grammar for a number, and a value nested very deep is cut where jq cuts it (TC-JQX-096 to 098). The Rust crate tests
   the same from the inside (475,255 strings over the characters of JSON, each a value or an error).
+- **Writes through a missing key failed, and `del`, `scan`, `join`, `from_entries` and `@base64d` answered otherwise than jq**
+  (TC-JQX-099 to 116). `.metadata.labels.env = "prod"` is the most common edit of a Kubernetes document and failed whenever
+  `labels` was not there; `reduce … (null; .[$w] += 1)` failed too; `del(.[1, 2])` and `del(.a[0], .a[1])` took the wrong
+  items; `scan` found the first match only; `join` wrote `null` as the text `null`; `from_entries` knew only `key` and
+  `value` (not AWS's `Key`/`Value`); `@base64d` refused a JWT segment, which has no padding. All are the app's own now, as
+  jq 1.8.1 has them (the Rust crate compares 1,166 cases with jq's own answers, and a random document with a random write
+  against a model). Two limits are the app's: an index from 16,777,216 on is an error (jq: 536,870,912), so that an id used
+  as an index does not use up the memory; and `.[length / 2]` (a fraction as an index) is still refused, as the known-issues
+  list says.
 - **The wording of an error differs between jq versions**, so the cases for the wrong-input
   errors (TC-JQX-067, 069) check that the message contains `cannot be csv-formatted`, and not the
   words after it: jq 1.7 ends "only an array can be", jq 1.8.1 "only array", and the app has the

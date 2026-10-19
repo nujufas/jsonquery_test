@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (October 2026): **698 test cases in 27 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
+touches your desktop. Status (October 2026): **725 test cases in 27 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
 
 Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
 app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
@@ -243,7 +243,7 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `keyboard_shortcuts` | Ctrl+F, Ctrl+Enter, Enter | [10](docs/10_keyboard_shortcuts.md) |
 | `popout` | the Query, Source and Results panes in windows of their own | [12](docs/12_popout_panes.md) |
 | `tools` | the Tools window: Merge, Format, Diff, Patch, Validate, and their file dialogs; and the Tools docked in the main window as tabs: the move both ways, the row of tabs, the Json Query tab, the keys, the drops, what is kept (ten files) | [13](docs/13_tools_window.md), [22](docs/22_tools_docked.md) |
-| `satellites` | the tutorial and About windows | [14](docs/14_tutorial_and_about_windows.md) |
+| `satellites` | the tutorial and About windows, with the list of known issues that opens in it | [14](docs/14_tutorial_and_about_windows.md) |
 | `pane_headers` | the panes' titles and headers, checked in pixels | [15](docs/15_pane_headers.md) |
 | `drag_and_drop` | files dropped on the main window, the Source window and the Tools pages | [16](docs/16_drag_and_drop.md) |
 | `jq_functions` | `IN`, `INDEX`, `JOIN`, `tostream`, `fromstream`, `truncate_stream`, `@csv` and `@tsv`, which the app adds to its jq engine, and its own `fromjson`, `tonumber` and `tojson` (text that is not a number or JSON, a value nested very deep), read back exactly | [17](docs/17_jq_functions.md) |

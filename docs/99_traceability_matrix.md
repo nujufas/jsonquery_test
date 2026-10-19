@@ -16,6 +16,10 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-20: 27 suites, 725 test cases** — the About window has a **Known issues (N)** header that opens the list of the jq programs that run differently here and makes the window bigger (640 wide, as tall as the list needs), and closing it puts the window back. TC-SAT-040 to 048 (`suites/satellites/`, [14_tutorial_and_about_windows.md](14_tutorial_and_about_windows.md)) are the new cases, and TC-SAT-026 reads the window at 380×330 and 320×330 now (it was 300 high); 10 of 10 passed on the debug build, and 16 mutants of the list and its window were made: 12 are killed, 4 are not, each with its reason in that document (the height cap and the least size cannot be seen on a 900-high display with `xdotool`).
+
+**Status as of 2026-10-19 (later): 27 suites, 716 test cases** — a write into a place that is not there (`.a.b.c = 1` over `{}`), `del`, `scan`, `join`, `from_entries` and `@base64d` answer as jq 1.8.1 does. TC-JQX-099 to 116 (`suites/jq_functions/`, [17_jq_functions.md](17_jq_functions.md)) are the new cases: 18 of 18 passed on the debug build, and 13 mutants of the app (M18 to M30 in that document) are each caught by their cases (the other suites were not run again).
+
 **Status as of 2026-10-19: 27 suites, 698 test cases** — `tonumber`, `fromjson` and `tojson` are the app's own now: text that
 is not a number or JSON is one error and no longer a run that never ends, and a result nested thousands of levels deep no longer
 closes the app. TC-JQX-090 to 098 (`suites/jq_functions/`, [17_jq_functions.md](17_jq_functions.md)) are the new cases. They were
@@ -714,6 +718,15 @@ engine edge) are covered by `cargo test`.
 | TC-SAT-024 | About Names The Website And Says What Is There | P1 | **Passing** | `suites/satellites/` |
 | TC-SAT-025 | The Website In About Is A Link That Opens The Site | P1 | **Passing** | `suites/satellites/` |
 | TC-SAT-026 | About Shows All It Says Down To The Last Link | P2 | **Passing** | `suites/satellites/` |
+| TC-SAT-040 | About Has A Known Issues Header, Shut, With The Number Of Issues | P1 | **Passing** | `suites/satellites/` |
+| TC-SAT-041 | Opening The Known Issues Shows The List And Makes The Window Bigger | P1 | **Passing** | `suites/satellites/` |
+| TC-SAT-042 | Closing The List Shuts It And The Window Goes Back To Its Size | P1 | **Passing** | `suites/satellites/` |
+| TC-SAT-043 | The List Can Be Opened Again After It Was Shut | P2 | **Passing** | `suites/satellites/` |
+| TC-SAT-044 | A Window Opened Afresh Has The List Shut | P1 | **Passing** | `suites/satellites/` |
+| TC-SAT-045 | A Window Wider Than The List Needs Keeps Its Width And Gets Its Size Back | P2 | **Passing** | `suites/satellites/` |
+| TC-SAT-046 | A Line Of The List Shows An Example While The Pointer Rests On It | P2 | **Passing** | `suites/satellites/` |
+| TC-SAT-047 | The Link Under The List Opens The Page With All The Issues | P1 | **Passing** | `suites/satellites/` |
+| TC-SAT-048 | A Window Too Small For The List Scrolls To Its End | P2 | **Passing** | `suites/satellites/` |
 | TC-SAT-030 | All The Windows Can Be Open Together | P1 | **Passing** | `suites/satellites/` |
 | TC-SAT-031 | Closing One Window Leaves The Others | P2 | **Passing** | `suites/satellites/` |
 
@@ -817,6 +830,24 @@ engine edge) are covered by `cargo test`.
 | TC-JQX-096 | A Result Nested Very Deep Is Cut Where It Gets Too Deep And The Window Stays | P0 | **Passing** | `suites/jq_functions/` |
 | TC-JQX-097 | tojson Stops Where jq Stops | P1 | **Passing** | `suites/jq_functions/` |
 | TC-JQX-098 | A Value Nested Far Deeper Than An Ordinary Thread Can Write Is Written Without The App Closing | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-099 | Assigning Into A Key That Is Not There Makes The Objects | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-100 | A reduce That Starts From null Builds An Object Or An Array | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-101 | An Index Past The End Makes The Array Longer With nulls | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-102 | setpath And pick Go Through null | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-103 | An Index Far Past The End Is An Error And The Window Answers The Next Query | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-104 | del Takes Several Items Of An Array At Once | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-105 | delpaths Takes All The Paths As The Value Was | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-106 | del Keeps The Other Keys In Their Order | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-107 | del Of What A Condition Selects | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-108 | scan Finds Every Match | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-109 | scan Gives The Groups Of Each Match As An Array | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-110 | join Writes null As Nothing | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-111 | join Refuses An Array Or An Object | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-112 | from_entries Reads The Names AWS Tags And Kubernetes Lists Have | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-113 | with_entries Uses The Same Names | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-114 | from_entries Refuses A Key That Is Not Text | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-115 | @base64d Decodes A JWT Segment Without Padding | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-116 | @base64d Refuses What Is Not Base64 And Replaces Bytes That Are Not Text | P2 | **Passing** | `suites/jq_functions/` |
 
 ## CSV and TSV output — [18_output_formats.md](18_output_formats.md)
 
@@ -1033,6 +1064,10 @@ engine edge) are covered by `cargo test`.
 | TC-WEB-005 | The Info And The Settings Buttons Work Beside The Globe And Open Nothing In The Browser | P1 | **Passing** | `suites/website/` |
 
 ## Coverage summary
+
+**2026-10-20, the About window's known issues:** 716 → 725 cases in 27 suites (TC-SAT-040 to 048), and TC-SAT-026 at 380×330. The header, the list opened (640 wide, as tall as it needs), shut again (the size it had), opened afresh (shut), a window already wider (it stays), the example of a line, the link to the page, and a window too small (it scrolls). They were written after the window was approved by the owner and passed on the first run, so they were then run against 16 mutants of the app (S1 to S16 in the document): 12 killed; the ones that live are a header slide that lasts a fifth of a second, an equivalent mutant, and two limits (the 9/10-of-the-screen height and the least size) that this display and `xdotool` do not reach. One finding: the window manager puts About at the screen corner under the pointer, so a window made bigger there leaves the display; the cases drag it to the top left first, as a person would.
+
+**2026-10-19, writes through `null`, `del`, `scan`, `join`, `from_entries`, `@base64d`:** 698 → 716 cases in 27 suites (TC-JQX-099 to 116). Before the change `.metadata.labels.env = "prod"` failed whenever `labels` was not there, `del(.[1, 2])` took the wrong items, `scan` found the first match only, `join` wrote `null` as text, `from_entries` knew only `key`/`value`, and `@base64d` refused a JWT segment without padding; the cases ask for jq's answers, and for an error (and a window that answers the next query) where an index is too far past the end. 18 of 18 passed; 13 app mutants (M18 to M30) are caught. The Rust crate tests the same from the inside (1,166 cases with jq 1.8.1's own answers, random documents against a model, mutants).
 
 **2026-10-19, the hang and the crash:** 689 → 698 cases in 27 suites (TC-JQX-090 to 098). Before the fix `"abc" | tonumber` and
 `"N/A" | fromjson` never ended (the one worker thread was lost with them) and a result nested about 2,000 levels deep closed the

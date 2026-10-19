@@ -16,6 +16,8 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-20 (later): 27 suites, 731 test cases** — a key that an object has more than once (valid JSON) is compared member by member in Diff JSON, the first with the first and the second with the second, and every member is a line of its column (nujufas/jsonquery_gui#1; the owner chose "pair them in order"): `suites/tools/tools_diff.robot`, TC-DIF-042 to 047 added ([13_tools_window.md](13_tools_window.md)). They pass, in a window of their own (the whole Diff file: 48 of 48, on the second run; on the first three cases failed to start their comparison under load and passed alone) and docked (the Diff cases that do not need the main window: 44 of 44); 9 faults put into the app one at a time were all killed by the case meant for them (G1 to G9). The other Tools suites (tools, format, patch, validate, merge, docked, dialogs: 155 cases) were run whole after the change and pass.
+
 **Status as of 2026-10-20: 27 suites, 725 test cases** — the About window has a **Known issues (N)** header that opens the list of the jq programs that run differently here and makes the window bigger (640 wide, as tall as the list needs), and closing it puts the window back. TC-SAT-040 to 048 (`suites/satellites/`, [14_tutorial_and_about_windows.md](14_tutorial_and_about_windows.md)) are the new cases, and TC-SAT-026 reads the window at 380×330 and 320×330 now (it was 300 high); 10 of 10 passed on the debug build, and 16 mutants of the list and its window were made: 12 are killed, 4 are not, each with its reason in that document (the height cap and the least size cannot be seen on a 900-high display with `xdotool`).
 
 **Status as of 2026-10-19 (later): 27 suites, 716 test cases** — a write into a place that is not there (`.a.b.c = 1` over `{}`), `del`, `scan`, `join`, `from_entries` and `@base64d` answer as jq 1.8.1 does. TC-JQX-099 to 116 (`suites/jq_functions/`, [17_jq_functions.md](17_jq_functions.md)) are the new cases: 18 of 18 passed on the debug build, and 13 mutants of the app (M18 to M30 in that document) are each caught by their cases (the other suites were not run again).
@@ -635,6 +637,12 @@ the sign that the text landed.
 | TC-DIF-039 | A Click Elsewhere Puts In What Was Typed, And An Arrow Is Not Held Up By A Caret | P1 | **Passing** | `suites/tools/` |
 | TC-DIF-040 | A Single Click Only Picks, So That More Lines Can Be Picked After It | P0 | **Passing** | `suites/tools/` |
 | TC-DIF-041 | After A Move The View Stays Where It Was And Picks Nothing | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-042 | A Key An Object Has More Than Once Is Compared Member By Member, And Each Member Is A Line | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-043 | A Document That Repeats Several Keys Shows Each Member As A Line, What The Other Lacks In Red | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-044 | A Move Into A Document Keeps Its Repeated Members | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-045 | A Line Typed Over Is The Member It Is, Whichever Of Its Name, And The Others Stay | P0 | **Passing** | `suites/tools/` |
+| TC-DIF-046 | The Open Document Is Read Again From Its File To Have Its Repeated Members | P1 | **Passing** | `suites/tools/` |
+| TC-DIF-047 | An Open Document That Cannot Be Read Again Says That Only Its Last Members Are Compared | P1 | **Passing** | `suites/tools/` |
 | TC-TWIN-008 | Patch JSON Applies A Patch And Opens The Result | P1 | **Passing** | `suites/tools/` |
 | TC-TWIN-009 | A Patch That Fails Names The Operation | P2 | **Passing** | `suites/tools/` |
 | TC-PAT-001 | Operations Apply In Order | P1 | **Passing** | `suites/tools/` |
@@ -1064,6 +1072,8 @@ engine edge) are covered by `cargo test`.
 | TC-WEB-005 | The Info And The Settings Buttons Work Beside The Globe And Open Nothing In The Browser | P1 | **Passing** | `suites/website/` |
 
 ## Coverage summary
+
+**2026-10-20, a key that an object has more than once, in Diff JSON:** 725 → 731 cases in 27 suites (TC-DIF-042 to 047). Before the change the last member of a key was compared and the others dropped, with nothing said (the Left box had 28 lines, the view 19). The cases: each member is a line and the one the other lacks has a blank across (red, nothing as bright as 100 in the right column), the menu of that line copies `/a#3`, the Patch view says it leaves out 2 changes and Copy patch gives `[]` (042); several repeated keys with no line over the page (043); a picked line moved into the other document and saved with both members (044); a line typed over the second of two members, saved (045); the open document read again from its file (046), and one pasted, which has none, saying that only the last member of each key is compared (047). Nine faults put into the app one at a time, each in a build of its own: see the table in [13_tools_window.md](13_tools_window.md) (G1 to G9).
 
 **2026-10-20, the About window's known issues:** 716 → 725 cases in 27 suites (TC-SAT-040 to 048), and TC-SAT-026 at 380×330. The header, the list opened (640 wide, as tall as it needs), shut again (the size it had), opened afresh (shut), a window already wider (it stays), the example of a line, the link to the page, and a window too small (it scrolls). They were written after the window was approved by the owner and passed on the first run, so they were then run against 16 mutants of the app (S1 to S16 in the document): 12 killed; the ones that live are a header slide that lasts a fifth of a second, an equivalent mutant, and two limits (the 9/10-of-the-screen height and the least size) that this display and `xdotool` do not reach. One finding: the window manager puts About at the screen corner under the pointer, so a window made bigger there leaves the display; the cases drag it to the top left first, as a person would.
 

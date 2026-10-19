@@ -350,6 +350,12 @@ not exist, and a merge that made a file there would end in an error. The unit te
 | TC-DIF-039 | A Click Elsewhere Puts In What Was Typed, And An Arrow Is Not Held Up By A Caret | P1 |
 | TC-DIF-040 | A Single Click Only Picks, So That More Lines Can Be Picked After It | P0 |
 | TC-DIF-041 | After A Move The View Stays Where It Was And Picks Nothing | P0 |
+| TC-DIF-042 | A Key An Object Has More Than Once Is Compared Member By Member, And Each Member Is A Line | P0 |
+| TC-DIF-043 | A Document That Repeats Several Keys Shows Each Member As A Line, What The Other Lacks In Red | P0 |
+| TC-DIF-044 | A Move Into A Document Keeps Its Repeated Members | P0 |
+| TC-DIF-045 | A Line Typed Over Is The Member It Is, Whichever Of Its Name, And The Others Stay | P0 |
+| TC-DIF-046 | The Open Document Is Read Again From Its File To Have Its Repeated Members | P1 |
+| TC-DIF-047 | An Open Document That Cannot Be Read Again Says That Only Its Last Members Are Compared | P1 |
 
 #### Comparing by itself, the arrows, picking lines and Save… (TC-DIF-024 to 032)
 
@@ -394,6 +400,49 @@ row is looked for in the left column before and after), the status bar names no 
 read), and Alt+Down goes to the one that is left ("Difference 1 of 1", and the amber is in view). That the text stays
 where it was scrolled to, down or sideways, and where the caret goes in text scrolled sideways, are in the window tests of
 the app, where the offsets can be exact.
+
+#### A key that an object has more than once (TC-DIF-042 to 047)
+
+nujufas/jsonquery_gui#1: JSON allows `{"a": 1, "a": 2}`, a parsed tree has one member to a key, and Diff compared the last member
+of each key without a word (the box had 28 lines and the view 19). The owner decided: **pair them in order**. The first member
+of a key in Left is compared with the first in Right, the second with the second, and a member the other has no match for is
+a removed or an added line, a line on one side and a blank across.
+
+The cases look at what a person sees: the left column's red row at the height of a member (`Sbs Row Y n`, the colour of
+`@{REMOVED_TINT}`), and nothing as bright as 100 across it in the right column (the text of a row is 140 at most, the blank
+33; `Get Ink Bounds`, which raises when there is nothing), the menu of that line copying its path (`/a#3`: a member after
+the first is `/name#n`), the Patch view saying what the patch leaves out and Copy patch giving `[]` (042); five removals and
+a change among several repeated keys, with no line over the page (043); the arrow that moves a picked line into the other
+document, and Right saved with both members, as a file (044; `Portal Will Accept Suggested Name In`, as TC-DIF-032); a line typed
+over the second of two members, which changes that member and leaves the first, and saved (045); the document open in the
+main window, loaded from a file that repeats a key and read again from it, so that its members are compared and nothing is
+said to be left out (046), and the same document pasted, which has no file: the last member is compared, as the main window has
+it, and an amber line over the page says that Left has a repeated key (047). Where the last member is compared the line is
+the only place that says so; with every other document the members are in the view and nothing is said, as there is nothing
+to say.
+
+Mutation checks, one fault at a time in a build of its own (`~/tmp/jqgaps/mutants_dup_gui.py`; the baseline passed 6 of 6):
+
+| Mutant | What is broken | Killed by |
+|---|---|---|
+| G1 | Left is read with its last members only | TC-DIF-042, 043, 045 |
+| G2 | the Patch view says nothing of what the patch leaves out | TC-DIF-042 |
+| G3 | no line over the page for an open document that lost its repeats | TC-DIF-047 |
+| G4 | the path of a removed row has the mark of a repeat in it (the menu copies it) | TC-DIF-042 |
+| G5 | an open document is not read again from its file | TC-DIF-046 |
+| G6 | a line typed over is always the first member of its name | TC-DIF-045 |
+| G7 | a document written out has the marks in its keys | TC-DIF-044, 045 |
+| G8 | documents that differ only in repeated members are the same | TC-DIF-042 |
+| G9 | an open document says nothing of its repeats | TC-DIF-047 |
+
+Sixty-eight more faults (the scanner, the loaders, the writer, the view, the job and the typed line) were put into the code and
+run against the unit tests of the app (`cargo test`): 67 were killed by them; the one that lived, the Patch view's note, is G2.
+Two of the first run's survivors got tests (a typed-over line that does not say what it left out, and members counted for
+keys), and an index of the keys of a big object that was off by one is caught by an object whose every key comes twice.
+
+The exact answers (which path each change has, what the patch leaves out and what is written out after a move or an edit)
+are in the unit tests of the app (`cargo test`), and a random check of 400 made-up documents, whose repeats are written down as they are made,
+against what the scanner finds (and against the member counts of `serde_json`).
 
 #### Mutation checks of the moving cases
 

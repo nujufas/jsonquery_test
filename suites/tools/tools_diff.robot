@@ -64,6 +64,12 @@ ${OPEN_FILE_X}       248
 # Two that differ in b, which is row 2 of the view (row 0 is the bracket that opens them)...
 ${EDIT_LEFT}         {"a":1,"b":2}
 ${EDIT_RIGHT}        {"a":1,"b":3}
+# A key that Left has three times and Right once (valid JSON: each member is a line of the view): rows 0 to 5 are the
+# bracket, a, b, the second a (3 against 9), the third a (Right has none) and the bracket.
+${REPEAT_LEFT}       {"a":1,"b":2,"a":3,"a":4}
+${REPEAT_RIGHT}      {"a":1,"b":2,"a":9}
+# The line over the page that says an open document was read with its last members only.
+@{REPEATS_NOTICE}    0      50     900    18
 
 *** Keywords ***
 File Should Hold Json
@@ -886,3 +892,141 @@ TC-DIF-041 After A Move The View Stays Where It Was And Picks Nothing
     Press Keys    alt    down
     Status Should Read    Difference 1 of 1
     Region Should Contain Color    @{SBS_LEFT}    57    47    29    tolerance=3
+
+TC-DIF-042 A Key An Object Has More Than Once Is Compared Member By Member, And Each Member Is A Line
+    [Documentation]    nujufas/jsonquery_gui#1: a key that an object has more than once is valid JSON, and
+    ...    its members were dropped but the last, with nothing said. Now the first is compared with the
+    ...    first and the second with the second: a is 1 and 1 (the same), 3 and 9 (changed), and Right has
+    ...    no third a, which is a red line in the left column with a blank across (nothing there). The list
+    ...    of changes names a member after the first `/a#2`, the menu of a line copies that, and the patch
+    ...    page says that a JSON Pointer cannot name either, so that the patch (Copy patch) is empty.
+    [Tags]    p0
+    Open Tool    diff
+    Compare Documents    ${REPEAT_LEFT}    ${REPEAT_RIGHT}
+    Tab Row Should Offer Changes    2
+    Status Should Read    1 removed
+    Status Should Read    1 changed
+    ${y}=    Sbs Row Y    4
+    ${top}=    Evaluate    ${y} - 7
+    Region Should Contain Color    8    ${top}    416    14    @{REMOVED_TINT}    tolerance=3
+    Get Ink Bounds    8    ${top}    416    14    threshold=100
+    Run Keyword And Expect Error    Nothing as bright as*
+    ...    Get Ink Bounds    454    ${top}    414    14    threshold=100
+    # the menu of the removed line: the path of the third member of its name
+    Set Clipboard    nothing was copied
+    Right Click At    120    ${y}
+    Sleep    0.5s
+    ${item}=    Evaluate    ${y} + 67
+    Click At    158    ${item}
+    Sleep    0.5s
+    ${path}=    Get Clipboard
+    Should Be Equal    ${path}    /a#3
+    Pick Diff View    changes
+    Diff Should Read    Changed
+    Diff Should Read    Removed
+    Pick Diff View    patch
+    Diff Should Read    leaves out 2 changes
+    Patch Should Be Empty
+
+TC-DIF-043 A Document That Repeats Several Keys Shows Each Member As A Line, What The Other Lacks In Red
+    [Documentation]    Left has r, o and d (the last only once, and Right has none) up to three times, Right
+    ...    has x, r and o: every member of Left is a line of its column, and those Right has no match for
+    ...    are red with nothing across: 5 removed (d twice, r and o after the first), and x changed. Nothing
+    ...    is said to be dropped: there is no line over the page.
+    [Tags]    p0
+    ${left}=    Set Variable    {"x":1,"r":[1],"o":{"t":1},"d":null,"r":[1],"o":{"t":1},"d":null,"r":[1]}
+    ${right}=    Set Variable    {"x":2,"r":[1],"o":{"t":1}}
+    Open Tool    diff
+    Compare Documents    ${left}    ${right}
+    Tab Row Should Offer Changes    6
+    Status Should Read    5 removed
+    Status Should Read    1 changed
+    # the first d (row 8, under the first o) is Left's only: red, and nothing across
+    ${y}=    Sbs Row Y    8
+    ${top}=    Evaluate    ${y} - 7
+    Region Should Contain Color    8    ${top}    416    14    @{REMOVED_TINT}    tolerance=3
+    Run Keyword And Expect Error    Nothing as bright as*
+    ...    Get Ink Bounds    454    ${top}    414    14    threshold=100
+    Region Should Not Contain Color    @{REPEATS_NOTICE}    210    150    40    tolerance=20
+
+TC-DIF-044 A Move Into A Document Keeps Its Repeated Members
+    [Documentation]    The second a is only Left's. Picked and moved to the right, Right has it as it is in Left,
+    ...    after the first a: Right has both members of a, and saved holds both. Taking Right's lack of the
+    ...    other member into Left takes that member out of Left.
+    [Tags]    p0
+    ${out}=    Make Temp Directory
+    ${left}=    Set Variable    {"a":1,"a":2,"b":1}
+    ${right}=    Set Variable    {"a":1,"b":5}
+    Open Tool    diff
+    Compare Documents    ${left}    ${right}
+    Tab Row Should Offer Changes    2
+    # the second a is row 2 of the view: pick it, and the arrow of its difference moves that line
+    ${b}=    Sbs Row Y    2
+    Click At    120    ${b}
+    Status Should Say Picked    1
+    Click Arrow To Right    2
+    Status Should Read    Moved the picked lines to the right
+    Tab Row Should Offer Changes    1
+    ${before}=    Portal Request Count
+    Portal Will Accept Suggested Name In    ${out}
+    Click At    ${DIFF_RIGHT_SAVE_X}    63
+    Wait For Dialog After    ${before}
+    Status Should Read    Saved to
+    ${text}=    Get File    ${out}${/}right.json    encoding=UTF-8
+    ${lines}=    Evaluate    [line.strip() for line in $text.splitlines()]
+    Should Be Equal    ${lines}    ${{['{', '"a": 1,', '"a": 2,', '"b": 5', '}']}}
+
+TC-DIF-045 A Line Typed Over Is The Member It Is, Whichever Of Its Name, And The Others Stay
+    [Documentation]    Two documents that are the same, with a twice in both. Typed over the second a, in Left,
+    ...    "a": 7, the second member changes and the first is as it was; the list says /a#2 is what differs.
+    [Tags]    p0
+    ${out}=    Make Temp Directory
+    ${both}=    Set Variable    {"a":1,"a":2,"b":1}
+    Open Tool    diff
+    Compare Documents    ${both}    ${both}
+    Tab Row Should Offer Changes    0
+    Type Over Line    120    2    ${SPACE}${SPACE}"a": 7,
+    Press Enter
+    Status Should Read    Changed line 3 of the left document
+    Tab Row Should Offer Changes    1
+    ${before}=    Portal Request Count
+    Portal Will Accept Suggested Name In    ${out}
+    Click At    ${DIFF_LEFT_SAVE_X}    63
+    Wait For Dialog After    ${before}
+    Status Should Read    Saved to
+    ${text}=    Get File    ${out}${/}left.json    encoding=UTF-8
+    ${lines}=    Evaluate    [line.strip() for line in $text.splitlines()]
+    Should Be Equal    ${lines}    ${{['{', '"a": 1,', '"a": 7,', '"b": 1', '}']}}
+
+TC-DIF-046 The Open Document Is Read Again From Its File To Have Its Repeated Members
+    [Documentation]    The main window has a file open that repeats a key (it shows the last member). Open
+    ...    document in Diff reads the file again, so that its members are all compared: against {"k":1}
+    ...    the second k is a removal, and nothing is said to be left out.
+    [Tags]    p1    main-layout
+    ${dir}=    Make Temp Directory
+    Create File    ${dir}${/}repeats.json    {"k":1,"k":2}
+    Load Via Url    ${dir}${/}repeats.json
+    Open Tool    diff
+    Click At    ${OPEN_DOCUMENT_X}    ${DIFF_HEADER_Y}
+    Sleep    0.5s
+    Paste Into Box    ${DIFF_RIGHT_X}    ${DIFF_BOX_Y}    {"k":1}
+    Press Main Button
+    Tab Row Should Offer Changes    1
+    Status Should Read    1 removed
+    Region Should Not Contain Color    @{REPEATS_NOTICE}    210    150    40    tolerance=20
+
+TC-DIF-047 An Open Document That Cannot Be Read Again Says That Only Its Last Members Are Compared
+    [Documentation]    Pasted into the main window, a document that repeats a key has no file to be read
+    ...    again from: Diff has its last members (as the main window does), and a line over the page,
+    ...    in amber, says that Left repeats a key and what is compared.
+    [Tags]    p1    main-layout
+    Load Fixture Via Paste    {"k":1,"k":2}
+    Open Tool    diff
+    Click At    ${OPEN_DOCUMENT_X}    ${DIFF_HEADER_Y}
+    Sleep    0.5s
+    Paste Into Box    ${DIFF_RIGHT_X}    ${DIFF_BOX_Y}    {"k":2}
+    Press Main Button
+    Status Should Read    same
+    Region Should Contain Color    @{REPEATS_NOTICE}    210    150    40    tolerance=20
+    Wait Until Keyword Succeeds    6x    0.5s
+    ...    Region Should Contain Text    @{REPEATS_NOTICE}    has a repeated key

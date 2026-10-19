@@ -1,6 +1,6 @@
 # The jq functions the app adds — test requirements
 
-Source: `crates/query/src/jq_ext.rs` and `jq_ext/{prelude.jq,tabular.rs,tostream.rs}` in
+Source: `crates/query/src/jq_ext.rs` and `jq_ext/{prelude.jq,tabular.rs,tostream.rs,json_text.rs}` in
 [jsonquery_gui](https://github.com/nujufas/jsonquery_gui); `run_query_with_vars` in
 `crates/query/src/lib.rs` is the one place a jq program is compiled, and chains the
 definitions in.
@@ -85,6 +85,15 @@ the rows as text. The error cases wrap the call in `try … catch .`, which ends
 | TC-JQX-080 | An error raised in the query shows its text plainly (`boom`, not `"boom"`) | P2 |
 | TC-JQX-081 | `try … catch` hands over the error text | P2 |
 | TC-JQX-082 | An unknown variable (`$ENV`) is a query error | P2 |
+| TC-JQX-090 | `tonumber` of text that is not a number is one error, worded as jq words it, and the window answers the next query | P0 |
+| TC-JQX-091 | `fromjson` of text that is not JSON is one error (`while parsing`), and the window answers the next query | P0 |
+| TC-JQX-092 | `tonumber?` skips what is not a number | P0 |
+| TC-JQX-093 | `tonumber` reads what jq reads: `007`, `+5`, `.5`, `5.`, `-1e2`, `1.50` | P1 |
+| TC-JQX-094 | `tonumber` refuses a space round a number, `0x10`, `1_000` and nothing | P2 |
+| TC-JQX-095 | `fromjson` reads one value and not two | P2 |
+| TC-JQX-096 | A result nested 5,000 levels deep is cut where it gets too deep (`<skipped: too deep>`) and the window stays | P0 |
+| TC-JQX-097 | `tojson` stops where jq stops: 256 levels are written in full, a deeper value is cut | P1 |
+| TC-JQX-098 | A value 50,000 levels deep is written as text by string interpolation without the app closing | P1 |
 
 ## Related
 
@@ -114,6 +123,12 @@ One thing broken at a time in a build of the app; each mutant fails the cases th
 
 ## Findings
 
+- **`"abc" | tonumber` and `"N/A" | fromjson` never finished** (TC-JQX-090, 091, 092). jaq's `fromjson` read the text as a
+  sequence of values and, on a token it could not read, answered with an error and tried the same place again, for ever: the
+  worker thread, one thread for every query, was busy with it and the memory grew by a gigabyte a second; `try` and `?` did not
+  help. The app has its own `fromjson`, `tonumber` and `tojson` now (`jq_ext/json_text.rs`): one value or one error, jq's
+  own grammar for a number, and a value nested very deep is cut where jq cuts it (TC-JQX-096 to 098). The Rust crate tests
+  the same from the inside (475,255 strings over the characters of JSON, each a value or an error).
 - **The wording of an error differs between jq versions**, so the cases for the wrong-input
   errors (TC-JQX-067, 069) check that the message contains `cannot be csv-formatted`, and not the
   words after it: jq 1.7 ends "only an array can be", jq 1.8.1 "only array", and the app has the

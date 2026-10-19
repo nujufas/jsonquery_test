@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (October 2026): **689 test cases in 27 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
+touches your desktop. Status (October 2026): **698 test cases in 27 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
 
 Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
 app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
@@ -246,7 +246,7 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `satellites` | the tutorial and About windows | [14](docs/14_tutorial_and_about_windows.md) |
 | `pane_headers` | the panes' titles and headers, checked in pixels | [15](docs/15_pane_headers.md) |
 | `drag_and_drop` | files dropped on the main window, the Source window and the Tools pages | [16](docs/16_drag_and_drop.md) |
-| `jq_functions` | `IN`, `INDEX`, `JOIN`, `tostream`, `fromstream`, `truncate_stream`, `@csv` and `@tsv`, which the app adds to its jq engine, read back exactly | [17](docs/17_jq_functions.md) |
+| `jq_functions` | `IN`, `INDEX`, `JOIN`, `tostream`, `fromstream`, `truncate_stream`, `@csv` and `@tsv`, which the app adds to its jq engine, and its own `fromjson`, `tonumber` and `tojson` (text that is not a number or JSON, a value nested very deep), read back exactly | [17](docs/17_jq_functions.md) |
 | `output_formats` | a query ending in `@csv` or `@tsv`: the CSV/TSV note, the Text view, Copy to Clipboard and Save... write rows, not JSON | [18](docs/18_output_formats.md) |
 | `tutorial_pages` | the eight tutorial pages for those functions: every example run, the buttons, the cheat sheet | [19](docs/19_tutorial_pages.md) |
 | `workflows` | whole journeys: a file chosen in the dialog, a lesson, a query, rows or JSON saved to disk | [20](docs/20_workflows.md) |

@@ -16,6 +16,12 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-19: 27 suites, 698 test cases** — `tonumber`, `fromjson` and `tojson` are the app's own now: text that
+is not a number or JSON is one error and no longer a run that never ends, and a result nested thousands of levels deep no longer
+closes the app. TC-JQX-090 to 098 (`suites/jq_functions/`, [17_jq_functions.md](17_jq_functions.md)) are the new cases. They were
+run on the debug build with the fix, with the other suites that use these functions (`jq_functions`, `query_engines`,
+`output_formats`): 152 of 152. The whole suite was not run again, and neither was it run docked.
+
 **Status as of 2026-10-11 (night): 27 suites, 689 test cases, run two ways** — the status bar has a 🌐 between the ⓘ and
 the ⚙ that opens https://jsonquery.dev, and the About window has a Website row with a link to it. `suites/website/website.robot`
 (TC-WEB-001 to 005, [23_website.md](23_website.md)), TC-SAT-024 to 026 and TC-DOCK-041 are the new cases; the ones that were
@@ -802,6 +808,15 @@ engine edge) are covered by `cargo test`.
 | TC-JQX-080 | An Error Raised In The Query Shows Its Text Plainly | P2 | **Passing** | `suites/jq_functions/` |
 | TC-JQX-081 | try catch Hands Over The Error Text | P2 | **Passing** | `suites/jq_functions/` |
 | TC-JQX-082 | An Unknown Variable Is A Query Error | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-090 | tonumber Of Text That Is Not A Number Is One Error And The Window Answers The Next Query | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-091 | fromjson Of Text That Is Not JSON Is One Error And The Window Answers The Next Query | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-092 | tonumber With A Question Mark Skips What Is Not A Number | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-093 | tonumber Reads What jq Reads | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-094 | tonumber Refuses A Space Around A Number | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-095 | fromjson Reads One Value And Not Two | P2 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-096 | A Result Nested Very Deep Is Cut Where It Gets Too Deep And The Window Stays | P0 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-097 | tojson Stops Where jq Stops | P1 | **Passing** | `suites/jq_functions/` |
+| TC-JQX-098 | A Value Nested Far Deeper Than An Ordinary Thread Can Write Is Written Without The App Closing | P1 | **Passing** | `suites/jq_functions/` |
 
 ## CSV and TSV output — [18_output_formats.md](18_output_formats.md)
 
@@ -1018,6 +1033,13 @@ engine edge) are covered by `cargo test`.
 | TC-WEB-005 | The Info And The Settings Buttons Work Beside The Globe And Open Nothing In The Browser | P1 | **Passing** | `suites/website/` |
 
 ## Coverage summary
+
+**2026-10-19, the hang and the crash:** 689 → 698 cases in 27 suites (TC-JQX-090 to 098). Before the fix `"abc" | tonumber` and
+`"N/A" | fromjson` never ended (the one worker thread was lost with them) and a result nested about 2,000 levels deep closed the
+app; the cases ask for an error, for the window to answer the next query, and for a deep result cut at 127 levels and
+written as text by `tojson` and by string interpolation. The run: `jq_functions` (with the nine new cases), `query_engines` and
+`output_formats` together, 152 of 152. The Rust crate tests the same from the inside (the original reports, 475,255 strings over
+the characters of JSON, the depth limits).
 
 **2026-10-11 night, the website button:** 680 → 689 cases in 27 suites (TC-WEB-001 to 005, TC-SAT-024 to 026, TC-DOCK-041).
 The last full runs (the debug build): `run_parallel.sh -j 5`, 688 of 689; `run_docked.sh -j 5`, the tools pass 151 of 151 and

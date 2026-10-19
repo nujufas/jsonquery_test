@@ -308,3 +308,73 @@ TC-JQX-082 An Unknown Variable Is A Query Error
     Load Fixture    people.json
     Run Query By Paste    $ENV | length
     Status Bar Should Say    error
+
+# --- text that is not a number or JSON, and values nested very deep -------------------------
+
+TC-JQX-090 tonumber Of Text That Is Not A Number Is One Error And The Window Answers The Next Query
+    [Documentation]    `"abc" | tonumber` never finished: jaq's `fromjson` answered with an error
+    ...    and, reading the same place again, with another, for ever, and the worker thread
+    ...    (one thread, which every query waits on) was busy with them while the memory grew.
+    ...    Now it is one error, worded as jq words it, and the next query is answered.
+    [Tags]    p0
+    Load Fixture    people.json
+    Run Query By Paste    "abc" | tonumber
+    Status Bar Should Say    item error
+    Status Bar Should Say    cannot be parsed as a number
+    Run Query By Paste    "12" | tonumber + 1
+    Results Should Be Json    [13]
+
+TC-JQX-091 fromjson Of Text That Is Not JSON Is One Error And The Window Answers The Next Query
+    [Tags]    p0
+    Load Fixture    people.json
+    Run Query By Paste    "N/A" | fromjson
+    Status Bar Should Say    item error
+    Status Bar Should Say    while parsing
+    Run Query By Paste    "[1,2]" | fromjson | add
+    Results Should Be Json    [3]
+
+TC-JQX-092 tonumber With A Question Mark Skips What Is Not A Number
+    [Documentation]    The way people get round bad numbers in jq. It did not get round this one:
+    ...    the stream of errors never ended, so nothing was ever skipped.
+    [Tags]    p0
+    Give    people.json    ["1", "x", "2"] | map(tonumber?)    [[1, 2]]
+
+TC-JQX-093 tonumber Reads What jq Reads
+    [Documentation]    Leading zeros, a plus sign, a point with nothing before or after it, an
+    ...    exponent, a trailing zero kept (from jq 1.8.1).
+    [Tags]    p1
+    Give    people.json    ["007", "+5", ".5", "5.", "-1e2", "1.50"] | map(tonumber)    [[7, 5, 0.5, 5, -100, 1.50]]
+
+TC-JQX-094 tonumber Refuses A Space Around A Number
+    [Documentation]    jaq read the text as JSON, and took " 5". jq's does not.
+    [Tags]    p2
+    Give    people.json    [" 5", "5 ", "", "0x10", "1_000"] | map(try tonumber catch "no")    [["no", "no", "no", "no", "no"]]
+
+TC-JQX-095 fromjson Reads One Value And Not Two
+    [Tags]    p2
+    Give    people.json    ("1 2" | try fromjson catch "no"), ("[1,2]" | fromjson | length)    ["no", 2]
+
+TC-JQX-096 A Result Nested Very Deep Is Cut Where It Gets Too Deep And The Window Stays
+    [Documentation]    5,000 arrays one in the next: the app closed at about 1,800. The result is shown
+    ...    down to 127 levels, the deepest a document can be, and `<skipped: too deep>` is
+    ...    what stands for the rest, as in jq.
+    [Tags]    p0
+    Load Fixture    people.json
+    Run Query By Paste    reduce range(5000) as $i ([]; [.])
+    ${text}=    Copy All Results
+    Should Contain    ${text}    <skipped: too deep>
+    Run Query By Paste    .[0].name
+    Results Should Be Json    ["Alice"]
+
+TC-JQX-097 tojson Stops Where jq Stops
+    [Documentation]    256 arrays round a number are written in full, a deeper value is cut with
+    ...    `<skipped: too deep>` (the lengths are those of jq 1.8.1).
+    [Tags]    p1
+    Give    people.json    (reduce range(256) as $i (1; [.]) | tojson | length), (reduce range(300) as $i ([]; [.]) | tojson | length)    [513, 533]
+
+TC-JQX-098 A Value Nested Far Deeper Than An Ordinary Thread Can Write Is Written Without The App Closing
+    [Documentation]    50,000 arrays one in the next, written as text by string interpolation, which
+    ...    jaq does by recursion, a kilobyte of stack for each level: the thread that runs queries
+    ...    has the room.
+    [Tags]    p1
+    Give    people.json    reduce range(50000) as $i ([]; [.]) | "\\(.)" | length    [100002]

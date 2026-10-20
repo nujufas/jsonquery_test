@@ -16,6 +16,8 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-20 (last): 29 suites, 760 test cases** — a text has a right-click menu: Cut, Copy, Paste and Select All in a box that can be typed in (the query box, the source field, the box of the empty Source pane, the Find field, every box of the Tools, the field of a line being typed over), Copy and Select All in a text that is only shown (the Text views, the result and the error of a tool), Copy on a message, a link and the lines of a list ([24_text_menus.md](24_text_menus.md)). `suites/text_menus/text_menus.robot` (TC-TXM-001 to 016 and 026), `suites/tools/tools_menus.robot` (TC-TXM-017 to 025) and TC-SAT-049 to 051 are the new cases (29), TC-CTX-007 says what it says now (the query box has a menu), and TC-DIF-010 finds an item of the menu of a line by OCR (the menu grew and opens above the pointer near the foot of the window). The runs, on the debug build: `run_parallel.sh -j 6`, 759 of 760 (TC-DOCK-023, an OCR misreading of `result(s)` as `resulkt{s)`, passes 3 of 3 alone); `run_docked.sh -j 6`, the tools pass 164 of 164 and the main-view pass 524 of 524. 33 faults put into the app one at a time (T1 to T33, in [24_text_menus.md](24_text_menus.md)) were all killed by the case meant for them. **The old cases found a fault in the change**: the error text of a tool had been made a read-only text box in the monospace font (it was a label in the window's own font), which broke the line one word earlier, and TC-FMT-012 failed on it (T33); the app is fixed and a unit test pins the font.
+
 **Status as of 2026-10-20 (later): 27 suites, 731 test cases** — a key that an object has more than once (valid JSON) is compared member by member in Diff JSON, the first with the first and the second with the second, and every member is a line of its column (nujufas/jsonquery_gui#1; the owner chose "pair them in order"): `suites/tools/tools_diff.robot`, TC-DIF-042 to 047 added ([13_tools_window.md](13_tools_window.md)). They pass, in a window of their own (the whole Diff file: 48 of 48, on the second run; on the first three cases failed to start their comparison under load and passed alone) and docked (the Diff cases that do not need the main window: 44 of 44); 9 faults put into the app one at a time were all killed by the case meant for them (G1 to G9). The other Tools suites (tools, format, patch, validate, merge, docked, dialogs: 155 cases) were run whole after the change and pass.
 
 **Status as of 2026-10-20: 27 suites, 725 test cases** — the About window has a **Known issues (N)** header that opens the list of the jq programs that run differently here and makes the window bigger (640 wide, as tall as the list needs), and closing it puts the window back. TC-SAT-040 to 048 (`suites/satellites/`, [14_tutorial_and_about_windows.md](14_tutorial_and_about_windows.md)) are the new cases, and TC-SAT-026 reads the window at 380×330 and 320×330 now (it was 300 high); 10 of 10 passed on the debug build, and 16 mutants of the list and its window were made: 12 are killed, 4 are not, each with its reason in that document (the height cap and the least size cannot be seen on a 900-high display with `xdotool`).
@@ -372,7 +374,7 @@ has no such requirement — only the Ctrl+Enter path is focus-gated this way).
 | TC-CTX-004 | Save… (single row) — cross-ref TC-SAVE-003/004 | P1 | **Passing** (covered by TC-SAVE-003a/b/c and TC-SAVE-004a/b/c, which choose the menu item and read the file) | `suites/saving/` |
 | TC-CTX-005 | Find in Source availability — cross-ref TC-SRCH-020+ | P1 | **Passing** (covered by TC-CTX-001's negative half + TC-CTX-002's positive half — no separate test needed) | `suites/context_menus/` |
 | TC-CTX-006 | Search… scoping by tree | P2 | **Passing** | `suites/context_menus/` |
-| TC-CTX-007 | No context menu outside tree rows | P3 | **Passing** | `suites/context_menus/` |
+| TC-CTX-007 | No Row Menu Appears Outside Any Tree Row, And No Menu On A Header Or A Button | P3 | **Passing** | `suites/context_menus/` |
 
 **Confirmed during implementation**: a right-click occasionally doesn't
 register on the first attempt (the same class of synthetic-input flakiness
@@ -735,6 +737,9 @@ engine edge) are covered by `cargo test`.
 | TC-SAT-046 | A Line Of The List Shows An Example While The Pointer Rests On It | P2 | **Passing** | `suites/satellites/` |
 | TC-SAT-047 | The Link Under The List Opens The Page With All The Issues | P1 | **Passing** | `suites/satellites/` |
 | TC-SAT-048 | A Window Too Small For The List Scrolls To Its End | P2 | **Passing** | `suites/satellites/` |
+| TC-SAT-049 | The Version Is Copied With A Right Click | P3 | **Passing** | `suites/satellites/` |
+| TC-SAT-050 | A Link Is Copied With A Right Click | P2 | **Passing** | `suites/satellites/` |
+| TC-SAT-051 | A Line Of The Known Issues Is Copied With A Right Click | P3 | **Passing** | `suites/satellites/` |
 | TC-SAT-030 | All The Windows Can Be Open Together | P1 | **Passing** | `suites/satellites/` |
 | TC-SAT-031 | Closing One Window Leaves The Others | P2 | **Passing** | `suites/satellites/` |
 
@@ -1071,7 +1076,40 @@ engine edge) are covered by `cargo test`.
 | TC-WEB-004 | Every Click On The Globe Opens The Site Once | P2 | **Passing** | `suites/website/` |
 | TC-WEB-005 | The Info And The Settings Buttons Work Beside The Globe And Open Nothing In The Browser | P1 | **Passing** | `suites/website/` |
 
+## Text menus — [24_text_menus.md](24_text_menus.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-TXM-001 | The Query Box Has The Menu Of A Text Box | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-002 | Paste In The Menu Of The Query Box Puts The Clipboard In It | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-003 | Select All And Copy In The Menu Put The Whole Query On The Clipboard | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-004 | Cut In The Menu Moves The Query To The Clipboard | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-005 | A Right Click Inside A Selection Keeps It, So That Copy Copies Just That | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-006 | A Right Click Outside A Selection Puts The Caret There, And Copy Is Dim | P2 | **Passing** | `suites/text_menus/` |
+| TC-TXM-007 | The Menu Of The Source Field Pastes A Path | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-008 | Paste In The Menu Of The Empty Source Panel Loads The Document | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-009 | The Results' Text View Has Copy And Select All, Not Cut Or Paste | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-010 | Select All And Copy In The Results' Text View Give All Of The Text | P1 | **Passing** | `suites/text_menus/` |
+| TC-TXM-011 | A Word Taken In The Results' Text View Stays Taken Under A Right Click | P2 | **Passing** | `suites/text_menus/` |
+| TC-TXM-012 | The Text View Of A Pasted Document Has The Menu Of A Box | P2 | **Passing** | `suites/text_menus/` |
+| TC-TXM-013 | The Text View Of A File Has Copy And Select All, Not Cut Or Paste | P2 | **Passing** | `suites/text_menus/` |
+| TC-TXM-014 | An Error In The Status Bar Is Copied With A Right Click | P2 | **Passing** | `suites/text_menus/` |
+| TC-TXM-015 | The Find Field Has The Menu Of A Text Box | P3 | **Passing** | `suites/text_menus/` |
+| TC-TXM-016 | A Hit Of Find All Copies Its Path Or Its Line | P3 | **Passing** | `suites/text_menus/` |
+| TC-TXM-017 | Every Box Of The Tools Has The Menu Of A Text Box | P1 | **Passing** | `suites/tools/` |
+| TC-TXM-018 | Paste In The Menu Of A Box Of A Tool Puts The Clipboard In It | P1 | **Passing** | `suites/tools/` |
+| TC-TXM-019 | Select All And Cut In The Menu Of A Box Of A Tool Empty It Into The Clipboard | P2 | **Passing** | `suites/tools/` |
+| TC-TXM-020 | The Result Of A Tool Is Text With Copy And Select All, Not Cut Or Paste | P1 | **Passing** | `suites/tools/` |
+| TC-TXM-021 | An Error Of A Tool Is Text That Can Be Selected And Copied | P2 | **Passing** | `suites/tools/` |
+| TC-TXM-022 | A Line Of The Side By Side View Copies Its Text | P1 | **Passing** | `suites/tools/` |
+| TC-TXM-023 | The Menu Of A Line Being Typed Over Is That Of A Box, And The Typing Goes On | P1 | **Passing** | `suites/tools/` |
+| TC-TXM-024 | A Change In The List Copies Its Path Or Its Line | P2 | **Passing** | `suites/tools/` |
+| TC-TXM-025 | A Problem In The List Copies Its Path, Its Message Or Its Line | P2 | **Passing** | `suites/tools/` |
+| TC-TXM-026 | Ctrl+A In A Text View Takes All Of Its Text, As Select All In The Menu Does | P3 | **Passing** | `suites/text_menus/` |
+
 ## Coverage summary
+
+**2026-10-20, the right-click menu of a text:** 731 → 760 cases in 29 suites (TC-TXM-001 to 026, TC-SAT-049 to 051). Before the change a text had no menu (egui gives a box its keys and nothing else), and a right click on a selection threw the selection away. The cases: Paste, Cut, Copy and Select All in the query box and the source field, a right click inside a word that was taken keeps it (and Copy gives that word), one outside it does not (001 to 007); Paste in the empty Source pane loads a document (008); the Results' Text view, a file's Text view, a message in the status bar, the Find field and the hits of Find All (009 to 016, 026); every box of the Tools, Paste and Cut in one, the result and the error of Format as text that can be copied (017 to 021); the lines of the side-by-side view copy their text, the line being typed over has a box's menu and goes on being typed over, the Changes list and Validate's problems copy their path, message or line (022 to 025); the About window's version, its links and a known issue (TC-SAT-049 to 051). Run in a window of the Tools and docked (the main-view pass has 17 of them, the tools pass 9). Thirty-three faults, one at a time, each killed ([24_text_menus.md](24_text_menus.md), T1 to T33). The whole suite found two things: the error text's font (above, a fault of the change, fixed) and the menu of a changed side-by-side line, which now opens above the pointer near the foot of the window (TC-DIF-010 found its item by distance, and now by OCR).
 
 **2026-10-20, a key that an object has more than once, in Diff JSON:** 725 → 731 cases in 27 suites (TC-DIF-042 to 047). Before the change the last member of a key was compared and the others dropped, with nothing said (the Left box had 28 lines, the view 19). The cases: each member is a line and the one the other lacks has a blank across (red, nothing as bright as 100 in the right column), the menu of that line copies `/a#3`, the Patch view says it leaves out 2 changes and Copy patch gives `[]` (042); several repeated keys with no line over the page (043); a picked line moved into the other document and saved with both members (044); a line typed over the second of two members, saved (045); the open document read again from its file (046), and one pasted, which has none, saying that only the last member of each key is compared (047). Nine faults put into the app one at a time, each in a build of its own: see the table in [13_tools_window.md](13_tools_window.md) (G1 to G9).
 

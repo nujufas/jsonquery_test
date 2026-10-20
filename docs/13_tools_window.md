@@ -156,11 +156,14 @@ The suites below run with the Tools in their window, which is how the app starts
 with the Tools docked in the main window (`./run_docked.sh`, pass *tools*): the page of a tool is then the
 window's own, pixel for pixel, in a tab of a main window of the Tools window's size, and nothing of a case
 changes but `Open Tool` clicking a tab and the points of the tab row and the status bar (`resources/
-docked_tools.py`). 144 of the 164 cases run docked; 20 are tagged and left out — `window-only` for the 7 of
+docked_tools.py`). 159 of the 179 cases run docked; 20 are tagged and left out — `window-only` for the 7 of
 `tools.robot` about the window itself (TC-TWIN-001 to 004, 012, 015, 016) and `main-layout` for the 13 that read
 the main window's own layout in the middle of a tool's case (TC-TWIN-008, TC-TWIN-011, TC-PAT-012, TC-PAT-015,
 TC-VAL-014, TC-VAL-015, TC-DIF-021, TC-FMT-021, TC-FMT-080, TC-MRG-011, TC-MRG-029, TC-MRG-042, TC-MRG-044) — and
 [22_tools_docked.md](22_tools_docked.md) has each one's docked counterpart.
+
+The right-click menu of the boxes, the results and the lists of the pages (TC-TXM-017 to 025,
+`tools_menus.robot`) is in [24_text_menus.md](24_text_menus.md); they run docked too.
 
 Six suites in `suites/tools/` share `resources/tools.resource` (every measured
 region and click point of the window, and the keywords that use them). The pages

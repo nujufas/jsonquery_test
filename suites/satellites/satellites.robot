@@ -184,6 +184,11 @@ About Should Not Show
     Region Should Not Contain Text    @{region}    ${text}
     Switch To Main Window
 
+Clipboard Should Be
+    [Arguments]    ${expected}
+    ${text}=    Get Clipboard
+    Should Be Equal    ${text}    ${expected}
+
 Pick Language
     [Arguments]    ${x}
     Click At    ${x}    ${TAB_Y}
@@ -580,6 +585,66 @@ TC-SAT-048 A Window Too Small For The List Scrolls To Its End
     Switch To Window    ${ABOUT_WINDOW}
     Scroll At    300    200    -30
     About Should Show    smaller ones, and more examples, in the full list
+
+TC-SAT-049 The Version Is Copied With A Right Click
+    [Documentation]    A right click on the first line of the window ("jsonquery gui v0.5.1") offers Copy, and
+    ...    the clipboard then has the line: what a person puts in a report of a problem. The menu is the
+    ...    one of a text that is only shown (docs/24_text_menus.md): its first item is 16 px under the pointer.
+    [Tags]    p3
+    ${version}=    Cargo Version
+    Open About
+    Switch To Window    ${ABOUT_WINDOW}
+    ${x}    ${y}=    Find Text In Region    @{ABOUT_TEXT}    jsonquery gui
+    Right Click At    ${x}    ${y}
+    Sleep    0.5s
+    Set Clipboard    nothing was copied
+    ${item}=    Evaluate    int(${y}) + 16
+    ${inside}=    Evaluate    int(${x}) + 20
+    Click At    ${inside}    ${item}
+    Wait Until Keyword Succeeds    8x    0.3s    Clipboard Should Be    jsonquery gui v${version}
+
+TC-SAT-050 A Link Is Copied With A Right Click
+    [Documentation]    A right click on a link offers Copy link, and the clipboard then has its address: the
+    ...    repository, the licence, the site and the policy of privacy (found by its second word: a row
+    ...    that begins "Privacy:" would be found by the first). A right click is not a click: the
+    ...    browser is not asked to open anything.
+    [Tags]    p2
+    Open About
+    Switch To Window    ${ABOUT_WINDOW}
+    &{links}=    Create Dictionary
+    ...    GitHub=https://github.com/nujufas/jsonquery_gui
+    ...    MIT=https://github.com/nujufas/jsonquery_gui/blob/master/LICENSE
+    ...    policy=https://github.com/nujufas/jsonquery_gui/blob/master/PRIVACY.md
+    ...    jsonquery.dev=https://jsonquery.dev
+    FOR    ${text}    ${address}    IN    &{links}
+        ${x}    ${y}=    Find Text In Region    @{ABOUT_TEXT}    ${text}
+        Right Click At    ${x}    ${y}
+        Sleep    0.5s
+        Set Clipboard    nothing was copied
+        ${item}=    Evaluate    int(${y}) + 16
+        ${inside}=    Evaluate    int(${x}) + 20
+        Click At    ${inside}    ${item}
+        Wait Until Keyword Succeeds    8x    0.3s    Clipboard Should Be    ${address}
+    END
+    Nothing Should Have Been Opened    settle=0.3
+
+TC-SAT-051 A Line Of The Known Issues Is Copied With A Right Click
+    [Documentation]    The list opened, a right click on the line about modules offers Copy, and the clipboard
+    ...    has the text of the issue, as the page of the issues has it in bold.
+    [Tags]    p3
+    ${page}=    Get File    ${APP_DIR}/docs/known-issues.md
+    ${text}=    Evaluate    re.search(r'^\\*\\*(Modules:.+)\\*\\*$', $page, re.M).group(1)    modules=re
+    Open The Known Issues
+    Switch To Window    ${ABOUT_WINDOW}
+    @{region}=    About Region
+    ${x}    ${y}=    Find Text In Region    @{region}    Modules:
+    Right Click At    ${x}    ${y}
+    Sleep    0.5s
+    Set Clipboard    nothing was copied
+    ${item}=    Evaluate    int(${y}) + 16
+    ${inside}=    Evaluate    int(${x}) + 20
+    Click At    ${inside}    ${item}
+    Wait Until Keyword Succeeds    8x    0.3s    Clipboard Should Be    ${text}
 
 TC-SAT-030 All The Windows Can Be Open Together
     [Documentation]    The Tools window, the tutorial and About open at once, each

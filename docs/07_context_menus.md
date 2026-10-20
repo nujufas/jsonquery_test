@@ -4,6 +4,9 @@ Source: `crates/app/src/tree_view.rs` (`context_menu` §). Applies to any row
 in either the Source or Results tree; item availability differs slightly by
 which tree the row belongs to (noted per case).
 
+The right-click menu of a *text* (Cut, Copy, Paste and Select All in a box, Copy on a text that is only
+shown, on a line of a list, on a message) is a different menu, in [24_text_menus.md](24_text_menus.md).
+
 ## Test cases
 
 ### TC-CTX-001 — Menu contents and order, Source tree row
@@ -53,9 +56,11 @@ for (b) — confirms scoping is by which tree was clicked, not a global toggle.
 Full dialog behavior covered in
 [08_search_and_find_in_source.md](08_search_and_find_in_source.md).
 
-### TC-CTX-007 — No context menu exists outside tree rows
+### TC-CTX-007 — No row menu outside tree rows, and no menu on a header or a button
 Priority: P3
-Steps: right-click the query box, a toolbar button, and a panel header.
-Expected: no context menu appears in any of these locations (negative
-assertion, low priority — include as a quick smoke check rather than a full
-per-location test).
+Steps: right-click the empty part of the Source pane, the title of the Source pane, and a button of the
+toolbar (the theme toggle).
+Expected: no context menu appears in any of these locations: not the row menu (`Copy JSON Path`), and not the
+menu of a text (`Select All`, `Copy`): these places are not text boxes. (Negative assertion, low priority —
+a quick smoke check rather than a full per-location test. The query box *has* a menu now, the one of a text
+box: TC-TXM-001 to 006 in [24_text_menus.md](24_text_menus.md).)

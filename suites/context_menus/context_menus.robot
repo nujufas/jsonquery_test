@@ -78,11 +78,22 @@ TC-CTX-006 Search... Scopes To Whichever Tree It Was Opened From
     Click Text In Region    @{menu}    Search
     Region Should Contain Text    @{POPUP_DIALOG_AREA}    Results
 
-TC-CTX-007 No Context Menu Appears Outside Any Tree Row
+TC-CTX-007 No Row Menu Appears Outside Any Tree Row, And No Menu On A Header Or A Button
+    [Documentation]    A right click on the empty part of the Source pane, on the title of the pane and on a
+    ...    button of the toolbar opens no menu: not the row menu, and not the menu of a text (the boxes
+    ...    that can be typed in have one, docs/24_text_menus.md, and these places are not boxes).
     [Tags]    p3
     Right Click At    300    500
     Sleep    0.3s
     Region Should Not Contain Text    @{SOURCE_PANEL}    Copy JSON Path
+    Right Click At    28    144
+    Sleep    0.4s
+    Region Should Not Contain Text    33    152    130    100    Select All
+    Region Should Not Contain Text    33    152    130    100    Copy JSON Path
+    Right Click At    ${THEME_TOGGLE_X}    ${THEME_TOGGLE_Y}
+    Sleep    0.4s
+    Region Should Not Contain Text    1000    19    190    100    Select All
+    Region Should Not Contain Text    1000    19    190    100    Copy
 
 TC-CTX-003 Copy JSON Path Copies The Path To The Clipboard
     [Documentation]    Right-clicking the root array's first element and

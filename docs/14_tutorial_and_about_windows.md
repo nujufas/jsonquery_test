@@ -62,6 +62,9 @@ that bug broke, on real windows (open, use, hand an example over, maximize, clos
 | TC-SAT-046 | A line of the list shows an example while the pointer rests on it | P2 |
 | TC-SAT-047 | The link under the list opens the page with all the issues | P1 |
 | TC-SAT-048 | A window too small for the list scrolls to its end | P2 |
+| TC-SAT-049 | The version is copied with a right click | P3 |
+| TC-SAT-050 | A link is copied with a right click | P2 |
+| TC-SAT-051 | A line of the known issues is copied with a right click | P3 |
 | TC-SAT-030 | All the windows can be open together | P1 |
 | TC-SAT-031 | Closing one window leaves the others | P2 |
 
@@ -90,6 +93,13 @@ readable when the window is as tall as the list needs, which is how the cases kn
 What the cases do not see: the window's *height cap*. The list at 640 wide is 731 high and the
 test display has 900, so the 9/10 of the screen that caps the height is never reached
 (the cap is a mutant that survives, below).
+
+TC-SAT-049 to 051 are about the right-click menu of a text ([24_text_menus.md](24_text_menus.md)): the
+version, each of the four links (the address is copied; the browser is asked for nothing: the stand-in
+writes down what it is given, and the teardown fails a case that was handed an address it did not ask
+about), and a line of the list, whose text is compared with what the page `docs/known-issues.md` has in
+bold for it. The window's text is found by OCR and right-clicked where it is found; a link is found by
+its last word (a row that begins `Privacy:` also holds the words "Privacy policy").
 
 ## Mutation checks
 

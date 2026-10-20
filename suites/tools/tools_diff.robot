@@ -321,7 +321,10 @@ TC-DIF-010 The Menu Of A Line Copies The Path Of Its Difference
     Status Should Read    Copied the path
     Right Click At    120    490
     Sleep    0.5s
-    Click At    158    557
+    # The last difference is near the foot of the window and the menu of a line (the moves,
+    # Copy path, a Copy for each side) is taller than what is left there: it opens above the
+    # pointer, so the item is found where it is and not by its distance.
+    Click Text In Region    100    350    240    225    Copy path
     Sleep    0.5s
     ${path}=    Get Clipboard
     Should Be Equal    ${path}    /c

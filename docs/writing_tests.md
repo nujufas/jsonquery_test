@@ -153,6 +153,42 @@ Wrap the read in `Wait Until Keyword Succeeds` (the suite does, as `Setting Shou
 [TC-SET-001](21_settings.md), shows opening the window; the regions and rows of the Settings window are
 variables at the top of `suites/settings/settings.robot`.
 
+## Writing a case about a text's right-click menu
+
+A text box, a read-only text and the lines of some lists have a right-click menu
+([24_text_menus.md](24_text_menus.md)). A case clicks the item by its distance under the pointer and reads
+what it did from the clipboard:
+
+```robot
+Set Clipboard    nothing was copied                    # a menu that did nothing fails
+Open Text Menu    ${x}    ${y}    Select All           # right-click, wait for a bright word of the menu
+Pick Menu Item    ${x}    ${y}    ${offset}            # Cut 16, Copy 37, Paste 58, Select All 79 (21 apart)
+Clipboard Should Be    the text                         # polled: a copy reaches the clipboard a frame or two later
+```
+
+(`Open Text Menu`, `Pick Menu Item`, `Choose From Text Menu`, `Clipboard Should Be` and the other keywords are
+in the suites' own `*** Keywords ***` sections, `suites/text_menus/` and `suites/tools/tools_menus.robot`.)
+The rules, learned on the way:
+
+- **The menu opens with its top-left corner at the pointer**, and the first item is 16 px under it. A menu of
+  a text that is only shown has two items (Copy, Select All), a line of a list has what it can give, the
+  menu of a changed side-by-side line has a separator after its two moves (Copy path is then 67 px under).
+  Near the foot of the window the menu opens *above* the pointer (the status bar's messages): find the item by
+  OCR (`Click Text In Region`) in a region that reaches above and below the point.
+- **Only a word that is bright is read.** Cut and Copy are dim until something is selected, Select All is dim in
+  an empty box: ask for `Paste` of a box, `Select All` of a text that is only shown.
+- **A click on a dim item closes the menu and does nothing**: a case about "Copy is dim" clicks it and checks
+  that the clipboard is still the marker.
+- **A menu of one item is narrow** (a message, a link): click 20 px right of the pointer, not at its x.
+- **Paste and Cut take a frame**: the window system answers with the event of the key. Wait 0.5 s after the
+  click.
+- **To read a box that should be empty**, set the clipboard to the marker, click in the box, Ctrl+A, Ctrl+C: the
+  marker is still on the clipboard (`Query Box Should Be Empty`, `Box Should Be Empty`).
+- **Find a link by its last word**: `Find Text In Region` finds a single word first and, failing that, the
+  words of a whole line joined, and answers with the middle of the line.
+- **A list anchored to the foot of the window** (the hits of Find All) does not move in the docked run: read
+  its row from a variable that `resources/docked_main.py` knows (`${HIT_ROW_1_Y}`).
+
 ## Writing a case that also runs with the Tools docked
 
 `./run_docked.sh` runs the suites a second time with the Tools docked in the main window as tabs

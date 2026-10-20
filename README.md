@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (October 2026): **731 test cases in 27 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
+touches your desktop. Status (October 2026): **760 test cases in 29 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
 
 Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
 app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
@@ -238,11 +238,12 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `tree_view` | row rendering and colours, expand/collapse, scrolling | [05](docs/05_tree_view.md) |
 | `text_view` | Tree/Text toggles, editable paste and Apply, read-only text | [06](docs/06_text_view.md) |
 | `context_menus` | row menus of the Source and Results panes, Copy JSON Path, Search... | [07](docs/07_context_menus.md) |
+| `text_menus` | the right-click menu of a text: Cut, Copy, Paste and Select All in the query box, the source field, the paste box and the Find field, Copy and Select All in the Text views, a message, a hit of Find All; the Tools' boxes, results and lists are in `tools/tools_menus.robot`, the About window's in `satellites` | [24](docs/24_text_menus.md) |
 | `search` | the Find dialog, Find All, regex mode, Find in Source | [08](docs/08_search_and_find_in_source.md) |
 | `saving` | the Save... buttons and menu items through the file dialog: default names, file types, the file written, errors, Ctrl+S | [09](docs/09_saving.md) |
 | `keyboard_shortcuts` | Ctrl+F, Ctrl+Enter, Enter | [10](docs/10_keyboard_shortcuts.md) |
 | `popout` | the Query, Source and Results panes in windows of their own | [12](docs/12_popout_panes.md) |
-| `tools` | the Tools window: Merge, Format, Diff, Patch, Validate, and their file dialogs; and the Tools docked in the main window as tabs: the move both ways, the row of tabs, the Json Query tab, the keys, the drops, what is kept (ten files) | [13](docs/13_tools_window.md), [22](docs/22_tools_docked.md) |
+| `tools` | the Tools window: Merge, Format, Diff, Patch, Validate, and their file dialogs; and the Tools docked in the main window as tabs: the move both ways, the row of tabs, the Json Query tab, the keys, the drops, what is kept, and the right-click menus of their boxes and lists (eleven files) | [13](docs/13_tools_window.md), [22](docs/22_tools_docked.md), [24](docs/24_text_menus.md) |
 | `satellites` | the tutorial and About windows, with the list of known issues that opens in it | [14](docs/14_tutorial_and_about_windows.md) |
 | `pane_headers` | the panes' titles and headers, checked in pixels | [15](docs/15_pane_headers.md) |
 | `drag_and_drop` | files dropped on the main window, the Source window and the Tools pages | [16](docs/16_drag_and_drop.md) |
@@ -304,7 +305,7 @@ results/, .venv/        generated, and ignored by git
   the tooling and the environment findings.
 - [docs/99_traceability_matrix.md](docs/99_traceability_matrix.md): every test case ID with its status
   (`Passing`, `Blocked` or `Not implemented`, each with its reason; nothing is blocked now).
-- `docs/01_*.md` to `docs/22_*.md`: the requirements of each area, linked from the table above.
+- `docs/01_*.md` to `docs/24_*.md`: the requirements of each area, linked from the table above.
 
 ## Continuous integration
 

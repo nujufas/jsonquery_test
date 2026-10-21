@@ -143,7 +143,7 @@ The query is put in the box by a paste (typing sends some characters wrong), `.p
 
 ### The About window (TC-SAT-049 to 051)
 
-In `suites/satellites/`: **049** the version (`jsonquery gui v0.5.1`, read from `Cargo.toml`) is copied; **050**
+In `suites/satellites/`: **049** the version (`jsonquery gui v` and the version of `Cargo.toml`) is copied; **050**
 each of the four links copies its address (GitHub, the licence, the site, the policy of privacy), and
 nothing is handed to the browser; **051** the line about modules, in the list of known issues, copies the
 text that the page `docs/known-issues.md` has in bold for it.

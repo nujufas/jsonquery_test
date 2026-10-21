@@ -587,7 +587,7 @@ TC-SAT-048 A Window Too Small For The List Scrolls To Its End
     About Should Show    smaller ones, and more examples, in the full list
 
 TC-SAT-049 The Version Is Copied With A Right Click
-    [Documentation]    A right click on the first line of the window ("jsonquery gui v0.5.1") offers Copy, and
+    [Documentation]    A right click on the first line of the window ("jsonquery gui v" and the version) offers Copy, and
     ...    the clipboard then has the line: what a person puts in a report of a problem. The menu is the
     ...    one of a text that is only shown (docs/24_text_menus.md): its first item is 16 px under the pointer.
     [Tags]    p3

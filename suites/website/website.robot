@@ -24,6 +24,9 @@ ${BAR_Y}               789
 ${INFO_X}              1181
 ${GLOBE_X}             1152
 ${GEAR_X}              1123
+# The button of the workspace pane is at the other end of the bar, the first thing at its left; nothing is left of the ⚙
+# (where the 🗗 is with the Tools docked).
+${WORKSPACE_X}         20
 ${NO_BUTTON_X}         1095
 # Where the tooltip of the 🌐 is: above the status bar, its right end near the window's.
 @{GLOBE_TIP}           800    730    380    44
@@ -34,12 +37,13 @@ ${SETTINGS_WINDOW}     JsonQuery — Settings
 
 *** Test Cases ***
 TC-WEB-001 The Status Bar Has A Globe Between The Info And The Settings Buttons
-    [Documentation]    From the right: ⓘ, 🌐, ⚙, and nothing left of the ⚙ (the 🗗 is only there
-    ...    with the Tools docked).
+    [Documentation]    From the right: ⓘ, 🌐, ⚙, and nothing left of that (the 🗗 is only there with the Tools docked); the
+    ...    workspace's button is at the other end of the bar.
     [Tags]    p1    undocked-only
     Status Bar Icon Should Be At    ${INFO_X}
     Status Bar Icon Should Be At    ${GLOBE_X}
     Status Bar Icon Should Be At    ${GEAR_X}
+    Status Bar Icon Should Be At    ${WORKSPACE_X}
     Nothing Should Be In The Status Bar At    ${NO_BUTTON_X}
 
 TC-WEB-002 Hovering The Globe Says What The Site Is And Where A Click Goes

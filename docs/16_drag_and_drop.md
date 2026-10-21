@@ -1,7 +1,9 @@
 # Drag and drop — test requirements
 
 Source: `App::handle_drag_and_drop` in `crates/app/src/app.rs` (one dropped file
-is opened as the document, several open the Tools window on its Merge page),
+is opened as the document, unless its name ends like a query, `.jq`, `.jsonpath`,
+`.jmespath` or `.jsonptr`, when it goes in the query box: `take_dropped_file`;
+several open the Tools window on its Merge page),
 `Tools::add_files` and `dropped_files` / `deliver` / `drop_target` in
 `crates/app/src/tools/operand.rs` (a dropped file goes into the first empty box of
 a Tools page, or replaces the last), and the Merge page's list in
@@ -30,6 +32,13 @@ This was listed as "not reachable" for as long as the suites drove the app with
 
 Not on native Wayland, where the app gets no drops at all (see "Known
 limitations" in the README) — the suite runs under X.
+
+**What the window is told of a drop** is the files and nothing of where: the toolkit under the app (winit
+0.30) drops the position that X11 sends, and a file that is dragged over the window has none, so a pane cannot
+be picked by the pointer and the name of the file decides where it goes (a query file in the query box, anything else
+the Source). It also resolves the path of every file before it hands it over, and drops the whole drop when it
+cannot — a file that is gone when it is let go is never seen by the app. The cases of the query files are in
+`suites/workspace/workspace_drop.robot` ([25_workspace.md](25_workspace.md)); this suite is the files that are not queries.
 
 The dropped files are in `resources/fixtures/merge/` (`platypus.json` is
 `["platypus"]`, `echidna.json` `["echidna"]`, `notes.txt` is not JSON, and so on:

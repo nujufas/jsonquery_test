@@ -22,7 +22,7 @@ ${SOURCE_SAVE_X}      566
 ${JSON_FILTER}        ${{ [{"name": "JSON", "globs": ["*.json"]}] }}
 # The status bar's one line of text, read tightly: dim text ("Saved to ...") is only read
 # when the crop is one line high, and then with the single-line page mode.
-@{STATUS_LINE}        0    775    1100    25
+@{STATUS_LINE}        36   775    1064    25
 
 *** Keywords ***
 Load People

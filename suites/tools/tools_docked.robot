@@ -59,7 +59,7 @@ ${DT_SHOW_IN_MAIN_X}     1125
 @{DT_POPUP_AREA}     15     15     345    150
 ${DT_DIFF_HEADER_Y}  71
 @{DT_DIFF_LEFT_TOP}  16     84     430    24
-@{DT_STATUS}         0      779    1000   20
+@{DT_STATUS}         36     779    964    20
 ${SETTINGS_WINDOW}   JsonQuery — Settings
 ${ABOUT_WINDOW}      JsonQuery — About
 # What the 🌐 hands to the browser: the website's address, as the app's browser crate writes it
@@ -137,14 +137,16 @@ TC-DOCK-005 The Theme And The Tutorial Are At The Right End Of The Row Of Tabs
     Nothing Should Be At    ${NO_UNDOCK_X}    ${DT_TAB_Y}
 
 TC-DOCK-006 The Status Bar Has The Info, The Website, The Settings And The Undock Buttons
-    [Documentation]    From the right: ⓘ, 🌐, ⚙, then 🗗, and nothing beside it.
+    [Documentation]    From the right: ⓘ, 🌐, ⚙, then 🗗, and nothing left of that; the workspace's button is at the other end
+    ...    of the bar, the first thing at its left.
     [Tags]    p1
     [Setup]    Launch Docked
     Icon Should Be At    ${SB_INFO_X}    ${SB_Y}
     Icon Should Be At    ${SB_WEBSITE_X}    ${SB_Y}
     Icon Should Be At    ${SB_SETTINGS_X}    ${SB_Y}
     Icon Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
-    Nothing Should Be At    1066    ${SB_Y}
+    Nothing Should Be At    ${SB_LEFT_OF_UNDOCK_X}    ${SB_Y}
+    Icon Should Be At    ${SB_WORKSPACE_X}    ${SB_Y}
 
 TC-DOCK-007 The Undock Button Is In The Status Bar Whichever Tab Is In Front
     [Documentation]    The Json Query tab and each tool's tab have it, in the same place,
@@ -160,14 +162,17 @@ TC-DOCK-007 The Undock Button Is In The Status Bar Whichever Tab Is In Front
 
 TC-DOCK-008 The Window Has No Undock Button
     [Documentation]    With the Tools in a window of their own there is nothing to undock:
-    ...    the status bar has the ⚙, the 🌐 and the ⓘ only.
+    ...    the status bar has the ⚙, the 🌐 and the ⓘ, and nothing where the 🗗 would be; the workspace's button is at the
+    ...    left end, as it is with the Tools docked.
     [Tags]    p1
     Icon Should Be At    ${SB_INFO_X}    ${SB_Y}
     Icon Should Be At    ${SB_WEBSITE_X}    ${SB_Y}
     Icon Should Be At    ${SB_SETTINGS_X}    ${SB_Y}
+    Icon Should Be At    ${SB_WORKSPACE_X}    ${SB_Y}
     Nothing Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
     Open Tools Window
     Switch To Main Window
+    Icon Should Be At    ${SB_WORKSPACE_X}    ${SB_Y}
     Nothing Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
 
 TC-DOCK-009 The Undock Button Takes The Tools Out Into A Window
@@ -187,6 +192,7 @@ TC-DOCK-009 The Undock Button Takes The Tools Out Into A Window
     Wait Until Keyword Succeeds    6x    0.5s
     ...    Region Should Contain Text    @{TOOLBAR_ROW}    Source
     Icon Should Be At    ${NO_TOOLS_X}    ${DT_TAB_Y}
+    Icon Should Be At    ${SB_WORKSPACE_X}    ${SB_Y}
     Nothing Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
     Switch To Window    ${TOOLS_WINDOW}
     Page Should Show    Left    @{LEFT_HEADER}

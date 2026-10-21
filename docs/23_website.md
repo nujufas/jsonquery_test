@@ -65,13 +65,15 @@ and TC-DOCK-041 in `suites/tools/tools_docked.robot` ([22_tools_docked.md](22_to
 
 The buttons are read by their pixels (an icon is "something bright there": a glyph cannot be read by OCR), the
 tooltip by OCR in the strip above the status bar, and every click is checked by what the stand-in browser was
-asked to open. TC-WEB-001 is tagged `undocked-only`: it says there is nothing left of the ⚙, which docked is the
-🗗's place (TC-DOCK-006 reads the docked bar, with the 🗗). The other four run docked as well (`./run_docked.sh`).
+asked to open. TC-WEB-001 is tagged `undocked-only`: it says that nothing is left of the ⚙ (at 1095, where the 🗗 is
+docked: TC-DOCK-006 reads the docked bar, with the 🗗), and that the button of the workspace pane is at the other end of
+the bar, the first thing at the left. The other four run docked as well (`./run_docked.sh`).
 
 What moved because of the 🌐, in the cases that were already there: the ⚙ is at x = 1123 now (it was 1152, where
 the 🌐 is), the 🗗 at 1095 (it was 1124); the status line that OCR reads stops at 1100 undocked, 1070 docked and
 770 in a Tools-sized window, short of the leftmost icon (an icon in the region makes OCR misread the text beside
-it: `resources/keywords.resource`, `docked_main.py`, `docked_tools.py`); the About window's text is read over its
+it: `resources/keywords.resource`, `docked_main.py`, `docked_tools.py`), and since the pane's button is at the left end
+of the bar they begin at x = 36, after it; the About window's text is read over its
 whole 380 × 300 (`@{ABOUT_TEXT}`; the About window was 380 × 366 for a few hours, with a paragraph on the site).
 
 ## What these cases do not reach

@@ -55,8 +55,9 @@ CLEAR_BUTTON_X = 1001
 STATUS_AREA = [790, 0, 380, 20]
 
 # The status bar has the 🗗 as well, at x 1086-1105 (left of the ⚙, the 🌐 and the ⓘ): with it in
-# the region OCR misreads the text beside it (as it did with the ⚙ and the ⓘ, see keywords.resource).
-STATUS_BAR = [0, 705, 1070, 95]
+# the region OCR misreads the text beside it (as it did with the ⚙ and the ⓘ, see keywords.resource);
+# the region begins after the button of the workspace pane at the left end, for the same reason.
+STATUS_BAR = [36, 705, 1034, 95]
 
 # The "..." button that opens the file dialog is in the source row too: 90 px to the right.
 BROWSE_X = 920
@@ -86,3 +87,17 @@ HIT_ROW_3_Y = 664 - DY
 # beside the 🛠 in the toolbar).
 DOCK_ALL_X = 1153
 DOCK_ALL_Y = 11
+
+# The workspace pane (resources/workspace.resource, suites/workspace/). It is under the row of tabs, so the
+# library moves its header, filter, chips and list down by DY like the rest of the main view. What it does
+# not move is what the window anchors by itself: the windows the pane opens (at the top centre of the window:
+# their points are given as the window has them, which the move would make DY too low), the status bar (its
+# button, at the left end, is where it is without the tabs), and the details under the list and the
+# status line (they reach into the foot of the window, which does not move). The list ends where the details
+# begin, so its region is DY shorter than the window's.
+WS_FORM_DY = -DY
+WS_LIST = [0, 93, 256, 654 - DY]
+# A point at the foot of the list, where a carried row makes it scroll: the foot is where it was in the window, so in
+# the suites' coordinates (which the library moves down by DY) it is DY higher.
+WS_LIST_FOOT_Y = 738 - DY
+WS_BELOW_LIST_Y = 760 - DY

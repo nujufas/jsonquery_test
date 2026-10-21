@@ -189,6 +189,82 @@ The rules, learned on the way:
 - **A list anchored to the foot of the window** (the hits of Find All) does not move in the docked run: read
   its row from a variable that `resources/docked_main.py` knows (`${HIT_ROW_1_Y}`).
 
+## Writing a case about the workspace (the pane at the left)
+
+The pane is a view of a folder on the computer ([25_workspace.md](25_workspace.md)), so a case makes the folder
+before the app starts and reads it afterwards, in Python, and uses the screen only for what a person sees:
+
+```robot
+Launch Workspace App                                  # the pane open, the files of STANDARD in the workspace
+Launch Workspace App    files=${MANY}                 # another dictionary of "path with / -> text"
+Pick Up Row    ${ROW_SCRATCH}    ${ROW_SERVICES}      # press on a row, carry it over another (real mouse, in steps)
+Mouse Up
+Workspace File Should Exist    Services/scratch.jq    # the folder, not the screen
+${item}=    Workspace Item    Services/scratch.jq      # the index's entry: id, sha256, bytes, sample
+```
+
+- **Rows are counted, not found.** A row is 20 points high from y = 93 and `${ROW_...}` (or its number) is
+  its place in `STANDARD`; `Row Y` gives its middle. Names are chosen so that OCR reads them (`update`, not `bump`),
+  and the order is the app's (folders first, then by name; `.patch.json` before `.schema.json`).
+- **A drag is three steps**: `Mouse Down At`, `Move Mouse Slowly To` (half a second, in steps: a jump is not reliably
+  seen as a drag) and `Mouse Up`. A press that moves a little is a click (`Click With Wobble`). What is lit while a row
+  is carried is read in pixels (`192, 222, 255` is the bright border), what is said beside the pointer by OCR.
+- **The pointer is put away** (`Move Mouse To 600 400`) before a colour or a small grey text is read: a row under the
+  pointer is lit, and a button under it has a tooltip, which covers the line under the title (TC-WSP-217 found that).
+- **The windows of the pane are told to the keywords** by `Set Form Kind` (`save`, `newfolder`, `export`, `import`,
+  `delete`), so that OCR is asked about a region as tight as the window; their buttons are found by their fill, not
+  by their label (`Press Primary Button`, `Press Cancel Button`): OCR reads a button's label badly among the lines of
+  a window.
+- **A button is told by its width when OCR cannot read it**: `Primary Button Should Be This Wide  28  42` (Save is 34
+  wide, Replace 53); the order of two buttons under the list by `Details Buttons Should Be In Order  schema  sample`.
+  A word in a message is not checked by the word alone when the message ends with a path that may contain it: the case
+  for the export asked for `Exported` and passed for a message that said `Copied`, because the folder was called
+  `exported` (`Exported +[^ ]{1,3} +ite` is the number after it).
+- **A name is read in its own row** (`Region Should Show Text  0  <row y - 10>  256  20  scratch`), not in the whole list:
+  the details under the list say the name of the item that is picked as well.
+- **Which window is in front is the window manager's to say** (`Active Window Title`): `Switch To Window` and
+  `Switch To Main Window` raise the window they are told to, so a case that must know that the *app* brought a window
+  forward (TC-WSP-240) reads the title before it switches.
+- **A point that the window anchors by itself does not move when the Tools are docked** (the foot of the list, the
+  windows the pane opens, the status bar): say it by a variable (`${WS_LIST_FOOT_Y}`) that `resources/docked_main.py`
+  overrides, as for the other anchored points above.
+- **A file that a script cut and pasted** (moving keywords between files) can be left with a case or a keyword twice, or a
+  `*** Keywords ***` section inside another: Robot does not always say so (it ran such a suite, with one case in the
+  keywords). `scripts/robot_lint.py suites/workspace resources/workspace.resource` finds a case id or a keyword that is
+  there twice, a section header that is there twice and a keyword name that has arguments in it.
+- **In an `Evaluate`, write a backslash twice** (`b"\\xff\\x00"`): Robot turns `\x00` into the character before Python
+  sees the expression, and a NUL in the source is an error (TC-WSP-209).
+- **An icon is a picture, and the case says it as one** (`Icon Should Look Like  left  top  threshold  dark  @{rows}`;
+  `Side Panel Icon Should Be At`, `New Folder Icon Should Be At`): rows of `X` (ink), `.` (none) and `?` (either), read
+  from the pixels of the region with two clear pixels round it. `?` is for the pixels at a rounded corner, which the
+  threshold decides: the same icon on a button (60) and on the strip's ground (27) has different pixels over 90 at its
+  corners. The bright icon is read over 150 and the dim one over 90, and "dim" is also "nothing as bright as 150"
+  (`Run Keyword And Expect Error  Nothing as bright as*  Get Ink Bounds ...`). Measure the picture first, from a
+  screenshot of the real window (a script that prints `Get Ink Art` for the region), and not from the drawing code.
+- **A screenshot probe that takes the whole bar takes its rule and its neighbours**: the status bar has a rule at its top
+  that is as bright as a button (60), and the Source box's edge is over 90 above the bar when the bar is short; the
+  region of a probe begins under what is not the thing, and for a button it is its *picture* (over 90) that is measured, not
+  its fill (TC-WSP-246 failed twice on that, and once on the splitter between two panes, which is white while the
+  pointer is on it).
+- **What begins at the left end of the status bar is read from x = 36**: the pane's button is at x 8-31 and the text is
+  from x 41, so the regions that read the text (`@{STATUS_BAR}`, `@{WS_STATUS_LINE}`, the docked profiles') begin after
+  the button, for the reason that they stop before the icons at the right: OCR reads an icon beside a word as noise.
+- **A file is dropped by name, in the middle of the window**: the app is never told where it was let go (TC-WSP-261 and
+  [16_drag_and_drop.md](16_drag_and_drop.md)), so a case does not try a pane, and does not drop a file that is not there:
+  the toolkit drops the drop. A file that is too big is made without the text going through the log
+  (`A Query File Of Dots`: `Evaluate  pathlib.Path($path).write_text('.' * int($size))`).
+- **A message in the status bar is read with a pattern that allows the space OCR loses** (`Load error.{0,3} ?big\.? ?jq`,
+  `?as ?the ?query`), and a file extension is not trusted to be read right: `.jq` came back as `.ja`.
+- **That a message is gone is checked beside something that is still there**: `Region Should Not Contain Text` passes
+  just as well when OCR read nothing of the bar, so TC-WSP-291 reads "Parsed" (what the bar says of the document)
+  before and after, and retries the missing message until the window has been redrawn. A test of the app that clears
+  the state it is about to look at (`load_error = None` before the good file is dropped) cannot see a message that
+  stays: that is how the stale "Load error" of a failed query-file drop went unseen for a round.
+- **Run lanes from a frozen copy of the test repository** while editing: Robot reads a `.resource` file when the
+  suite that imports it starts, so a keyword that is changed under a lane that is running breaks the lane (a
+  half-written file is a suite that does not parse). A copy with `rsync` (without `results` and `.git`, `.venv`
+  linked) is what a long run reads.
+
 ## Writing a case that also runs with the Tools docked
 
 `./run_docked.sh` runs the suites a second time with the Tools docked in the main window as tabs

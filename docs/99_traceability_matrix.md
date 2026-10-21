@@ -16,7 +16,11 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
-**Status as of 2026-10-20 (last): 29 suites, 760 test cases** — a text has a right-click menu: Cut, Copy, Paste and Select All in a box that can be typed in (the query box, the source field, the box of the empty Source pane, the Find field, every box of the Tools, the field of a line being typed over), Copy and Select All in a text that is only shown (the Text views, the result and the error of a tool), Copy on a message, a link and the lines of a list ([24_text_menus.md](24_text_menus.md)). `suites/text_menus/text_menus.robot` (TC-TXM-001 to 016 and 026), `suites/tools/tools_menus.robot` (TC-TXM-017 to 025) and TC-SAT-049 to 051 are the new cases (29), TC-CTX-007 says what it says now (the query box has a menu), and TC-DIF-010 finds an item of the menu of a line by OCR (the menu grew and opens above the pointer near the foot of the window). The runs, on the debug build: `run_parallel.sh -j 6`, 759 of 760 (TC-DOCK-023, an OCR misreading of `result(s)` as `resulkt{s)`, passes 3 of 3 alone); `run_docked.sh -j 6`, the tools pass 164 of 164 and the main-view pass 524 of 524. 33 faults put into the app one at a time (T1 to T33, in [24_text_menus.md](24_text_menus.md)) were all killed by the case meant for them. **The old cases found a fault in the change**: the error text of a tool had been made a read-only text box in the monospace font (it was a label in the window's own font), which broke the line one word earlier, and TC-FMT-012 failed on it (T33); the app is fixed and a unit test pins the font.
+**Status as of 2026-10-21 (night, last): 30 suites, 1036 test cases** — the second round on the workspace, after the window had been looked at: the pane's button (in the status bar and in the strip) is a window with its left column filled, the button that makes a folder is a folder with a plus left out of it (the rows keep the plain folder), the pane's button is the first thing at the left end of the status bar, a file that is dropped on the window and ends like a query (`.jq`, `.jsonpath`, `.jmespath`, `.jsonptr`) goes in the query box, and a query that is carried out of the list onto the Query pane is opened ([25_workspace.md](25_workspace.md)). 46 cases are new (47 with TC-WSP-291, written after the owner's answer): TC-WSP-243 to 247, 249 to 258 and 260 to 290, in three new files (`workspace_statusbar.robot`, `workspace_drop.robot`, `workspace_carry.robot`) and in the files of the docked pane, the panes in windows of their own and the states of the window; nine of the 229 that were there changed (TC-WSP-002, 003, 004, 019, 020, 021, 113, 210, 222), and four older ones about the status bar (TC-DOCK-006, 008, 009 and TC-WEB-001) say where the buttons are now. The runs, on the debug build: `run_parallel.sh -j 6` before the new cases, 988 of 989 (TC-DIF-026, which did not find its text on a busy lane and passed twice alone); `run_docked.sh -j 6`, the tools pass 164 of 164 and the main-view pass 780 of 782 (TC-WSP-246, which clicked a point that the docked profile moves, fixed; TC-QRY-031, an OCR read that passed 3 of 3 alone); the workspace suites in their last form, 275 of 275 and docked 258 of 258; after the owner's answer (a good query file takes away the message about a bad one), the workspace cases (276, with TC-WSP-291) and the drag-and-drop suite again, 294 of 294 and docked 268 of 268. **197 faults put into the app one at a time were all killed**, 64 of them in this round (45 of them new; one got through a check that was too loose, which was made stricter). **The cases found two faults of the app**: a file that was let go from a workspace that is reached through a link was not the item it is (TC-WSP-289; fixed in `WorkspacePane::note_dropped`, with a test of the app), and the message about a query file that could not be used, which stayed after a good file was dropped (seen while the cases were written and left for the owner to say; fixed when they said that a good drop should clear it: `use_query_file`, a test of the app that fails without it, TC-WSP-262 made stricter and TC-WSP-291 new, three faults put in for it and killed). Seen and left as it is: a file that is gone when it is let go is not handed to the window by the toolkit at all, and a query that is opened from the list does not take that message away (only the drop was asked for).
+
+**Status as of 2026-10-21 (day): 30 suites, 989 test cases** — the workspace: a pane at the left of the window over a folder of saved queries, schemas, patches and documents, shown and hidden by a folder button in the status bar, with one plain folder as its picture everywhere and rows that can be dragged into folders ([25_workspace.md](25_workspace.md)). `suites/workspace/` is new: TC-WSP-001 to 242, 229 cases in ten files (the pane, items, saving, moving, the windows of the pane, the Tools, what is kept, the states of the window, panes in windows of their own, docked). The runs, on the debug build, the whole suite again because the pane adds a button to the status bar: `run_parallel.sh -j 6`, 987 of 990 (TC-WSP-097, which is a test of the app now, and two older cases that fail now and then on a busy lane and passed alone: TC-OPEN-003, TC-TDLG-002); `run_docked.sh -j 6`, the tools pass 164 of 164 and the main-view pass 739 of 739; the workspace suites by themselves at the end, 229 of 229 and docked 214 of 214. Four older cases about the status bar (TC-DOCK-006, 008, 009 and TC-WEB-001) say where the folder button is, and the line of the docked Tools' status bar that has to be blank ends before it (`resources/docked_tools.py`). **152 faults put into the app one at a time** (in [25_workspace.md](25_workspace.md)) were all killed by the case meant for them, after 17 that were not at first had each made a case new or stricter; the tests of the app kill 62 of 62 faults of the pane and its dragging (and 117 of the data under it, before any case). **The cases and the tests of the app found six faults of the change**: the strip of a folded pane cut off its button and its folder, a folder that was renamed or moved shut itself, a message under the list never went away without a touch of the mouse, the buttons of the header were drawn over the title in a pane narrower than 208 points, Save… in a Query pane that is in a window of its own opened the window that saves behind it, and the drag with the right button carried a row (all fixed).
+
+**Status as of 2026-10-20 (evening): 29 suites, 760 test cases** — a text has a right-click menu: Cut, Copy, Paste and Select All in a box that can be typed in (the query box, the source field, the box of the empty Source pane, the Find field, every box of the Tools, the field of a line being typed over), Copy and Select All in a text that is only shown (the Text views, the result and the error of a tool), Copy on a message, a link and the lines of a list ([24_text_menus.md](24_text_menus.md)). `suites/text_menus/text_menus.robot` (TC-TXM-001 to 016 and 026), `suites/tools/tools_menus.robot` (TC-TXM-017 to 025) and TC-SAT-049 to 051 are the new cases (29), TC-CTX-007 says what it says now (the query box has a menu), and TC-DIF-010 finds an item of the menu of a line by OCR (the menu grew and opens above the pointer near the foot of the window). The runs, on the debug build: `run_parallel.sh -j 6`, 759 of 760 (TC-DOCK-023, an OCR misreading of `result(s)` as `resulkt{s)`, passes 3 of 3 alone); `run_docked.sh -j 6`, the tools pass 164 of 164 and the main-view pass 524 of 524. 33 faults put into the app one at a time (T1 to T33, in [24_text_menus.md](24_text_menus.md)) were all killed by the case meant for them. **The old cases found a fault in the change**: the error text of a tool had been made a read-only text box in the monospace font (it was a label in the window's own font), which broke the line one word earlier, and TC-FMT-012 failed on it (T33); the app is fixed and a unit test pins the font.
 
 **Status as of 2026-10-20 (later): 27 suites, 731 test cases** — a key that an object has more than once (valid JSON) is compared member by member in Diff JSON, the first with the first and the second with the second, and every member is a line of its column (nujufas/jsonquery_gui#1; the owner chose "pair them in order"): `suites/tools/tools_diff.robot`, TC-DIF-042 to 047 added ([13_tools_window.md](13_tools_window.md)). They pass, in a window of their own (the whole Diff file: 48 of 48, on the second run; on the first three cases failed to start their comparison under load and passed alone) and docked (the Diff cases that do not need the main window: 44 of 44); 9 faults put into the app one at a time were all killed by the case meant for them (G1 to G9). The other Tools suites (tools, format, patch, validate, merge, docked, dialogs: 155 cases) were run whole after the change and pass.
 
@@ -1106,6 +1110,287 @@ engine edge) are covered by `cargo test`.
 | TC-TXM-024 | A Change In The List Copies Its Path Or Its Line | P2 | **Passing** | `suites/tools/` |
 | TC-TXM-025 | A Problem In The List Copies Its Path, Its Message Or Its Line | P2 | **Passing** | `suites/tools/` |
 | TC-TXM-026 | Ctrl+A In A Text View Takes All Of Its Text, As Select All In The Menu Does | P3 | **Passing** | `suites/text_menus/` |
+
+## Workspace — [25_workspace.md](25_workspace.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-WSP-001 | The Workspace Is Not There Until It Is Asked For | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-002 | The Button In The Status Bar Shows The Pane And Hides It Again | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-003 | The Button Is A Window With Its Left Column Filled, Dim While The Pane Is Not Shown | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-004 | The Button That Makes A Folder Is A Folder With A Plus In It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-005 | A Folder In The List Is The Same Plain Folder Whether It Is Open Or Shut | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-006 | The List Has The Top Folders Open And The Rest Shut | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-007 | A Click On A Folder Opens It And A Click On It Again Shuts It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-008 | A Click Picks A Row And The Details Under The List Say What It Is | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-009 | What A Folder Holds Is Said Under The List When It Is Picked | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-010 | What Is Typed In The Filter Narrows The List By Name | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-011 | The Filter Looks At The Name Of The Folder As Well As The Name Of The Item | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-012 | The Filter Does Not Mind The Case | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-013 | A Filter That Matches Nothing Says So And Shows Nothing | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-014 | The Chips Narrow The List To One Sort Of Item | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-015 | The Docs Chip Shows The JSON And NDJSON Files And Not The Other Sorts | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-016 | A Chip That Has Nothing Under It Says So | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-017 | A Chip And A Filter Narrow The List Together | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-018 | The Fold Button Folds The Pane To A Strip And The Strip's Button Opens It Again | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-019 | The Strip Has A Button And The Pane's Icon, And The Window Takes The Room | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-020 | The Menu Has An Item That Hides The Workspace | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-021 | How Much Of The Pane Is Shown Is Kept | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-022 | The Pane Is As Wide As It Was Dragged To And That Is Kept | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-023 | The Pane Cannot Be Made Narrower Than A Least Width | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-024 | In A Window Too Narrow For It Only The Strip Is Shown | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-025 | A Workspace With Nothing In It Says So | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-026 | A Folder That Was Chosen And Is Gone Is Said And Is Not Made Again | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-027 | Use The Usual One Goes Back To The Usual Workspace | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-028 | The Line Under The Title Says Where The Workspace Is And How Much Is In It | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-029 | Every Sort Of Item Has Its Own Tag | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-030 | What Is Not An Item Is Not Shown | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-031 | A Row That Has A Sample Has A Paperclip And Its Tag Is Moved Over For It | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-032 | Folders Come Before Items And Every One Is In Alphabetical Order | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-033 | A List Longer Than The Pane Scrolls | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-034 | The Arrow Of A Folder Points Right When It Is Shut And Down When It Is Open | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-035 | The Button That Folds The Pane Points Left And The One That Opens It Points Right | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-036 | The Three Dots Of The Menu Button Are One Over The Other | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-037 | What Is In A Folder Is Indented Under It And The Names Line Up | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-038 | A Folder Says How Many Items Are In It At The Right Of Its Row | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-039 | The Details Show The First Lines Of What The Item Holds | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-243 | The Button Is The First Thing At The Left End Of The Status Bar And The Text Begins After It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-244 | The Button Is Where It Is Whether The Pane Is Shown, Folded Or Hidden | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-245 | Held Still Under The Pointer The Button Says What It Is And What A Click Does | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-246 | A Message Too Long For One Line Wraps Beside The Button And Leaves It At The Left End | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-247 | The Buttons At The Right End Are Where They Were Before There Was A Pane | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-040 | A Double Click On A Query Opens It In The Query Box In Its Language | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-041 | A Query That Ends .jmespath Is Opened As JMESPath | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-042 | A JSONPath Query And A JSON Pointer Query Are Opened In Their Own Language | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-043 | The Open Button Under The List Opens The Item That Is Picked | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-044 | A Query That Was Changed Since It Was Opened Is Marked | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-096 | A Click Only Picks: What Is In The Query Box Stays Until Something Is Opened | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-045 | Open With Sample Opens The Sample As The Source And Runs The Query | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-046 | A Query With No Sample Has No Button For One | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-047 | A Document Is Opened As The Source | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-048 | The Button Under The List Opens A Document As The Source | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-049 | The Menu Of An Item Has What Can Be Done With It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-050 | An Item That Has A Sample Has One More Item In Its Menu | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-051 | The Menu Of A Folder Has What Can Be Done With A Folder | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-052 | A Right Click Picks The Row It Is On | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-053 | Open In The Menu Opens The Query | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-054 | Rename In The Menu Gives An Item Another Name And Keeps Its Id | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-055 | Renaming An Item Takes Its Sample With It | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-056 | A Name That Is Typed And Then Escape Is Not A Rename | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-057 | A Name That Is Taken Is Said And The Item Is Not Renamed | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-058 | A Name That A File Cannot Have Is Said And The Item Is Not Renamed | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-059 | A Folder Is Renamed And Everything In It Keeps Its Id | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-060 | Duplicate Makes A Copy With Its Sample And An Id Of Its Own | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-061 | Duplicate Twice Makes Two Copies With Numbers | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-062 | Copy Text Puts The Text Of The Item On The Clipboard | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-063 | Show In The File Manager Opens The Folder The Item Is In | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-064 | Show In The File Manager On A Folder Opens That Folder | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-065 | Delete Asks Before It Deletes And Cancel Keeps The Item | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-066 | Escape Closes The Question And Keeps The Item | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-067 | Delete Deletes The File And The Id The Workspace Kept Of It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-068 | Deleting An Item Deletes Its Sample Too | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-069 | Deleting A Folder Deletes What The Workspace Put In It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-070 | A Folder That Has A File That Is Not The Workspace's Keeps It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-168 | A Message Under The List Goes After A Few Seconds | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-071 | The Pane's Save Button Opens The Window That Saves What Is In The Query Box | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-072 | Nothing Is Saved Until There Is A Name | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-073 | The Window Says What The File Will Be Called As The Name Is Typed | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-074 | Enter In The Name Box Saves The Query Under That Name | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-075 | What Is Kept Of The Query Is An Id And A SHA-256 Of What It Holds | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-076 | The Save Button Of The Window Saves Too | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-077 | Escape And Cancel And The Cross Close The Window And Save Nothing | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-078 | The Save Button Beside Run Opens The Same Window | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-079 | The Query Can Be Saved In A Folder That Is Chosen In The Window | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-080 | A New Folder Is Made For The Query By Typing Its Name | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-081 | A Folder Is Chosen And A New One Is Made In It | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-082 | A Name That A File Cannot Have Is Said In Red And Nothing Is Saved | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-083 | A Name That Is Taken Asks To Replace And Replacing Keeps The Id | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-084 | A Query That Came From The Workspace Is Offered Back Under Its Own Name | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-085 | The Language The Query Is In Gives The File Its End | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-086 | Nothing Can Be Saved From An Empty Query Box | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-087 | The Source Can Be Kept As The Sample Of The Query | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-088 | The Tick For A Sample Is Dim When There Is No Source | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-089 | Without The Tick No Sample Is Kept | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-090 | The Source Is Saved As A Document Of The Workspace | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-091 | The Folder That Is Picked In The List Is The One The Window Offers | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-092 | An Item That Is Picked Offers The Folder It Is In | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-093 | After A Query Is Saved The Box Came From It And The Window Offers Its Name Again | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-094 | A Query Saved With The Pane Folded Is In The Workspace All The Same | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-095 | The Menu Of A Folder Saves The Query In That Folder | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-100 | A Row Dragged Onto A Folder Goes Into It And Is The Same Item Afterwards | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-101 | While A Row Is Carried The Folder It Would Go Into Is Lit And The Label Says Where | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-102 | A Row Takes Its Sample With It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-103 | A Folder Dragged Onto A Folder Takes Everything In It With The Ids Unchanged | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-104 | A Row Put Down On An Item Goes Into The Folder That Item Is In | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-105 | A Row Put Down On The Empty Part Of The List Goes To The Top | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-106 | The Empty Part Of The List Is Lit As The Place Where A Row Would Go To The Top | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-107 | A Row Put Down On The Folder It Is In Stays Where It Is | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-108 | A Row That Is Not Over Anything It Can Go Into Is Not Lit | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-109 | A Folder Is Not Put Into A Folder In It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-110 | A Name That Is Taken In The Folder Is Said And Nothing Moves | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-111 | A Folder Of The Same Name In The Folder Is Said And Nothing Moves | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-112 | Escape Puts The Row Back | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-113 | A Row Let Go Outside The List Stays Where It Is | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-114 | A Press That Moves A Little Is A Click And Carries Nothing | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-115 | A Shut Folder That A Row Rests On Opens After A Moment | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-116 | A Shut Folder That A Row Only Passes Over Does Not Open | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-127 | A Folder Is Not Put Into Itself | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-128 | The Label Says The Way To A Folder That Is In Another | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-129 | A Row Held Below The List Does Not Scroll It | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-117 | The List Scrolls While A Row Is Held Near Its Foot | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-118 | An Item That Was Opened Is Still Said To Be Where The Box Came From After It Is Moved | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-119 | A Folder That Is Open Is Open Where It Is Put Down | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-120 | The Menu's Move To Lists The Top And The Folders | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-121 | Move To In The Menu Moves The Item Into The Folder | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-122 | Move To The Top In The Menu Takes An Item Out Of Its Folder | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-123 | Move To In The Menu Of A Folder Moves The Folder | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-124 | The Folder An Item Is In Cannot Be Chosen In Its Move To | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-125 | A Folder Cannot Be Moved Into Itself In The Menu | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-126 | A Row Put Down On A Shut Folder Goes In And The Folder Opens To Show It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-271 | A Query Carried Onto The Query Pane Lights It, Says What It Opens As, And Is Opened When It Is Let Go | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-272 | Each Language Is Opened In Its Own Engine, As A Double Click Opens It | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-273 | A Schema Or A Patch Carried Onto The Query Pane Is Not Lit And Is Not Opened | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-274 | A Folder Carried Onto The Query Pane Is Not Lit And Is Not Opened | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-275 | A Document Carried Onto The Query Pane Is Not Lit And Is Not Opened | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-276 | Escape While A Query Is Over The Query Pane Opens Nothing | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-277 | A Query Taken Over The Query Pane And Back Over A Folder Is Moved As Before | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-278 | A Press That Is Not Carried Anywhere Opens Nothing | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-290 | A Query That Has A Sample Is Opened Without It When It Is Carried Onto The Query Pane | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-249 | A File From Anywhere Else Is Nobody's And The Row Forgets The Item It Had | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-250 | A File That Ends .jq Dropped On The Window Is A jq Query In The Query Box | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-251 | A File That Ends .jsonpath Is A JSONPath Query, .jmespath A JMESPath Query And .jsonptr A JSON Pointer | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-252 | The End Of The Name Is All That Says It Is A Query, Whatever Its Case Or Where It Is Hidden | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-253 | A Document Is Opened As The Source And The Query Box Is Left Alone | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-254 | A Text File Is Not A Query Whatever Is In It | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-255 | A Schema Or A Patch Is A Document Here, Not A Query | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-256 | A Query File Takes The Place Of What Was In The Box | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-257 | A Byte-Order Mark At The Start Of The File Is Not In The Box | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-258 | A Query File Of More Than A Mebibyte Is Said To Be Too Big And The Box Is Left Alone | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-260 | A Query File That Is Not Text Is Said Not To Be Readable And The Box Is Left Alone | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-261 | A File That Is Gone When It Is Let Go Is Not Seen At All | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-262 | A Good Query File After One That Could Not Be Used Is Used And Takes The Message Away | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-263 | A Dropped Query File Is Not Run And Does Not Touch The Source, And Run Uses It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-264 | Several Files Go To Merge, Query Files Too, And The Query Box Is Left Alone | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-265 | A Query File Held Over The Window Outlines The Query Box And The Empty Source Says What It Would Be | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-266 | A Document Held Over The Window Says Drop To Open And Outlines Nothing | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-267 | The Outline And The Words Go When The File Is Taken Away | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-268 | Several Files Held Over The Window Are Not Outlined As A Query | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-269 | With A Document Loaded A Query File Held Over The Window Still Outlines The Box | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-270 | A File Let Go From The Workspace's Own Folder Is The Item The Box Came From | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-287 | A Query File With Windows Line Ends Is Put In The Box As It Is And Runs | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-288 | A Name With Spaces, Brackets And Accents Is A Query All The Same | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-289 | A File From A Workspace That Is Reached Through A Link Is The Item All The Same | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-291 | With A Document Loaded A Good Query File Takes The Message Away And The Document Stays | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-130 | The Folder Button Opens The Window That Makes A Folder | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-131 | A Folder Is Made By Typing Its Name And Enter And It Is Open And Picked | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-132 | The Make It Button Makes The Folder | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-133 | A Folder Is Made Inside The Folder That Is Picked | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-134 | The Menu Of The Three Dots Makes A Folder Too | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-135 | The Menu Of A Folder Makes A Folder Inside It | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-136 | A Folder Is Made Inside A Folder That Is Chosen In The Window | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-137 | A Name That A Folder Cannot Have Is Said And No Folder Is Made | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-138 | A Folder That Is There Already Is Said And Nothing Is Made | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-139 | Escape And Cancel Make Nothing | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-140 | The Export Window Says What Is Exported And Where To | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-141 | Export Makes A Copy Of The Workspace With The Ids It Kept | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-142 | Without The Samples Only The Items Are Copied | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-143 | A Folder Is Exported Alone | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-144 | The Menu Of A Folder Exports That Folder | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-145 | A Folder That Has Something In It Is Not Exported To | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-146 | The Workspace Is Not Exported Into Itself | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-147 | Cancel Exports Nothing | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-150 | The Import Window Asks For A Folder And Where To Put What Is In It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-151 | A Folder That Is Typed Is Looked At When The Box Is Left | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-152 | Import Brings The Items In A New Folder Named For The Folder They Came In | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-153 | The Ids That Were Kept In The Folder Are The Ids Of The Items After The Import | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-154 | The Name Of The New Folder Can Be Typed | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-155 | A Folder That Is Not One Is Said In Red And Nothing Is Imported | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-156 | A Folder With Nothing In It That The Workspace Can Use Is Said | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-157 | Import Among What Is In A Folder Keeps Both When A Name Is Taken | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-158 | Import With Replace Puts The New Text Over The Old | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-159 | Import With Leave Out Keeps What Is There | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-160 | An Item That Is The Same As The One There Is Not Brought In Again | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-161 | Choose Folder Fills In The Folder From The File Dialog | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-162 | Another Folder Can Be The Workspace | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-163 | What Is Saved Goes To The Folder That Was Chosen | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-164 | The Usual Workspace Comes Back From The Menu | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-165 | Show It In The File Manager Opens The Folder Of The Workspace | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-166 | Read It Again Shows What Another Program Did To The Folder | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-148 | With A Folder Picked The Export Window Still Offers The Whole Workspace First | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-167 | The Menu Does Not Offer The Usual Workspace While It Is The One In Use | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-170 | Save Schema Saves What Is In The Schema Box As A Schema Of The Workspace | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-183 | Save Schema Offers The Schema When The Patch Box Of The Other Page Has Something Too | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-184 | Save Patch Offers The Patch When The Schema Box Of The Other Page Has Something Too | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-171 | The Document Box Of Validate Can Be Kept As The Sample Of The Schema | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-172 | Save Schema Does Nothing While The Schema Box Is Empty | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-173 | Saved Schemas Narrows The List To The Schemas | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-174 | Saved Schemas Shows The Pane When It Was Hidden | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-175 | Use As Schema Puts The Schema In The Schema Box Of Validate | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-176 | Use As Schema With Its Sample Puts The Sample In The Document Box And Checks It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-177 | The Button Under The List Does The Same As The Menu | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-178 | Save Patch Saves What Is In The Patch Box As A Patch Of The Workspace | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-179 | The Document Box Of Patch Can Be Kept As The Sample Of The Patch | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-180 | Saved Patches Narrows The List To The Patches | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-181 | Use As Patch Puts The Patch In The Patch Box Of Patch | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-182 | A Document Item Is Opened As The Source Of The Main Window | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-190 | The First Read Of A Workspace That Has Files Gives Every Item An Id And A SHA-256 | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-191 | Nothing Is Made For A Workspace That Has Nothing In It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-192 | What Is Not An Item Has No Id | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-193 | Another Program Changes An Item And It Keeps Its Id With A New SHA-256 | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-194 | Another Program Renames An Item And It Is Found Again By What It Holds | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-195 | Another Program Moves An Item To Another Folder And It Keeps Its Id | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-196 | An Item That Another Program Deleted Is Taken Out Of The Index | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-197 | An Item That Another Program Added Gets An Id | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-198 | Two Items That Hold The Same Text Have Ids Of Their Own | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-199 | The Ids Are The Same When The App Is Started Again | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-200 | A Damaged Index Is Set Aside And Made Again From The Folder | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-201 | A Link Is Not Followed | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-202 | A Name That Differs From One That Is There Only By Its Case Is The Same Name | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-203 | Items That Share A Name Share The Sample | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-204 | A Save Leaves Nothing Of Its Own Behind | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-205 | What Another Program Did Is Seen When The Window Gets The Focus Back | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-206 | The Index Is Written Again Only When It Changes | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-207 | A Folder That Cannot Be Written To Says So And Saves Nothing | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-208 | An Item That Is Too Big For The Box Is Said And The Box Is Not Touched | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-209 | An Item That Is Not Text Is Said When It Is Opened | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-213 | An Item With A Byte-Order Mark Is Opened Without It | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-214 | A Workspace That Is A Link To Another Folder Is Used | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-215 | A Name Longer Than The Row Is Cut Short And The Tag Stays | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-216 | A Name With Letters Of Other Languages Is Kept As It Is | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-217 | Three Thousand Items Are Read And Listed | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-220 | In The Light Theme A Picked Row Has The Colour Of A Selection There | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-221 | In The Light Theme Every Sort Of Item Has Its Light Tag | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-222 | In The Light Theme The Icons Are In Dark Ink | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-223 | In The Light Theme A Row That Is Carried Lights The Folder With The Light Border | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-285 | In The Light Theme A Query Carried Onto The Query Pane Lights It With The Light Border | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-286 | In The Light Theme A Query File Held Over The Window Outlines The Query Box In The Link Colour Of That Theme | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-224 | In The Light Theme A Query Is Saved From The Window | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-225 | A Shorter Window Has A Shorter List And The Details Stay At Its Foot | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-226 | A Pane That Was Made Wider Has Rows As Wide | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-227 | The Pane Is At Most Half As Wide As The Window | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-228 | A Setting That Says Nothing The App Knows Shows No Pane | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-229 | A Width In The Settings Is Brought Into What The Pane Can Be | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-230 | A Workspace Under The Home Is Written With A Tilde | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-231 | A Row Under The Pointer Is Lit Grey | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-232 | In The Light Theme A Row Under The Pointer Is Lit Light Grey | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-233 | Folders Nested Eight Deep Are Each Indented And The Item At The Bottom Still Has Its Tag | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-234 | A Taller Window Has A Taller List And The Details Stay At Its Foot | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-235 | A Wider Window Gives The Room To What Is Beside The Pane And Not To The Pane | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-236 | A Click On The Strip's Button In A Window Too Narrow For The Pane Does Not Open It For Later | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-237 | The Theme Button Changes The Pane Too While The App Runs | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-238 | The Pane Is Shown In A Window Of 900 Points And Only The Strip In One Of 899 | P3 | **Passing** | `suites/workspace/` |
+| TC-WSP-240 | The Button Beside Run Saves The Query From The Pane In Its Own Window | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-241 | An Item Opened From The Pane Goes To The Query Pane That Is In Its Own Window | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-242 | A Document Opened From The Pane Goes To The Source Pane That Is In Its Own Window | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-283 | A Query File Dropped On The Query Pane That Is In Its Own Window Goes In The Box There | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-284 | A Query Carried Out Of The List Opens Nothing While The Query Pane Is In A Window Of Its Own | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-210 | With The Tools Docked The Pane Is Under The Row Of Tabs | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-211 | The Chips Follow The Page That Is In Front | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-212 | A Chip That Was Picked By Hand Stays While The Same Page Is In Front | P2 | **Passing** | `suites/workspace/` |
+| TC-WSP-279 | With The Page Of A Tool In Front The Status Bar Has The Button First And The Text Of The Page After It | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-280 | With The Page Of A Tool In Front A Query File Dropped On The Window Is The Page's And Not The Query Box's | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-281 | With The Page Of A Tool In Front A Query Carried Out Of The List Has No Query Pane To Go On | P1 | **Passing** | `suites/workspace/` |
+| TC-WSP-282 | A Query Opened From The List While The Page Of A Tool Is In Front Brings The Json Query Tab Forward | P1 | **Passing** | `suites/workspace/` |
 
 ## Coverage summary
 

@@ -310,7 +310,7 @@ class AppLibrary:
 
     @keyword("Launch Jsonquery App")
     def launch_jsonquery_app(
-        self, timeout=10, settings=None, keep_home=False, temp_dir=None
+        self, timeout=10, settings=None, keep_home=False, temp_dir=None, workspace=None
     ):
         """Starts a fresh jsonquery_gui process and waits for its window.
 
@@ -320,7 +320,10 @@ class AppLibrary:
         the suite. `settings`: the text of the settings.json it starts with. With
         `keep_home` the folder of the last launch is used again (see
         `Close Jsonquery App`), as for the next run of the same user. `temp_dir`:
-        the folder the app makes its temporary files in (TMPDIR), to look into it."""
+        the folder the app makes its temporary files in (TMPDIR), to look into it.
+        `workspace`: files to be in the workspace (the `workspace` folder of the settings
+        folder, which is where the app keeps it unless the user chose another) before the
+        app starts: a dictionary from the path of a file in it, with `/`, to its text."""
         if not os.path.exists(BINARY_PATH):
             raise AssertionError(
                 f"{BINARY_PATH} not found -- run `cargo build -p jsonquery_gui` first."
@@ -328,6 +331,8 @@ class AppLibrary:
         if not (keep_home and self._app_home and os.path.isdir(self._app_home)):
             self._forget_app_home()
             self._app_home = self._make_app_home()
+        if workspace:
+            self._write_workspace(workspace)
         # Every app starts as the run's profile says, whatever the case before it set.
         self._docked_dy = int(os.environ.get("JQ_DOCKED_DY", "0") or 0)
         # With `keep_home` and no text of its own the file is the one the last launch left.
@@ -481,6 +486,149 @@ class AppLibrary:
     @keyword("Settings File Exists")
     def settings_file_exists(self):
         return os.path.exists(os.path.join(self._app_home or "", "settings.json"))
+
+    # -- the workspace: the folder the app keeps saved queries in ------------------------------
+
+    def _workspace_root(self):
+        if not self._app_home:
+            raise AssertionError("No app has been launched: there is no workspace")
+        return os.path.join(self._app_home, "workspace")
+
+    def _workspace_path(self, rel):
+        parts = [p for p in str(rel).split("/") if p]
+        return os.path.join(self._workspace_root(), *parts)
+
+    def _write_workspace(self, files):
+        for rel, text in dict(files).items():
+            path = self._workspace_path(rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text)
+
+    @keyword("Workspace Folder")
+    def workspace_folder(self, rel=""):
+        """Where the running app's workspace is on disk (`workspace` in its settings folder,
+        unless the case chose another), or the file or folder `rel` in it."""
+        return self._workspace_path(rel) if rel else self._workspace_root()
+
+    @keyword("Workspace Files")
+    def workspace_files(self, hidden=False):
+        """The files in the workspace, as paths with `/`, sorted. The app's own folder
+        (`.jsonquery`, where the ids are kept) and every name that starts with a dot are left
+        out unless `hidden` is true."""
+        root = self._workspace_root()
+        found = []
+        for folder, dirs, names in os.walk(root):
+            if not hidden:
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
+            for name in names:
+                if hidden or not name.startswith("."):
+                    path = os.path.join(folder, name)
+                    found.append(os.path.relpath(path, root).replace(os.sep, "/"))
+        return sorted(found)
+
+    @keyword("Workspace Folders")
+    def workspace_folders(self):
+        """The folders in the workspace, as paths with `/`, sorted (not the app's own)."""
+        root = self._workspace_root()
+        found = []
+        for folder, dirs, _ in os.walk(root):
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+            for name in dirs:
+                found.append(os.path.relpath(os.path.join(folder, name), root).replace(os.sep, "/"))
+        return sorted(found)
+
+    @keyword("Workspace File Should Be")
+    def workspace_file_should_be(self, rel, expected):
+        """The file `rel` of the workspace holds exactly `expected`."""
+        try:
+            with open(self._workspace_path(rel), encoding="utf-8") as f:
+                actual = f.read()
+        except OSError as error:
+            raise AssertionError(f"{rel} could not be read: {error}")
+        if actual != expected:
+            raise AssertionError(f"{rel} holds {actual!r}, not {expected!r}")
+
+    @keyword("Workspace File Should Hold Json")
+    def workspace_file_should_hold_json(self, rel, expected):
+        """The file `rel` of the workspace is JSON, and is the JSON that `expected` (text) is,
+        whatever the white space."""
+        try:
+            with open(self._workspace_path(rel), encoding="utf-8") as f:
+                actual = json.load(f)
+        except (OSError, ValueError) as error:
+            raise AssertionError(f"{rel} is not JSON that could be read: {error}")
+        wanted = json.loads(expected)
+        if actual != wanted:
+            raise AssertionError(f"{rel} holds {actual!r}, not {wanted!r}")
+
+    @keyword("Workspace File Should Exist")
+    def workspace_file_should_exist(self, rel):
+        if not os.path.exists(self._workspace_path(rel)):
+            raise AssertionError(f"{rel} is not in the workspace: {self.workspace_files()}")
+
+    @keyword("Workspace File Should Not Exist")
+    def workspace_file_should_not_exist(self, rel):
+        if os.path.lexists(self._workspace_path(rel)):
+            raise AssertionError(f"{rel} is in the workspace")
+
+    @keyword("Wait Until Workspace File Exists")
+    def wait_until_workspace_file_exists(self, rel, timeout=5):
+        deadline = time.time() + float(timeout)
+        while time.time() < deadline:
+            if os.path.exists(self._workspace_path(rel)):
+                return
+            time.sleep(0.1)
+        raise AssertionError(f"{rel} did not appear in the workspace: {self.workspace_files()}")
+
+    @keyword("Write Workspace File")
+    def write_workspace_file(self, rel, text):
+        """Put a file in the workspace behind the app's back, as another program does."""
+        self._write_workspace({rel: text})
+
+    @keyword("Delete Workspace File")
+    def delete_workspace_file(self, rel):
+        os.remove(self._workspace_path(rel))
+
+    @keyword("Move Workspace File")
+    def move_workspace_file(self, old, new):
+        """Rename or move a file or a folder of the workspace behind the app's back."""
+        target = self._workspace_path(new)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        os.rename(self._workspace_path(old), target)
+
+    @keyword("Make Workspace Folder")
+    def make_workspace_folder(self, rel):
+        os.makedirs(self._workspace_path(rel), exist_ok=True)
+
+    @keyword("Link Workspace Path")
+    def link_workspace_path(self, rel, target):
+        """A symbolic link at `rel` in the workspace, pointing at `target` (a path)."""
+        path = self._workspace_path(rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        os.symlink(target, path)
+
+    @keyword("Workspace Index")
+    def workspace_index(self):
+        """What the app keeps of the ids and SHA-256s of the items of the workspace
+        (`.jsonquery/index.json`), as a dictionary."""
+        with open(self._workspace_path(".jsonquery/index.json"), encoding="utf-8") as f:
+            return json.load(f)
+
+    @keyword("Workspace Item")
+    def workspace_item(self, rel):
+        """The index's entry for the item at `rel`: its `id`, `sha256`, `bytes`, `modified`
+        and, if it has one, its `sample`."""
+        items = self.workspace_index()["items"]
+        if rel not in items:
+            raise AssertionError(f"The index has no item {rel!r}: {sorted(items)}")
+        return items[rel]
+
+    @keyword("Sha256 Of Text")
+    def sha256_of_text(self, text):
+        import hashlib
+
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
     @keyword("Opened Addresses")
     def opened_addresses(self):
@@ -673,6 +821,17 @@ class AppLibrary:
     def window_exists(self, title):
         """True if a window with exactly this title is open."""
         return bool(self._search_windows(title))
+
+    @keyword("Active Window Title")
+    def active_window_title(self):
+        """The title of the window that has the keyboard focus on the test display (the window manager's
+        active window): what a case reads to know which of the app's windows came forward by itself, as
+        `Switch To Window` brings the one it is told to forward."""
+        result = _run(
+            ["xdotool", "getactivewindow", "getwindowname"],
+            env={**os.environ, "DISPLAY": XVFB_DISPLAY},
+        )
+        return result.stdout.strip()
 
     @keyword("List Windows")
     def list_windows(self):
@@ -927,6 +1086,44 @@ class AppLibrary:
         time.sleep(0.2)
         pyautogui.mouseUp()
         time.sleep(0.2)
+
+    @keyword("Click With Wobble")
+    def click_with_wobble(self, x, y, dx, dy):
+        """A press at (x, y), the pointer moved by (dx, dy) while the button is down, and the button let
+        go at once: a click that was not quite still, which a program must take for a click and not a
+        drag (it is one while the pointer has moved less than a few points and the button is down for
+        less than a second)."""
+        ax, ay = self._to_absolute(int(x), int(y))
+        pyautogui.moveTo(ax, ay)
+        time.sleep(0.2)
+        pyautogui.mouseDown()
+        pyautogui.moveRel(int(dx), int(dy), duration=0.05)
+        pyautogui.mouseUp()
+        time.sleep(0.4)
+
+    @keyword("Mouse Down At")
+    def mouse_down_at(self, x, y):
+        """Moves to (x, y) and presses the left button, and keeps it down: the start of a drag
+        that a case goes on with (`Move Mouse Slowly To`, `Mouse Up`)."""
+        ax, ay = self._to_absolute(int(x), int(y))
+        pyautogui.moveTo(ax, ay)
+        time.sleep(0.2)
+        pyautogui.mouseDown()
+        time.sleep(0.2)
+
+    @keyword("Move Mouse Slowly To")
+    def move_mouse_slowly_to(self, x, y, duration=0.5):
+        """Moves the pointer, button down or not, to (x, y) over `duration` seconds, in steps
+        (a jump is not reliably seen as a drag), and rests there a moment."""
+        ax, ay = self._to_absolute(int(x), int(y))
+        pyautogui.moveTo(ax, ay, duration=float(duration))
+        time.sleep(0.2)
+
+    @keyword("Mouse Up")
+    def mouse_up(self):
+        """Lets go of the left button where the pointer is."""
+        pyautogui.mouseUp()
+        time.sleep(0.4)
 
     @keyword("Drop Files On Window")
     def drop_files_on_window(self, x, y, *paths):
@@ -1198,9 +1395,41 @@ class AppLibrary:
                 msg or f"Expected region to contain {expected!r}, but OCR read: {actual!r}"
             )
 
+    @keyword("Region Should Show Text")
+    def region_should_show_text(self, x, y, width, height, expected, psm=6, msg=None):
+        """Passes when OCR reads `expected` in the region, as it is or, failing that, with the
+        tinted backgrounds flattened first (`_flatten_tints`): text on a picked row or on a
+        chip is read well by the one and badly by the other, and which is which depends on
+        the text. Fails with both readings."""
+        plain = self.read_region_text(x, y, width, height, psm=psm)
+        if self._text_contains(plain, expected):
+            return
+        flat = self.read_region_text(x, y, width, height, psm=psm, flatten_tints=True)
+        if self._text_contains(flat, expected):
+            return
+        raise AssertionError(
+            msg or f"Expected region to show {expected!r}, but OCR read: {plain!r} "
+            f"and, with the tints flattened, {flat!r}"
+        )
+
+    @keyword("Region Should Not Show Text")
+    def region_should_not_show_text(self, x, y, width, height, unexpected, psm=6, msg=None):
+        """Passes when OCR reads `unexpected` in the region neither as it is nor with the
+        tinted backgrounds flattened."""
+        for flatten in (False, True):
+            actual = self.read_region_text(x, y, width, height, psm=psm, flatten_tints=flatten)
+            if self._text_contains(actual, unexpected):
+                raise AssertionError(
+                    msg or f"Expected region NOT to show {unexpected!r}, but OCR read: {actual!r}"
+                )
+
     @keyword("Region Should Not Contain Text")
-    def region_should_not_contain_text(self, x, y, width, height, unexpected, psm=6, msg=None):
-        actual = self.read_region_text(x, y, width, height, psm=psm)
+    def region_should_not_contain_text(
+        self, x, y, width, height, unexpected, psm=6, msg=None, flatten_tints=False
+    ):
+        actual = self.read_region_text(
+            x, y, width, height, psm=psm, flatten_tints=flatten_tints
+        )
         if self._text_contains(actual, unexpected):
             raise AssertionError(
                 msg or f"Expected region NOT to contain {unexpected!r}, but OCR read: {actual!r}"
@@ -1486,6 +1715,108 @@ class AppLibrary:
                 return bx, by
         raise AssertionError(f"No block below y={y} among {blocks}")
 
+    @keyword("Get Lowest Color Segments")
+    def get_lowest_color_segments(
+        self, x, y, width, height, r, g, b, tolerance=4, min_height=10, min_width=12, r2=None, g2=None, b2=None
+    ):
+        """The runs of a colour (or of either of two: a button that cannot be pressed has a darker fill) along the
+        lowest band of it in a region: the buttons of a window are a row of grey boxes at its foot, and a button's label is read badly (it is dark text on a fill). Gives the
+        centre of each run, left to right, as (x, y) in the suites' coordinates (app-relative), and the
+        run's left and right ends: a list of (centre_x, centre_y, left, right). A band is a run of rows of
+        at least `min_height` that all have `min_width` of the colour in a row somewhere; a run of the
+        colour narrower than `min_width` (a stray edge) is not a segment. Raises if there is no band."""
+        img = self.screenshot_region(x, y, width, height, label="color-segments")
+        targets = [(int(r), int(g), int(b))]
+        if r2 is not None:
+            targets.append((int(r2), int(g2), int(b2)))
+        target = targets[0]
+        tol = int(tolerance)
+        w, h = img.size
+        px = img.convert("RGB").load()
+
+        def near(xx, yy):
+            return any(max(abs(a - c) for a, c in zip(px[xx, yy], t)) <= tol for t in targets)
+
+        rows_with = [any(sum(1 for xx in range(w) if near(xx, yy)) >= int(min_width) for _ in [0]) for yy in range(h)]
+        bands, start = [], None
+        for yy in range(h + 1):
+            on = yy < h and rows_with[yy]
+            if on and start is None:
+                start = yy
+            elif not on and start is not None:
+                if yy - start >= int(min_height):
+                    bands.append((start, yy - 1))
+                start = None
+        if not bands:
+            raise AssertionError(f"No band of {target} in region ({x},{y},{width},{height})")
+        top, bottom = bands[-1]
+        # A row near the top of the band: through the middle of a button its label breaks the fill into pieces.
+        scan = min(top + 2, bottom)
+        mid = (top + bottom) // 2
+        segments, run_start = [], None
+        for xx in range(w + 1):
+            on = xx < w and near(xx, scan)
+            if on and run_start is None:
+                run_start = xx
+            elif not on and run_start is not None:
+                if xx - run_start >= int(min_width):
+                    segments.append((run_start, xx - 1))
+                run_start = None
+        out = []
+        for left, right in segments:
+            out.append(
+                (
+                    int(x) + (left + right) / 2,
+                    self._suite_y_in(y, height, mid),
+                    int(x) + left,
+                    int(x) + right,
+                )
+            )
+        return out
+
+    @keyword("Get Color Bounds")
+    def get_color_bounds(self, x, y, width, height, r, g, b, tolerance=6):
+        """(left, top, right, bottom), relative to the region's top-left corner, of the pixels
+        of the region that are within `tolerance` of (r, g, b): where a coloured fill is, and
+        how far it reaches. Raises if there is none."""
+        img = self.screenshot_region(x, y, width, height, label="color-bounds")
+        target = (int(r), int(g), int(b))
+        tol = int(tolerance)
+        w, h = img.size
+        px = img.convert("RGB").load()
+        xs, ys = [], []
+        for yy in range(h):
+            for xx in range(w):
+                if max(abs(a - c) for a, c in zip(px[xx, yy], target)) <= tol:
+                    xs.append(xx)
+                    ys.append(yy)
+        if not xs:
+            raise AssertionError(
+                f"No pixel near ({r}, {g}, {b}) in region ({x},{y},{width},{height})"
+            )
+        return min(xs), min(ys), max(xs), max(ys)
+
+    @keyword("Get Dark Ink Bounds")
+    def get_dark_ink_bounds(self, x, y, width, height, threshold=150):
+        """(left, top, right, bottom), relative to the region's top-left corner, of the dark pixels (every channel at
+        most `threshold`) of the region: how big an icon of dark ink on a light ground is drawn (the same as `Get Ink
+        Bounds` is for light ink on a dark one). Raises if nothing in the region is that dark."""
+        img = self.screenshot_region(x, y, width, height, label="dark-ink-probe")
+        thr = int(threshold)
+        w, h = img.size
+        px = img.convert("RGB").load()
+        xs, ys = [], []
+        for yy in range(h):
+            for xx in range(w):
+                if max(px[xx, yy]) <= thr:
+                    xs.append(xx)
+                    ys.append(yy)
+        if not xs:
+            raise AssertionError(
+                f"Nothing as dark as {thr} in region ({x},{y},{width},{height})"
+            )
+        return min(xs), min(ys), max(xs), max(ys)
+
     @keyword("Get Ink Bounds")
     def get_ink_bounds(self, x, y, width, height, threshold=110):
         """(left, top, right, bottom) of the bright pixels (any channel at
@@ -1507,6 +1838,60 @@ class AppLibrary:
                 f"Nothing as bright as {thr} in region ({x},{y},{width},{height})"
             )
         return min(xs), min(ys), max(xs), max(ys)
+
+    @keyword("Get Ink Art")
+    def get_ink_art(self, x, y, width, height, threshold=110, dark=False):
+        """The region as a picture, one string per row: `X` where a pixel is
+        ink and `.` where it is not. Ink is a pixel with any channel at least
+        `threshold`, or, with `dark`, one whose channels are all under it (an
+        icon of dark ink on a light ground). What an icon is, drawn on whole
+        pixels, can then be said as the picture it is, and compared whole."""
+        img = self.screenshot_region(x, y, width, height, label="ink-art")
+        thr = int(threshold)
+        w, h = img.size
+        px = img.convert("RGB").load()
+        on_light = str(dark).lower() in ("true", "1", "yes")
+        rows = []
+        for yy in range(h):
+            if on_light:
+                row = "".join("X" if max(px[xx, yy]) < thr else "." for xx in range(w))
+            else:
+                row = "".join("X" if max(px[xx, yy]) >= thr else "." for xx in range(w))
+            rows.append(row)
+        return rows
+
+    @keyword("Icon Should Look Like")
+    def icon_should_look_like(self, left, top, threshold, dark, *picture):
+        """The icon whose top-left pixel is (left, top) is the `picture`: rows
+        of `X` (ink), `.` (no ink) and `?` (either: the pixels that the
+        rounded corner of a shape shares between ink and ground, which the
+        threshold decides). The two pixels round it must be clear. Ink is
+        read as `Get Ink Art` does. Fails with the two pictures side by side."""
+        rows = [str(row) for row in picture]
+        height, width = len(rows), len(rows[0])
+        assert all(len(row) == width for row in rows), "the rows of the picture are not all as long"
+        margin = 2
+        found = self.get_ink_art(
+            int(left) - margin, int(top) - margin, width + 2 * margin, height + 2 * margin,
+            threshold=threshold, dark=dark,
+        )
+        wrong = []
+        for r, seen in enumerate(found):
+            for c, got in enumerate(seen):
+                inside = margin <= r < margin + height and margin <= c < margin + width
+                want = rows[r - margin][c - margin] if inside else "."
+                if want != "?" and want != got:
+                    wrong.append((r - margin, c - margin))
+        if wrong:
+            side = "\n".join(
+                f"{' ' * margin}{rows[r - margin] if margin <= r < margin + height else ' ' * width}"
+                f"{' ' * margin}   {seen}"
+                for r, seen in enumerate(found)
+            )
+            raise AssertionError(
+                f"The icon at ({left},{top}) is not the picture (wanted at the left, drawn at the right; "
+                f"{len(wrong)} pixels differ, the first at row {wrong[0][0]}, column {wrong[0][1]}):\n{side}"
+            )
 
     # -- clipboard -------------------------------------------------------------
 
@@ -1535,6 +1920,40 @@ class AppLibrary:
         path = tempfile.mkdtemp(prefix="jq-test-")
         self._temp_dirs.append(path)
         return path
+
+    @keyword("Make Folder With Files")
+    def make_folder_with_files(self, name, files=None):
+        """A new folder called `name`, in a new temp directory (which goes when the display stops), with
+        these files in it (a dictionary from a path with `/` to its text). Returns the folder's path:
+        what an import is made from, or a place an export goes to that already has something in it."""
+        parent = self.make_temp_directory()
+        root = os.path.join(parent, name)
+        os.makedirs(root, exist_ok=True)
+        for rel, text in dict(files or {}).items():
+            path = os.path.join(root, *[p for p in str(rel).split("/") if p])
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text)
+        return root
+
+    @keyword("Files In Folder")
+    def files_in_folder(self, folder, hidden=False):
+        """The files in a folder and the folders in it, as paths with `/` under it, sorted; what starts
+        with a dot is left out unless `hidden` is true."""
+        found = []
+        for here, dirs, names in os.walk(folder):
+            if not hidden:
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
+            for name in names:
+                if hidden or not name.startswith("."):
+                    found.append(os.path.relpath(os.path.join(here, name), folder).replace(os.sep, "/"))
+        return sorted(found)
+
+    @keyword("Index Of Folder")
+    def index_of_folder(self, folder):
+        """What `.jsonquery/index.json` of a folder holds, as a dictionary (an exported workspace has one)."""
+        with open(os.path.join(folder, ".jsonquery", "index.json"), encoding="utf-8") as f:
+            return json.load(f)
 
     @keyword("Make Lists Of Words")
     def make_lists_of_words(self, files=2, words=60):

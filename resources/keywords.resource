@@ -71,9 +71,10 @@ Library           AppLibrary.py
 # 1114-1132, the 🌐 at 1141-1162 and the ⓘ at 1171-1191, which are click points, not text):
 # OCR reads them as noise, and with two of them there it read "[JSONPath" as "SSONPath"
 # (TC-QRY-012, found by replaying the failed screenshot with and without them; one icon
-# alone was harmless). The status text itself wraps at the full width, so a line of it
-# that long is cut here.
-@{STATUS_BAR}             0      705    1100    95
+# alone was harmless). It begins after the button of the workspace pane at the left end
+# (x 8-31: the text is from x 41) for the same reason. The status text itself wraps at the
+# full width, so a line of it that long is cut here.
+@{STATUS_BAR}             36     705    1064    95
 # Icon-only controls OCR can't read -- fixed click points, not regions.
 ${THEME_TOGGLE_X}         1183
 ${THEME_TOGGLE_Y}         10

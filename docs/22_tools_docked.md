@@ -116,8 +116,9 @@ Of the 648 cases that are not the dock's own, **619 run docked** (151 in the too
   tools pass runs (`TC-DND-006` to `TC-DND-015`, `TC-HDR-010`);
 - **`undocked-only`**: the case is about the toolbar, the status bar or the settings file as they are with no tabs
   (3 cases: TC-SET-003 and TC-SET-005 read that no settings file is written by a start, which a docked start does:
-  it writes `"tools": "docked"`; TC-WEB-001 reads that there is nothing left of the ⚙, which docked is the 🗗's
-  place — TC-DOCK-006 reads the docked bar). Added where a docked pass showed it.
+  it writes `"tools": "docked"`; TC-WEB-001 reads that nothing is left of the ⚙, which docked is the 🗗's place —
+  TC-DOCK-006 reads the docked bar; the pane's button is at the other end of the bar, at the left, in both). Added where
+  a docked pass showed it.
 
 ## What these cases do not reach
 

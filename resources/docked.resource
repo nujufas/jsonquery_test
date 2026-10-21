@@ -18,13 +18,18 @@ ${DOCKED}            {"tools": "docked"}
 @{DT_TAB_ROW}        0      0      640    22
 ${DT_TAB_Y}          11
 # The status bar, y 778-800: the buttons from the right are the info, the website (the 🌐),
-# the settings and the undock; the text of the page in front is at the left. The first three
-# are where they are with the Tools in a window too, the 🗗 is the one the docking adds.
+# the settings and the undock; at the left is the button of the workspace pane, and the text of
+# the page in front after it. The first three are where they are with the Tools in a window too,
+# the 🗗 is the one the docking adds.
 ${SB_Y}              789
 ${SB_INFO_X}         1181
 ${SB_WEBSITE_X}      1152
 ${SB_SETTINGS_X}     1123
 ${SB_UNDOCK_X}       1095
+# The workspace's button is the first thing at the left end of the bar, whichever the tabs: it is where it is with
+# the Tools in a window, docked, and in front of a page. Between the text and the buttons at the right there is nothing.
+${SB_WORKSPACE_X}    20
+${SB_LEFT_OF_UNDOCK_X}    1066
 
 *** Keywords ***
 Without Layout Shift

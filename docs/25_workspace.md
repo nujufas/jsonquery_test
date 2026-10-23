@@ -1,6 +1,6 @@
 # Workspace — test requirements
 
-Source: the app's `crates/app/src/workspace.rs` and `workspace/` (the folder as data: `names.rs`, `files.rs`,
+Source: the app's `crates/app/src/workspace.rs` and `workspace/` (the folder as data: `names.rs`, `address.rs`, `files.rs`,
 `ids.rs`, `index.rs`, `store.rs`, `transfer.rs`), `workspace_pane.rs` and `workspace_pane/` (`tree.rs` the list,
 `drag.rs` moving by dragging, `forms.rs` the windows, `icons.rs` the pictures), `settings.rs` (how much of the pane
 is shown), where the pane is drawn and asked for things (`app.rs`, `tools/validate.rs`, `tools/patch.rs`), and what
@@ -12,9 +12,24 @@ settings in unless the user chose another — and the **pane** at the left of th
 through. What is in it:
 
 - **Items**, by the end of the file's name: a query (`.jq`, `.jsonpath`, `.jmespath`, `.jsonptr`), a schema
-  (`.schema.json`), a patch (`.patch.json`), a document (`.json`, `.ndjson`, `.jsonl`). An item can have a **sample**,
-  `<name>.sample.json` beside it, which the items of one name share. A name that starts with a dot, a text file and
-  anything else is not an item.
+  (`.schema.json`), a patch (`.patch.json`), a document (`.json`, `.ndjson`, `.jsonl`), a web address (`.url`). An item
+  can have a **sample**, `<name>.sample.json` beside it, which the items of one name share (a web address has none: below).
+  A name that starts with a dot, a text file and anything else is not an item.
+- **A web address**, a `.url` file: a Windows *Internet Shortcut*, which the app writes as `[InternetShortcut]`, `URL=` and the
+  address, CR LF after each (UTF-8, no byte-order mark), and reads leniently (the value of the first line whose key is `URL`,
+  in any case, in any section or none; a file of one line is that line; a byte-order mark and either line end are in no
+  one's way). An address is `http://` or `https://` (any case) and a host, 1 to 4096 characters, no white space or control
+  character in it; what is not one is listed all the same and says `There is no web address in it` when it is used. The pane
+  lists it with a **yellow `url` tag** and a sixth chip, **URLs**; under the list it shows the address and says `Web address`
+  where the others say whether they have a sample; its button is **Load from the web** (the menu has it, and so has a double click
+  on the row), which loads the address as the Source at once, as if it had been typed in the Source field and Load pressed (the
+  Query page is shown); **Copy text** copies the address. The window that saves has a fifth choice, **Web address**, whose box
+  starts with the address of the document that is open if it came from the web, else with an address that is in the Source field
+  and has not been loaded, else is empty and has the focus; the name follows the address (the last part of its path without
+  `.json`, `.ndjson` or `.jsonl`, else the host) until one is typed, and what is not an address is said in red and cannot be
+  saved. A folder's menu has **Save a web address here…**. **A web address never has a sample** and shares none: the
+  `<name>.sample.json` beside it is the sample of the queries, schemas and patches of that name or nobody's, and scanning,
+  saving, renaming, moving, copying, deleting, exporting and importing leave it alone.
 - **Folders**, to any depth, which the user makes, renames, moves and deletes.
 - **An index**, `.jsonquery/index.json`, hidden from the person who uses the app: the **id** (a UUID of version 4) that
   each item was given when it was first stored and keeps whatever becomes of its name, place or text, and the
@@ -35,8 +50,8 @@ through. What is in it:
   in does nothing. The move is the menu's *Move to*: the item keeps its id and its SHA-256.
 - **A query carried onto the query pane**: a query row that is carried over the Query pane lights the pane, the label
   beside the pointer says `Open “logins” as the query`, and let go there the query is opened as a double click opens it
-  (the text, the language, the item picked, the Query row says where the box came from). A schema, a patch, a document and
-  a folder are not opened that way; there is no such pane to put a query on with the page of a tool in front or the Query
+  (the text, the language, the item picked, the Query row says where the box came from). A schema, a patch, a document, a web
+  address and a folder are not opened that way; there is no such pane to put a query on with the page of a tool in front or the Query
   pane in a window of its own.
 - **A query file dropped on the window**: a file whose name ends `.jq`, `.jsonpath`, `.jmespath` or `.jsonptr` (whatever
   the case, hidden or not) is the query: its text goes in the box, in its language, and what was there is gone; any other
@@ -69,6 +84,14 @@ store's every refusal) is checked there, in the app repository; what these cases
   (Rows are 20 high from y = 93; a case clicks a row by its number, `${ROW_...}` in `resources/workspace.resource`.
   The names are chosen so that OCR reads them: `bump` was read as `burnp`, `update` as `uocate` by the flattened reading
   below, and the sorting puts `orders` before `update`, `.patch.json` before `.schema.json`.)
+- **A web address is loaded from a server of the case's own.** `Serve These Files` starts a server on 127.0.0.1, on a port of
+  its own, that serves a dictionary of files (a path that is not one is a 404, `invalid.txt` is not JSON) and writes down what it is
+  asked for, with the query; `Launch With Web Addresses` makes the `.url` files for it and starts the app. `Fixture Server Should
+  Have Been Asked For` waits until exactly these paths have been asked for, then a moment more for one that should not come (a
+  click that only picks asks for nothing). The Source field is read by copying it (`Source Field Should Hold`: an address is read
+  badly by OCR), and a document by the first row of the Source (`3 items`). No case reaches a host that is not the machine's own.
+- **The bytes of a `.url` file are read as bytes** (`Workspace File Should Hold Bytes`): the text reader of `Workspace File Should Be` makes a CR LF one
+  line end, so a file with LF where the app writes CR LF would be the same file to it.
 - **The folder is read from Python**, not from the screen: `Workspace Files`, `Workspace File Should Be`,
   `Workspace Item` (the index's entry: `id`, `sha256`, `bytes`, `sample`), `Workspace Index`, `Files In Folder` and
   `Index Of Folder` (an export), and what another program does to it behind the app's back: `Write Workspace File`,
@@ -93,7 +116,10 @@ store's every refusal) is checked there, in the app repository; what these cases
   the list). The status bar is at the foot of the window and is not moved: the pane's button is at x 8–31, and the regions
   that read what the bar says begin at x 36, after it (`@{STATUS_BAR}`, `@{WS_STATUS_LINE}`, the docked profiles').
 - **The windows of the pane** (Save, New folder, Export, Import, Delete) are put at the top centre of the window, so a
-  case says where a point of one is by `Form Y`; a window is told to the keywords by `Set Form Kind` so that OCR is
+  case says where a point of one is by `Form Y`; the Save window has five choices and is 409 points wide (13 wider than it was
+  with four: the cross at its top right is at x = 786), and with the Web address chosen it has a box for the address above the
+  name, so everything under it is 40 points lower (58 with a complaint about the address under its box: `${SAVE_URL_...}` in
+  `resources/workspace.resource`); the boxes of the window are read by copying them (`Address In Save Form Should Be`); a window is told to the keywords by `Set Form Kind` so that OCR is
   asked about a region as tight as the window.
 
 ### What OCR reads here, and what it does not
@@ -106,6 +132,13 @@ store's every refusal) is checked there, in the app repository; what these cases
   list (`Copied as “scratch (2)”`) come back with a letter wrong (`Sitems`, `[S items`, `scratch {2)`) or not at all. A
   case asks for them with a regular expression that says which letters may be wrong (`[5S] items`), or sees that
   something is drawn there (`Get Ink Bounds`), and the layout tests of the app read the words.
+- **The picked choice of the Save window is read as `Ehequery`** (white on the selection's blue, every setting and every
+  crop: TC-WSP-071 failed on it once the window had a fifth choice), so a choice is told by its fill (`Tab Of The Save Window
+  Should Be Picked`) and, if it is a word, by a pattern that has the letters that are read (`he ?query`); a choice that cannot be
+  picked is drawn dim (104) and one that can is bright (180).
+- **The tag of a web address is read as `url`** with the tints flattened (`curl` without: the pill's edge is read as a letter), and a
+  web address in the details is read with a space after `http:` (`http: //127.0.0.1:37109/valid...`) and cut with `...` where the pane is
+  not wide enough: a case asks for what is certain (`example.{0,3}com/data/rat`), and the address itself is read by copying it.
 - **A button's label is read badly**, among the lines of a window, by every setting: the buttons of a window are found by
   their **fill** (the row of grey boxes at its foot, `60, 60, 60`, or `43, 43, 43` while the button cannot be pressed:
   `Get Lowest Color Segments`, `Press Primary Button`, `Press Cancel Button`) and not by what they say. A band is
@@ -245,6 +278,53 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-094 | A Query Saved With The Pane Folded Is In The Workspace All The Same | P2 |
 | TC-WSP-095 | The Menu Of A Folder Saves The Query In That Folder | P2 |
 
+### Web addresses: the tag, the chip, loading from the web, the Save window's fifth choice, and no sample (`suites/workspace/workspace_urls.robot`, 42 cases)
+
+| ID | Title | Priority |
+|---|---|---|
+| TC-WSP-292 | A Web Address Has A Yellow Tag That Says url | P1 |
+| TC-WSP-293 | The Sixth Chip Is URLs, After Docs, And Narrows The List To The Web Addresses | P1 |
+| TC-WSP-294 | The URLs Chip And A Filter Narrow The List Together | P2 |
+| TC-WSP-295 | The URLs Chip Of A Workspace That Has No Web Address Says So | P3 |
+| TC-WSP-296 | The Details Of A Web Address Say Where It Is, Its Address And That It Is One, And Have One Button | P1 |
+| TC-WSP-297 | A Web Address With A Sample File Beside It Has No Sample | P1 |
+| TC-WSP-298 | A Query And A Web Address Of One Name: The Sample Is The Query's | P2 |
+| TC-WSP-299 | The Menu Of A Web Address Has Load From The Web Where Other Items Have Open | P1 |
+| TC-WSP-300 | The Menu Of A Folder Has Save A Web Address Here Beside Save The Query Here | P1 |
+| TC-WSP-301 | Save A Web Address Here Opens The Window On The Web Address Choice, For That Folder | P1 |
+| TC-WSP-302 | Copy Text Of A Web Address Copies The Address And Not The File | P1 |
+| TC-WSP-303 | A Shortcut That Another Program Wrote Is Read Whatever Way It Was Written | P1 |
+| TC-WSP-304 | A File That Holds No Address Is Listed, And Its Copy Text Says So And Copies Nothing | P1 |
+| TC-WSP-305 | An Address Of 4096 Characters Is One And An Address Of 4097 Is Not | P3 |
+| TC-WSP-306 | Load From The Web Loads The Address Into The Source At Once | P1 |
+| TC-WSP-307 | A Double Click And The Menu's Load From The Web Load It Too | P1 |
+| TC-WSP-308 | The Whole Address Is Asked For, Its Path And Its Query | P1 |
+| TC-WSP-309 | An Address That The Server Answers With 404 Is Said In The Status Bar And Stays In The Source Field | P1 |
+| TC-WSP-310 | A Response That Is Not JSON And A Server That Is Not There Are Said Too | P2 |
+| TC-WSP-311 | A File That Holds No Address Loads Nothing And Is Said Under The List | P1 |
+| TC-WSP-312 | A Shortcut With A Byte-Order Mark, A Lower-Case Key And Line Feeds Loads, And So Does A File That Is Only The Address | P2 |
+| TC-WSP-313 | A Web Address That Is Loaded Replaces The Document That Was Open And Leaves What Is In The Query Box | P2 |
+| TC-WSP-314 | The Save Window Has A Fifth Choice, Web Address, That Can Always Be Picked | P1 |
+| TC-WSP-315 | A Document That Was Loaded From The Web Offers Its Address, Whatever Is Typed In The Source Field After | P1 |
+| TC-WSP-316 | An Address Typed In The Source Field And Not Loaded Is Offered, And A Path Is Not | P1 |
+| TC-WSP-317 | With Nothing To Offer The Box Is Empty And Has The Focus, And What Is Typed Is Saved As The Lines Of A Shortcut | P1 |
+| TC-WSP-318 | The Name Follows The Address Until A Name Is Typed | P1 |
+| TC-WSP-319 | The Name Starts As The Last Part Of The Address Without .json, Or As The Host | P2 |
+| TC-WSP-320 | An Address That Is Not One Is Said In Red And Cannot Be Saved | P1 |
+| TC-WSP-321 | An Address Of 4096 Characters Can Be Saved And One Of 4097 Cannot | P3 |
+| TC-WSP-322 | A Name That Is Taken Asks To Replace And Replacing Keeps The Id | P1 |
+| TC-WSP-323 | The Window Offers No Sample For A Web Address, Though A Document Is Open, And None Is Written | P1 |
+| TC-WSP-324 | Renaming A Web Address Leaves The Sample Of The Items Of Its Name Where It Is | P1 |
+| TC-WSP-325 | Renaming A Query Takes Its Sample With It Though A Web Address Has The Same Name | P1 |
+| TC-WSP-326 | Deleting A Query Deletes Its Sample Though A Web Address Has The Same Name | P1 |
+| TC-WSP-327 | Deleting A Web Address Deletes No Sample, And The Window Says None Goes With It | P1 |
+| TC-WSP-328 | Moving A Web Address By Dragging Does Not Take The Sample Of Its Name Along, And Is Not Stopped By One | P1 |
+| TC-WSP-329 | Duplicating A Web Address Copies The File Alone, Whatever Sample Files Have The Name Of The Copy | P1 |
+| TC-WSP-330 | An Export Copies The Web Addresses As They Are And No Sample For Them | P1 |
+| TC-WSP-331 | Import Says How Many Web Addresses A Folder Has And Brings Them In Without A Sample | P1 |
+| TC-WSP-332 | An Imported Web Address Whose Name Is Taken Gets The Next Number Though A Sample File Has It | P2 |
+| TC-WSP-338 | Web Addresses That Are Exported And Imported Into Another Workspace Come In As The Same Items | P2 |
+
 ### Moving: dragging a row, and Move to (`suites/workspace/workspace_move.robot`, 30 cases)
 
 | ID | Title | Priority |
@@ -280,7 +360,7 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-125 | A Folder Cannot Be Moved Into Itself In The Menu | P3 |
 | TC-WSP-126 | A Row Put Down On A Shut Folder Goes In And The Folder Opens To Show It | P1 |
 
-### A query carried onto the Query pane (`suites/workspace/workspace_carry.robot`, 9 cases)
+### A query carried onto the Query pane (`suites/workspace/workspace_carry.robot`, 10 cases)
 
 | ID | Title | Priority |
 |---|---|---|
@@ -293,6 +373,7 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-277 | A Query Taken Over The Query Pane And Back Over A Folder Is Moved As Before | P1 |
 | TC-WSP-278 | A Press That Is Not Carried Anywhere Opens Nothing | P3 |
 | TC-WSP-290 | A Query That Has A Sample Is Opened Without It When It Is Carried Onto The Query Pane | P2 |
+| TC-WSP-333 | A Web Address Carried Onto The Query Pane Is Not Lit And Is Not Opened | P2 |
 
 ### A file dropped on the window: the query file (`suites/workspace/workspace_drop.robot`, 25 cases)
 
@@ -416,7 +497,7 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-216 | A Name With Letters Of Other Languages Is Kept As It Is | P3 |
 | TC-WSP-217 | Three Thousand Items Are Read And Listed | P3 |
 
-### The pane in other states of the window (`suites/workspace/workspace_variants.robot`, 21 cases)
+### The pane in other states of the window (`suites/workspace/workspace_variants.robot`, 23 cases)
 
 | ID | Title | Priority |
 |---|---|---|
@@ -441,6 +522,8 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-236 | A Click On The Strip's Button In A Window Too Narrow For The Pane Does Not Open It For Later | P3 |
 | TC-WSP-237 | The Theme Button Changes The Pane Too While The App Runs | P2 |
 | TC-WSP-238 | The Pane Is Shown In A Window Of 900 Points And Only The Strip In One Of 899 | P3 |
+| TC-WSP-334 | In The Light Theme A Web Address Has The Light Yellow Tag In Dark Ink | P2 |
+| TC-WSP-335 | In The Narrowest Pane The URLs Chip Is On A Row Of Its Own And The List Starts A Row Lower | P2 |
 
 ### The pane with another pane of the window in a window of its own (`suites/workspace/workspace_panes.robot`, 5 cases)
 
@@ -452,7 +535,7 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-283 | A Query File Dropped On The Query Pane That Is In Its Own Window Goes In The Box There | P2 |
 | TC-WSP-284 | A Query Carried Out Of The List Opens Nothing While The Query Pane Is In A Window Of Its Own | P2 |
 
-### With the Tools docked (`suites/workspace/workspace_docked.robot`, 7 cases)
+### With the Tools docked (`suites/workspace/workspace_docked.robot`, 9 cases)
 
 | ID | Title | Priority |
 |---|---|---|
@@ -463,6 +546,8 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-280 | With The Page Of A Tool In Front A Query File Dropped On The Window Is The Page's And Not The Query Box's | P1 |
 | TC-WSP-281 | With The Page Of A Tool In Front A Query Carried Out Of The List Has No Query Pane To Go On | P1 |
 | TC-WSP-282 | A Query Opened From The List While The Page Of A Tool Is In Front Brings The Json Query Tab Forward | P1 |
+| TC-WSP-336 | With The Tools Docked The URLs Chip Is Where It Is Under The Row Of Tabs And Narrows The List | P2 |
+| TC-WSP-337 | A Web Address Opened From The List While The Page Of A Tool Is In Front Brings The Json Query Tab Forward And Loads It | P1 |
 
 ## Run both ways
 
@@ -473,7 +558,9 @@ forward, and the files that go to Merge — are tagged `window-only` and run in 
 `workspace_docked.robot` has the cases that are about the docked Tools and the pane (the pane is under the row of tabs;
 the chips follow the page in front; with a page in front there is no Query pane, a dropped file is the page's, and the
 button of the status bar is first with the page's text after it). `undocked-only` is TC-WSP-247, which reads the right end
-of the status bar as it is without the 🗗.
+of the status bar as it is without the 🗗. The two cases of the web addresses that are docked (TC-WSP-336, the sixth chip under the
+row of tabs, and TC-WSP-337, a web address opened from the list while a tool's page is in front brings the Json Query tab forward
+and loads it) are in `workspace_docked.robot`.
 
 **2026-10-21, the debug build.** The pane adds a button to the status bar, which several older cases read, so the **whole
 suite** was run again in both ways, and the suites of the pane by themselves after the last case was changed:
@@ -553,11 +640,43 @@ The rest of the suite was not run again: the line that was added is in the funct
 on the window calls. The tests of the app: 109 + 453 + 823 passed (the one that was changed and the new one fail on the app
 as it was), `cargo fmt --check` and `clippy -D warnings` clean for Linux, Windows and macOS. Nothing failed on the way.
 
+**2026-10-23, web addresses as items of the workspace** (the app's `.url` kind: a yellow tag, a sixth chip, the address under the list, *Load from
+the web*, a fifth choice in the window that saves, one rule for what an address is, and no sample for it anywhere). The 276 cases that were there
+were run against the new app before anything was changed, and the new ones written after: 47 cases are new (TC-WSP-292 to 338: the new file
+`workspace_urls.robot` has 42, and five are in the files of the carried queries, the states of the window and the docked pane), two of the 276
+changed (TC-WSP-071 and 077), and the suite of the pane has 323 cases and the whole suite 1083.
+
+| Run | Cases | Passed |
+|---|---|---|
+| `./run_parallel.sh -j 6 --include workspace`, the 276 that were there, the new app, nothing changed | 276 | 274 |
+| the same, with the new cases (the first full run) | 323 | 323 |
+| `./run_docked.sh -j 6 main --include workspace` (the first) | 306 | 305 |
+| `./run_parallel.sh -j 6 --include workspace`, every case in its last form | 323 | 322 |
+| `./run_docked.sh -j 6 main --include workspace`, every case in its last form | 306 | 306 |
+
+The Tools' pass was not run (the change is not in it), nor were the suites outside the workspace.
+
+What failed on the way, and what was done:
+
+- **The 276 that were there, against the new app: 274.** TC-WSP-071 and 077 failed, for what had changed and nothing else: the Save window has a fifth
+  choice, Web address, and is 13 points wider, so its cross is at x = 786 (it was 779: TC-WSP-077 clicked beside it), and the choice that is picked,
+  `the query`, is read as `Ehequery` by every crop and setting (TC-WSP-071). Their points are variables now (`${SAVE_CLOSE_X}`, `${SAVE_TAB_..._X}`, which
+  moved 5 to 7 points, and the tick that keeps a sample, 417 to 410), and TC-WSP-071 asks for more than it did: the five choices, the picked one by its fill and
+  by `he ?query`, the fifth one not picked. The sixth chip moved none of the older cases (the chips of the first five are where they were).
+- **The new cases, the first time each ran: 42 of 47.** The five that failed were mistakes of the cases and not of the app: TC-WSP-297 and 298 looked for the paperclip
+  where the tag of an item with no sample ends (they tell it by where the tag ends now, 242 without a paperclip and 229 with), TC-WSP-316 used a
+  keyword that had not been written, and TC-WSP-315 and 323 expected the address to be saved at the top of the workspace, where the window offers the folder that the
+  picked item is in (`Sources/`, which they say now). None of the five was a fault of the app.
+- **The docked pass, 305 of 306 the first time.** TC-WSP-314 read the label `Name` in a crop that has the text behind the window in it, and with the Tools docked the
+  label is on the line of that text (`Kiama items`): it is read in a crop of its own now, and passed 3 of 3 alone undocked and 3 of 3 docked.
+- **The last full run, 322 of 323.** TC-WSP-249 (an older case about a file that is dropped: its first step, a double click right after the launch, did not
+  register, and the Query row never said `scratch.jq`) failed in that one run; it passed 3 of 3 alone, and in the baseline run and in the first full run.
+
 ## Faults put into the app, one at a time
 
 One thing broken at a time in a scratch copy of the app (the pane and its files, `app.rs`, `workspace/*.rs`), built, and
-the cases that should see it run on that build: the fault is **killed** when one of them fails. 197 faults, **all 197 are
-killed**; the cases that failed are named for each (where there are several, each of them failed). The first run killed
+the cases that should see it run on that build: the fault is **killed** when one of them fails. 257 faults, **256 are
+killed** (the one that is not cannot be seen from outside: u39, below); the cases that failed are named for each (where there are several, each of them failed). The first run killed
 129 of 146: the 15 that survived and the 2 that did not compile were each looked at, and what was missing or too weak in
 the cases is in "Faults of the cases" below (new cases: TC-WSP-096, 127, 128, 129, 183, 184, 236, 238, and stricter
 checks in a dozen more). The faults for the new states of the window (x01 to x06) were made together with the cases that
@@ -576,6 +695,19 @@ app as it is, and **q52** (a query that is carried is opened with its sample) wa
 **q55** were put in with the owner's answer that a good query file takes away what was said of a bad one (the
 message stays, the document is unloaded, the message goes only while no document is loaded: TC-WSP-291 is the only
 case that sees the last): all three were killed at once.
+
+**The round of the web addresses** (the `.url` kind, the sixth chip, the details, *Load from the web*, the fifth choice of the Save window, the
+reading of a file, no sample anywhere) put in 60 faults more (u01 to u59, and u39b), each built in a scratch copy of the app (the build's memory
+capped at 40 GiB) and run against the cases that should see it: **59 were killed, every one by the cases that were meant to see it, and the run
+changed no case.** The one that is not killed, **u39**, takes the byte-order mark off in `address_in` and nowhere else: `read_text`, which
+the app reads every `.url` file with, has taken it off before `address_in` sees the text, so no file can show the fault (the tests of the app
+call `address_in` with the mark, and see it). **u39b** takes it off in neither and is killed by TC-WSP-303, by the bare address that comes after
+a mark: that file is what keeps the reading of a mark honest end to end. TC-WSP-320 asks, besides the red text, that the window does not say
+`nothing to save` (the message that an address which could be saved and is not one would give): u27 writes no file either way, and the
+two are told apart by that line. Three were put in after the first run, for cases that had none to be killed by (u57, a load that does not leave the address in the Source field, for
+TC-WSP-309 and 310; u58, the end of a name read in its own case, for the `.URL` of TC-WSP-303; u59, a web address carried over the Query pane that is a query, for
+TC-WSP-333), and were killed at once. The faults whose only sign is a byte (u28, u29: a file that holds the bare address, a shortcut with LF) are seen by
+`Workspace File Should Hold Bytes`.
 
 The tests of the app, which are faster and see more, were asked the same about the pane: **62 of 62** faults of the
 pictures, the dragging, the strip, what a folder keeps open, the message that goes, the least width, the window that
@@ -829,6 +961,71 @@ import, the settings) were killed by the tests of the app before any case was wr
 | x05 | the pane is not shown in a window of exactly 900 | TC-WSP-238 |
 | x06 | the pane is shown in a window of 899 | TC-WSP-238 |
 
+#### Web addresses: the tag, the chip, the details, loading, the Save window, what is read from a file, and no sample
+
+| Mutant | What is broken | Killed by |
+|---|---|---|
+| u01 | the tag of a web address is the document's grey in the dark theme | TC-WSP-292, 303 |
+| u02 | the tag of a web address is the document's grey in the light theme | TC-WSP-334 |
+| u03 | the ink of the tag of a web address is white in the light theme | TC-WSP-334 |
+| u04 | the tag of a web address says json | TC-WSP-292 |
+| u05 | the URLs chip shows the documents | TC-WSP-293, 294 |
+| u06 | the sixth chip is called Links | TC-WSP-293 |
+| u07 | the URLs chip is not drawn | TC-WSP-293, 335 |
+| u08 | All leaves the web addresses out | TC-WSP-292, 293 |
+| u09 | Docs shows the web addresses | TC-WSP-293 |
+| u10 | the details of a web address say no sample | TC-WSP-296, 297 |
+| u11 | the details show the lines of the file and not the address | TC-WSP-296 |
+| u12 | the button of a web address says Open | TC-WSP-296, 299, 334 |
+| u13 | Load from the web loads the path of the file | TC-WSP-306, 308 |
+| u14 | Load from the web does nothing | TC-WSP-306, 307, 313 |
+| u15 | Load from the web does not bring the Json Query tab forward | TC-WSP-337 |
+| u16 | Copy text of a web address copies the file | TC-WSP-302, 303 |
+| u17 | Copy text of a file with no address copies its text | TC-WSP-304, 305 |
+| u18 | a file with no address says something else | TC-WSP-304, 305, 311 |
+| u19 | the menu of a folder has no Save a web address here | TC-WSP-300, 301 |
+| u20 | Save a web address here opens the window on the query | TC-WSP-301 |
+| u21 | Save a web address here saves at the top | TC-WSP-301 |
+| u22 | the Save window has no choice for a web address | TC-WSP-071, 314 |
+| u23 | the choice for a web address is dim while there is none | TC-WSP-314, 317 |
+| u24 | the name does not follow the address | TC-WSP-317, 318, 319 |
+| u25 | the name follows the address over a name that was typed | TC-WSP-318 |
+| u26 | an address that is not one is not said | TC-WSP-320, 321 |
+| u27 | an address that is not one can be saved | TC-WSP-320 |
+| u28 | the file holds the address and not a shortcut | TC-WSP-301, 317 |
+| u29 | the shortcut has LF line ends | TC-WSP-301, 317 |
+| u30 | the address of the document is not offered | TC-WSP-315 |
+| u31 | the address in the Source field is not offered | TC-WSP-316 |
+| u32 | the address in the Source field is offered before the document's | TC-WSP-315 |
+| u33 | the box for the address does not take the focus | TC-WSP-301 |
+| u34 | Enter in the box for the address does not save | TC-WSP-318 |
+| u35 | the name is the last part of the path, empty or not | TC-WSP-319 |
+| u36 | the name keeps .json | TC-WSP-315, 319 |
+| u37 | the host is named with who it is for and its port | TC-WSP-319 |
+| u38 | the key of the address is read in capitals only | TC-WSP-303, 312 |
+| u39 | a byte-order mark is in the way | **survives**, and cannot be seen from outside: `read_text` takes the byte-order mark off before `address_in` sees the text (u39b takes it off in neither, and is killed) |
+| u39b | a byte-order mark is in the way: neither read_text nor address_in takes it off | TC-WSP-303 |
+| u40 | a file that is only the address has none | TC-WSP-303, 312 |
+| u41 | the last URL line is the address | TC-WSP-303 |
+| u42 | the scheme is read in small letters only | TC-WSP-303 |
+| u43 | an address may have 8192 characters | TC-WSP-305, 321 |
+| u44 | an address may have a space in it | TC-WSP-304, 320 |
+| u45 | an address needs no host | TC-WSP-304 |
+| u46 | a web address has the sample that is called after it | TC-WSP-297, 298, 328 |
+| u47 | a web address keeps the sample of the query that has its name | TC-WSP-325, 326 |
+| u48 | the copy of a web address skips a name that a sample file has | TC-WSP-329 |
+| u49 | an imported web address skips a name that a sample file has | TC-WSP-332 |
+| u50 | every sort of item has a sample | TC-WSP-297, 298, 328 |
+| u51 | an import counts the web addresses as documents | TC-WSP-331 |
+| u52 | the import window does not say how many web addresses | TC-WSP-331 |
+| u53 | a web address is saved as .lnk | TC-WSP-301, 317 |
+| u54 | the window says there is an item of that name | TC-WSP-322 |
+| u55 | a web address is saved as a document | TC-WSP-301, 317 |
+| u56 | the window offers a sample for a web address | TC-WSP-314, 323 |
+| u57 | a load of an address does not put it in the Source field | TC-WSP-309, 310 |
+| u58 | the end of a file's name is read in its own case | TC-WSP-303 |
+| u59 | a web address carried over the Query pane is a query | TC-WSP-333 |
+
 ## What the cases found
 
 ### Faults of the app
@@ -892,6 +1089,16 @@ time the window gets the focus after it opens: the first read made the index aga
 of (TC-WSP-200 reads the index and the set-aside file; TC-WSP-201 sees the warning where it stays, for a link in the
 folder).
 
+**The web addresses** (2026-10-23, `.url` items): the cases found **no fault of the app**. Seen, and not changed:
+
+- **At the least width the sixth chip is on a row of its own.** The pane can be made 208 points wide, and the six chips need a little
+  more than that: URLs wraps under the others, at the left, and the list begins 20 points lower than in the pane of 256. Nothing is cut
+  off and the chip works there (TC-WSP-335 says so; the cases that were there looked at the header at that width and not at the chips).
+- **A file that holds no address, used after a load that failed, leaves what that load said.** The status bar still has its error and the
+  Source field the address it tried: nothing was loaded, so nothing is cleared (TC-WSP-311 begins from a window with neither).
+- **A `.url` file dropped on the window is opened as JSON, and fails** (`Load error: parsing JSON: expected value at line 1 column 2`): the
+  drop looks at the end of the name only for a query. Not a case ("Not reachable" below).
+
 ### Faults of the cases
 
 Found by the faults that were put into the app (the tables above): each of these was a fault that **survived** the cases
@@ -924,9 +1131,30 @@ missing or too weak.
   (TC-WSP-236: it must not leave the pane open for later), items nested eight deep (233), a taller and a wider window
   (234, 235).
 
+The web-address round (u01 to u59, above) found **no check that was missing or too loose**: all but one of the 60 faults were killed at
+once by the cases that were meant to see them, and the one that was not (u39) cannot be seen from outside at all.
+
 ### What came out of the cases about the cases
 
 (Also in [writing_tests.md](writing_tests.md).)
+
+- **A window with one more choice is a window that has moved.** The Save window has a fifth choice and is 13 points wider: its
+  cross went from x = 779 to 786, its choices 5 to 7 points to the left, and TC-WSP-071 and 077 failed on the first run against the
+  new app for that and nothing else (the picked choice, `the query`, is read as `Ehequery` by every crop and setting, so the case
+  tells it by its fill and by `he ?query`). The points are variables now (`${SAVE_CLOSE_X}`, `${SAVE_TAB_..._X}`), and the tick that keeps
+  a sample moved 7 points as well (417 to 410: a click at the old place still hit it, which no case would have said).
+- **A text reader hides a line end.** `Workspace File Should Be` opens the file as text, and Python makes a CR LF one `\n`: a `.url` file
+  written with LF, where the app writes CR LF, is the file that the case expected. `Workspace File Should Hold Bytes` reads the bytes, and
+  u29 (the shortcut written with LF) is the fault that needs it.
+- **A paperclip is where the tag of an item with no sample ends.** The first `Row Should Have No Paperclip` looked in the paperclip's
+  place for ink and found the tag of the row (242 is its right edge when there is no sample, 229 when there is): the rows are told by where
+  their tag ends.
+- **An address is read badly by OCR, by copying well.** `http://127.0.0.1:43557/missing.json` comes back as `http: //127.0.0.1:43557/miss in...`
+  in the details and `xjson` in the status bar; the Source field, the boxes of the Save window and the clipboard of Copy text are
+  read by copying them, and the words of a message by a pattern that lets a character go (`Load error.{0,3} ?requesting.*404`).
+- **A server of the case's own tells what was asked.** That a click only picks, that a load asks once and for this path with this query, and that a
+  file with no address asks nothing are said by the list of paths that the server has been asked for (`Fixture Server Should Have Been Asked
+  For`); the screen alone could not say the last.
 
 - **A pointer left over a button has a tooltip** that covers the line under the title (TC-WSP-217 failed on it the first
   time); a case that reads small text puts the pointer away first.
@@ -965,7 +1193,11 @@ missing or too weak.
 - **A display bigger than 1280 × 900**: the window is made as wide and as tall as that at most (TC-WSP-234, 235).
 - **The keyboard in the list**: there are no keys that move through the list, none are tested (Enter and Escape in the
   windows of the pane and in a name that is being typed are).
-- **The web** has no pane yet; nothing here is about it.
+- **A `.url` file dropped on the window**: the window opens any file that does not end like a query as the Source, a `.url` file as well, and
+  says `Load error: parsing JSON: expected value at line 1 column 2`; the app has nothing for it (a web address is loaded from the list,
+  or typed in the Source field), so no case is written for it.
+- **A host that is not the machine's own**: the web addresses that are loaded are served by a server on 127.0.0.1 that the case starts;
+  what the app does with a name that has to be looked up, a certificate or a proxy is its HTTP library's and is not run.
 - **Where in the window a file is let go**: the toolkit under the app drops the position that X11 sends with a drop (and
   has no position at all for a file that is dragged over the window), so the app cannot know which pane a file is let go
   on, and no case can say it: the name of the file is what decides, and the cases let go in the middle of the window.

@@ -19,12 +19,17 @@ ${DOCUMENT}               {"a": [1, 2, 3]}
 
 *** Test Cases ***
 TC-WSP-071 The Pane's Save Button Opens The Window That Saves What Is In The Query Box
-    [Documentation]    The window has the sort of thing that is saved (the query is the one that is picked), the Name
-    ...    box with the focus, the Folder box, a box for a folder to make, and the tick that keeps a sample.
+    [Documentation]    The window has the sort of thing that is saved (five choices: the query, which is the one that is picked, a
+    ...    schema, a patch, the Source and a web address), the Name box with the focus, the Folder box, a box for a folder to
+    ...    make, and the tick that keeps a sample. (The picked choice is read badly by OCR -- `Ehequery` -- so it is told by
+    ...    its fill, and by the letters that are read.)
     [Tags]    p1
     Type In Query Box    ${QUERY}
     Open Save Form
-    Form Should Show    Save    the query    a schema    a patch    the Source    Name    Folder    new folder in it
+    Form Should Show    Save    a schema    a patch    the Source    Web address    Name    Folder    new folder in it
+    Form Should Match    he ?query
+    Tab Of The Save Window Should Be Picked    ${SAVE_TAB_QUERY_X}
+    Tab Of The Save Window Should Not Be Picked    ${SAVE_TAB_URL_X}
     Form Should Show    Keep the Source as its sample
     # Save, which cannot be pressed with no name, and Cancel.
     Form Should Have This Many Buttons    2
@@ -105,7 +110,7 @@ TC-WSP-077 Escape And Cancel And The Cross Close The Window And Save Nothing
     Sleep    0.6s
     Form Should Not Be Open    ${SAVE_TITLE}
     Open Save Form
-    Click In Form    779    97
+    Click In Form    ${SAVE_CLOSE_X}    ${SAVE_CLOSE_Y}
     Form Should Not Be Open    ${SAVE_TITLE}
     Workspace File Should Not Exist    nothing.jq
 

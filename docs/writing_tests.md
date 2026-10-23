@@ -260,6 +260,24 @@ ${item}=    Workspace Item    Services/scratch.jq      # the index's entry: id, 
   before and after, and retries the missing message until the window has been redrawn. A test of the app that clears
   the state it is about to look at (`load_error = None` before the good file is dropped) cannot see a message that
   stays: that is how the stale "Load error" of a failed query-file drop went unseen for a round.
+- **A web address is loaded from a server of the case's own** (`Launch With Web Addresses  ${SERVED}  ${{ {"Sources/feed.url": "/valid.json"} }}`
+  gives its address): the server is on 127.0.0.1, on a port of its own, and writes down what it is asked for, so a case
+  says that a click that only picks asked for nothing and that a load asked once, for this path with this query
+  (`Fixture Server Should Have Been Asked For  /v1/orders.json?page=2`, which waits for what should come and then a moment for what
+  should not). The suite's teardown stops it (`Stop Server And Close App`). The Source field is read by copying it
+  (`Source Field Should Hold`): OCR reads a port number badly.
+- **The bytes of a file are read as bytes** when the line end is the point: `Workspace File Should Be` reads text, and Python's text
+  mode makes a CR LF one `\n`, so a `.url` file written with LF would have been the file a case expected
+  (`Workspace File Should Hold Bytes`).
+- **A box of a window is read by copying it, not by OCR**: the address and the name of the Save window (`Address In Save Form Should Be`,
+  `Name In Save Form Should Be`); an empty box is the marker that is still on the clipboard. A box that is typed into without a click
+  in it is a case about the focus (TC-WSP-301, 317): the choice is clicked and the keys are sent at once.
+- **A window that grows moves what a case clicked**: the Save window is 13 points wider with its fifth choice, so its cross and its choices moved
+  (TC-WSP-071 and 077 failed on it), and with the Web address chosen it is 40 points taller. Read the window again (a screenshot with a
+  grid is enough) when a choice is added.
+- **A tag is told by its fill and its width**: the tag of a web address is 19 points wide, that of a document 24 and that of a jq query 15
+  (`Tag Width`); a paperclip is told by where the tag ends (242 without one, 229 with), because the paperclip's place is where the
+  tag of an item with no sample ends.
 - **Run lanes from a frozen copy of the test repository** while editing: Robot reads a `.resource` file when the
   suite that imports it starts, so a keyword that is changed under a lane that is running breaks the lane (a
   half-written file is a suite that does not parse). A copy with `rsync` (without `results` and `.git`, `.venv`

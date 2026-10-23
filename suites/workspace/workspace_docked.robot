@@ -111,6 +111,40 @@ TC-WSP-282 A Query Opened From The List While The Page Of A Tool Is In Front Bri
     Query Box Should Hold    ${LOGINS_TEXT}
     Engine Chip Should Be Selected    jmespath
 
+TC-WSP-336 With The Tools Docked The URLs Chip Is Where It Is Under The Row Of Tabs And Narrows The List
+    [Documentation]    The sixth chip is at the same x as in the window with the Tools in a window of their own, and picked it has the web addresses only.
+    [Tags]    p2
+    Close Jsonquery App
+    Launch Jsonquery App    settings=${DOCKED_AND_OPEN}    workspace=${WITH_URLS}
+    Sleep    0.8s
+    Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_ALL_X}
+    Without Layout Shift    Chip Should Not Be Picked    ${WS_CHIP_URLS_X}
+    Without Layout Shift    Click At    ${WS_CHIP_URLS_X}    ${CHIPS_Y_DOCKED}
+    Sleep    0.6s
+    Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_URLS_X}
+    Without Layout Shift    Chip Should Not Be Picked    ${WS_CHIP_ALL_X}
+    List Should Show    rates    weather
+    List Should Not Show    scratch    orders    data
+
+TC-WSP-337 A Web Address Opened From The List While The Page Of A Tool Is In Front Brings The Json Query Tab Forward And Loads It
+    [Documentation]    The Query pane is the Json Query tab's: a double click on a web address shows that tab and loads the address as the Source (as a
+    ...    query is put in the box, TC-WSP-282): the server it names is asked once, for the path of the address.
+    [Tags]    p1
+    [Teardown]    Stop Server And Close App
+    Close Jsonquery App
+    ${base}=    Serve These Files    ${SERVED}
+    ${text}=    Shortcut Text    ${base}/valid.json
+    ${files}=    Evaluate    {**$STANDARD, "Sources/feed.url": $text}
+    Launch Jsonquery App    settings=${DOCKED_AND_OPEN}    workspace=${files}
+    Sleep    0.8s
+    Show Docked Tab    format
+    Set Layout Shift    ${DY}
+    Double Click Row    ${ROW_RATES}
+    Docked Tab Should Be Selected    json
+    Wait Until Region Matches    @{WS_SOURCE_PANEL}    3 items    timeout=8
+    Source Field Should Hold    ${base}/valid.json
+    Fixture Server Should Have Been Asked For    /valid.json
+
 *** Keywords ***
 Paste In Page Box
     [Documentation]    The box of the page that is in front holds `text` (pasted).

@@ -308,6 +308,53 @@ TC-WSP-238 The Pane Is Shown In A Window Of 900 Points And Only The Strip In One
     Sleep    1.0s
     Pane Should Be Open
 
+TC-WSP-334 In The Light Theme A Web Address Has The Light Yellow Tag In Dark Ink
+    [Documentation]    The tag is (246, 240, 160) with ink of (98, 76, 0), as wide as it is in the dark theme (19 points); the tag of no other sort is that
+    ...    colour, and the dark theme's olive is not shown. The details under the list say it is a web address, and have the one button.
+    [Tags]    p2
+    Close Jsonquery App
+    Launch Workspace App    settings=${LIGHT_OPEN}    files=${WITH_URLS}
+    # Rows: 0 Logs ... 5 update, 6 Sources, 7 rates (url), 8 data (json), 9 scratch (jq), 10 weather (url).
+    Row Should Have Tag Colour    ${ROW_RATES}    246    240    160
+    Row Should Have Tag Colour    ${ROW_WEATHER}    246    240    160
+    Row Should Not Have Tag Colour    ${ROW_DATA}    246    240    160
+    Row Should Not Have Tag Colour    ${ROW_SCRATCH_WITH_URLS}    246    240    160
+    Row Should Not Have Tag Colour    ${ROW_RATES}    84    76    0
+    ${y}=    Row Y    ${ROW_RATES}
+    Region Should Contain Color    170    ${{ ${y} - 8 }}    80    16    100    80    4    tolerance=14
+    ...    msg=The tag of a web address has no dark ink
+    ${width}=    Tag Width    ${ROW_RATES}    246    240    160
+    Should Be True    17 <= ${width} <= 21    msg=The tag of a web address is ${width} wide, not 19
+    Click Row    ${ROW_RATES}
+    Details Should Show    rates    Sources/rates.url    Load from the web
+    Details Should Match    [Ww]eb ?add
+    Details Should Have One Button Saying    Load from the web
+
+TC-WSP-335 In The Narrowest Pane The URLs Chip Is On A Row Of Its Own And The List Starts A Row Lower
+    [Documentation]    At 208 points the six chips do not fit on one row: Docs is the last of the first, URLs is at the left of a second, and the list begins 20
+    ...    points lower than in the pane of 256. The chip can be picked there, and the list then has the web addresses only.
+    [Tags]    p2
+    Close Jsonquery App
+    Launch Workspace App    files=${WITH_URLS}
+    Drag Mouse    ${WS_PANE_WIDTH}    400    90    400
+    Sleep    0.8s
+    Pane Should Be This Wide    208
+    Move Mouse To    600    400
+    ${docs}    ${first_row}=    Find Text In Region    0    71    208    20    Docs
+    ${urls}    ${second_row}=    Find Text In Region    0    91    208    20    URL
+    Should Be True    ${second_row} - ${first_row} >= 15    msg=URLs (${second_row}) is not on a row under the others (${first_row})
+    Should Be True    ${urls} < ${docs}    msg=URLs (${urls}) is not at the left of the second row
+    Chip At Should Not Be Picked    25    101
+    Click At    25    101
+    Sleep    0.6s
+    Move Mouse To    600    400
+    Chip At Should Be Picked    25    101
+    Chip At Should Not Be Picked    ${WS_CHIP_ALL_X}    81
+    Wait Until Keyword Succeeds    4x    0.5s    Region Should Show Text    0    113    208    300    rates
+    Region Should Show Text    0    113    208    300    weather
+    Region Should Not Show Text    0    113    208    300    scratch
+    Region Should Not Show Text    0    113    208    300    orders
+
 *** Keywords ***
 Dark Folder Should Be A Plain Folder At
     [Documentation]    The picture on the point is a folder of dark ink on a light ground: 14 by 11 points, a tab at the top left

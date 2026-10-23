@@ -36,6 +36,9 @@ ${WS_CHIP_QUERIES_X}      49
 ${WS_CHIP_SCHEMAS_X}      95
 ${WS_CHIP_PATCHES_X}      140
 ${WS_CHIP_DOCS_X}         177
+# The sixth chip, after Docs: 28 wide (x 196 to 223) while the pane is wide enough to have the six on a row (it is, from 256 down to
+# about 240); in the narrowest pane (208) it is on a row of its own under the others and the list starts 20 lower.
+${WS_CHIP_URLS_X}         210
 ${WS_LIST_TOP}            93
 ${WS_ROW_HEIGHT}          20
 # A point of a row that is not on its name or its tag (a click there is a click on the row), and the
@@ -136,21 +139,37 @@ ${EXPORT_CHOOSE_Y}        170
 ${NEWFOLDER_MAKE_X}       462
 ${NEWFOLDER_CANCEL_X}     518
 ${NEWFOLDER_BUTTONS_Y}    213
-# The Save window, 380 wide, with its tabs (what is saved), the Name box, the Folder box, the box for a new folder
-# in it, the tick that keeps a sample, and its buttons under what it says of what is being saved.
+# The Save window, 409 wide (its five choices do not fit in 380: it is 13 wider than it was with four, and the cross at its
+# top right is that much further right), with its tabs (what is saved), the Name box, the Folder box, the box for a new
+# folder in it, the tick that keeps a sample, and its buttons under what it says of what is being saved.
 ${SAVE_TAB_Y}             130
-${SAVE_TAB_QUERY_X}       476
-${SAVE_TAB_SCHEMA_X}      547
-${SAVE_TAB_PATCH_X}       611
-${SAVE_TAB_SOURCE_X}      679
+${SAVE_TAB_QUERY_X}       471
+${SAVE_TAB_SCHEMA_X}      541
+${SAVE_TAB_PATCH_X}       604
+${SAVE_TAB_SOURCE_X}      672
+${SAVE_TAB_URL_X}         757
+${SAVE_CLOSE_X}           786
+${SAVE_CLOSE_Y}           98
 ${SAVE_NAME_X}            600
 ${SAVE_NAME_Y}            173
 ${SAVE_FOLDER_X}          530
 ${SAVE_FOLDER_Y}          213
 ${SAVE_SUB_X}             665
 ${SAVE_SUB_Y}             234
-${SAVE_SAMPLE_X}          417
+${SAVE_SAMPLE_X}          410
 ${SAVE_SAMPLE_Y}          256
+# With the Web address chosen the window has the box for the address above the name (a label and a box, 40 points), and
+# a complaint about the address under its box (18 more). The tick that keeps a sample is not there.
+${SAVE_ADDRESS_X}         600
+${SAVE_ADDRESS_Y}         173
+${SAVE_URL_NAME_Y}        213
+${SAVE_URL_NAME_COMPLAINT_Y}    231
+${SAVE_URL_FOLDER_Y}      253
+${SAVE_URL_SUB_Y}         274
+# Where the Source field of the toolbar is with the pane open (it is at the right of the pane): a point in it to click, and
+# the region that reads it.
+${WS_SOURCE_FIELD_X}      560
+@{WS_SOURCE_FIELD}        256    0      560    24
 # The list that the Folder box opens, under it.
 @{SAVE_FOLDER_LIST}       404    226    260    170
 
@@ -397,16 +416,31 @@ Clear The Filter
     Move Mouse To    600    400
 
 Click Chip
-    [Documentation]    `all`, `queries`, `schemas`, `patches` or `docs`.
+    [Documentation]    `all`, `queries`, `schemas`, `patches`, `docs` or `urls`.
     [Arguments]    ${chip}
     ${x}=    Set Variable If    '${chip}' == 'all'    ${WS_CHIP_ALL_X}
     ...    '${chip}' == 'queries'    ${WS_CHIP_QUERIES_X}
     ...    '${chip}' == 'schemas'    ${WS_CHIP_SCHEMAS_X}
     ...    '${chip}' == 'patches'    ${WS_CHIP_PATCHES_X}
+    ...    '${chip}' == 'urls'    ${WS_CHIP_URLS_X}
     ...    ${WS_CHIP_DOCS_X}
     Click At    ${x}    ${WS_CHIPS_Y}
     Sleep    0.5s
     Move Mouse To    600    400
+
+Chip At Should Be Picked
+    [Documentation]    The chip at this x (in the row of chips at y, 81 with the pane at the top of the window) has the colour of a
+    ...    selection: it is 28 or more points wide, and its fill is under its label.
+    [Arguments]    ${x}    ${y}=${WS_CHIPS_Y}
+    ${left}=    Evaluate    int(${x}) - 18
+    Region Should Contain Color    ${left}    ${{ int(${y}) - 8 }}    36    16    0    92    128    tolerance=10
+    ...    msg=The chip at ${x} is not picked
+
+Chip At Should Not Be Picked
+    [Arguments]    ${x}    ${y}=${WS_CHIPS_Y}
+    ${left}=    Evaluate    int(${x}) - 18
+    Region Should Not Contain Color    ${left}    ${{ int(${y}) - 8 }}    36    16    0    92    128    tolerance=10
+    ...    msg=The chip at ${x} is picked
 
 Type In Query Box
     [Documentation]    The query box (with the pane open) holds `text`: put there with a paste, as typing sends
@@ -981,3 +1015,185 @@ Tab Of The Save Window Should Be Picked
     ${top}=    Form Y    ${SAVE_TAB_Y}
     ${top}=    Evaluate    int(${top}) - 8
     Region Should Contain Color    ${left}    ${top}    60    16    0    92    128    tolerance=10
+
+# ---- web addresses: a `.url` file (a Windows Internet Shortcut) is an item of its own sort ------------------------------
+
+Shortcut Text
+    [Documentation]    The text of a file that holds a web address, as the app writes it and as Windows does: `[InternetShortcut]`, `URL=` and
+    ...    the address, a line end after each (CR LF unless `eol` says another).
+    [Arguments]    ${address}    ${eol}=\r\n
+    ${text}=    Evaluate    "[InternetShortcut]" + $eol + "URL=" + $address + $eol
+    RETURN    ${text}
+
+Serve These Files
+    [Documentation]    A server on 127.0.0.1, on a port of its own, that serves these files (a dictionary from a path with / to its text; a path
+    ...    that is not one is a 404) and writes down what it is asked for (`Fixture Server Requests`). Gives its address, `http://127.0.0.1:port`,
+    ...    with no slash at the end. The suites that use it stop it in their teardown.
+    [Arguments]    ${files}
+    ${folder}=    Make Folder With Files    served    ${files}
+    ${base}=    Start Fixture Server    ${folder}
+    RETURN    ${base}
+
+Launch With Web Addresses
+    [Documentation]    The server of `Serve These Files` with `served`, and the app, the pane open, with a workspace of `files` (STANDARD unless
+    ...    another) and these web addresses in it: `addresses` is a dictionary from the path of a `.url` file to what the server is asked for
+    ...    (`/valid.json`, or `/v1/orders.json?page=2`). Gives the server's address.
+    [Arguments]    ${served}    ${addresses}    ${files}=${STANDARD}    ${eol}=\r\n
+    ${base}=    Serve These Files    ${served}
+    ${made}=    Evaluate    dict($files)
+    FOR    ${path}    ${target}    IN    &{addresses}
+        ${text}=    Shortcut Text    ${base}${target}    ${eol}
+        Set To Dictionary    ${made}    ${path}    ${text}
+    END
+    Launch Workspace App    files=${made}
+    RETURN    ${base}
+
+Stop Server And Close App
+    [Documentation]    The teardown of the cases that start a server: both are stopped, the second also when the first was not running.
+    Run Keywords    Stop Fixture Server    AND    Close Jsonquery App
+
+Source Field Should Hold
+    [Documentation]    The Source field of the toolbar holds exactly `expected` (all of it is selected and copied and the clipboard is compared:
+    ...    a long address is read badly by OCR). With the pane open the field is at the right of it.
+    [Arguments]    ${expected}
+    Wait Until Keyword Succeeds    4x    0.6s    Source Field Holds    ${expected}
+
+Source Field Holds
+    [Arguments]    ${expected}
+    Set Clipboard    nothing was copied
+    Click At    ${WS_SOURCE_FIELD_X}    ${TOOLBAR_Y}
+    Sleep    0.3s
+    Press Keys    ctrl    a
+    Press Keys    ctrl    c
+    Sleep    0.4s
+    ${text}=    Get Clipboard
+    Move Mouse To    600    400
+    Should Be Equal    ${text}    ${expected}
+
+Source Field Should Be Empty
+    [Documentation]    Nothing is in the Source field: with the clipboard set to a marker, all of the field selected and copied, the marker is
+    ...    still on the clipboard.
+    Source Field Should Hold    nothing was copied
+
+Press Load From The Web
+    [Documentation]    The button under the list that loads the web address that is picked (the lowest place that says it).
+    Press In Details    Load from the web
+
+Details Should Have One Button Saying
+    [Documentation]    Exactly one place under the list says this (a button): an item that had a sample would have two buttons.
+    [Arguments]    ${text}
+    ${x}    ${y}    ${w}    ${h}=    Set Variable    @{WS_DETAILS}
+    ${hits}=    Find All Text In Region    ${x}    ${y}    ${w}    ${h}    ${text}    psm=11
+    ${count}=    Get Length    ${hits}
+    Should Be Equal As Integers    ${count}    1    msg=${count} places under the list say ${text}: ${hits}
+
+Tag Width
+    [Documentation]    How many points wide the tag at the right of the row is (its fill of that colour: the label and a margin).
+    [Arguments]    ${row}    ${r}    ${g}    ${b}
+    ${y}=    Row Y    ${row}
+    ${top}=    Evaluate    ${y} - 7
+    ${l}    ${t}    ${right}    ${bottom}=    Get Color Bounds    170    ${top}    80    14    ${r}    ${g}    ${b}    tolerance=6
+    ${width}=    Evaluate    ${right} - ${l} + 1
+    RETURN    ${width}
+
+Row Should Have No Paperclip
+    [Documentation]    The row has no paperclip, the sign of a sample: its tag (of this colour) ends at the right end of the row, at 242, where the tag of
+    ...    a row that has a sample ends 8 points or more to the left, and there is nothing drawn at the right of it.
+    [Arguments]    ${row}    ${r}    ${g}    ${b}
+    ${edge}=    Tag Right Edge    ${row}    ${r}    ${g}    ${b}
+    Should Be True    ${edge} >= 238    msg=The tag of row ${row} ends at ${edge}: there is a paperclip at the right of it
+    ${y}=    Row Y    ${row}
+    Run Keyword And Expect Error    Nothing as bright as*    Get Ink Bounds    ${{ ${edge} + 3 }}    ${{ ${y} - 8 }}    ${{ 252 - ${edge} - 3 }}    16    threshold=60
+
+Row Should Have A Paperclip
+    [Documentation]    The row has a paperclip at its right end, and its tag (of this colour) is moved left of it (it ends at 229 and not at 242).
+    [Arguments]    ${row}    ${r}    ${g}    ${b}
+    ${edge}=    Tag Right Edge    ${row}    ${r}    ${g}    ${b}
+    Should Be True    ${edge} <= 234    msg=The tag of row ${row} ends at ${edge}: no room was made for a paperclip
+    ${y}=    Row Y    ${row}
+    Get Ink Bounds    ${{ ${edge} + 2 }}    ${{ ${y} - 8 }}    ${{ 250 - ${edge} - 2 }}    16    threshold=60
+
+Tab Of The Save Window Should Not Be Picked
+    [Arguments]    ${x}
+    ${left}=    Evaluate    int(${x}) - 30
+    ${top}=    Form Y    ${SAVE_TAB_Y}
+    ${top}=    Evaluate    int(${top}) - 8
+    Region Should Not Contain Color    ${left}    ${top}    60    16    0    92    128    tolerance=10
+    ...    msg=The tab at ${x} is picked
+
+Save Choice Should Be Dim
+    [Documentation]    The choice of the Save window at this x cannot be picked: its label is drawn dim (104; a label that can be is 180).
+    [Arguments]    ${x}
+    ${left}=    Evaluate    int(${x}) - 28
+    ${top}=    Form Y    ${{ int(${SAVE_TAB_Y}) - 8 }}
+    Run Keyword And Expect Error    Nothing as bright as*    Get Ink Bounds    ${left}    ${top}    56    16    threshold=120
+
+Save Choice Should Be Bright
+    [Documentation]    The choice at this x can be picked: its label is drawn bright.
+    [Arguments]    ${x}
+    ${left}=    Evaluate    int(${x}) - 28
+    ${top}=    Form Y    ${{ int(${SAVE_TAB_Y}) - 8 }}
+    Get Ink Bounds    ${left}    ${top}    56    16    threshold=150
+
+Choose Web Address In Save Form
+    [Documentation]    The choice that says Web address, clicked; the window has the box for the address then (a label and a box above the name).
+    Click In Form    ${SAVE_TAB_URL_X}    ${SAVE_TAB_Y}
+    Wait Until Keyword Succeeds    4x    0.4s    Tab Of The Save Window Should Be Picked    ${SAVE_TAB_URL_X}
+
+Open Save Form On Web Address
+    [Documentation]    The 💾 of the pane, and the choice that says Web address.
+    Open Save Form
+    Choose Web Address In Save Form
+
+Paste In Address Box
+    [Documentation]    The box for the address (clicked) holds `text` instead of what it had, put there with a paste.
+    [Arguments]    ${text}
+    Set Clipboard    ${text}
+    Click In Form    ${SAVE_ADDRESS_X}    ${SAVE_ADDRESS_Y}
+    Press Keys    ctrl    a
+    Press Keys    ctrl    v
+    Sleep    0.4s
+
+Address In Save Form Should Be
+    [Documentation]    The box for the address holds exactly `expected` (copied: OCR reads an address badly).
+    [Arguments]    ${expected}
+    Wait Until Keyword Succeeds    4x    0.5s    Address In Save Form Is    ${expected}
+
+Address In Save Form Is
+    [Arguments]    ${expected}
+    Set Clipboard    nothing was copied
+    Click In Form    ${SAVE_ADDRESS_X}    ${SAVE_ADDRESS_Y}
+    Press Keys    ctrl    a
+    Press Keys    ctrl    c
+    Sleep    0.4s
+    ${text}=    Get Clipboard
+    Should Be Equal    ${text}    ${expected}
+
+Address In Save Form Should Be Empty
+    [Documentation]    The box for the address is empty: with the clipboard set to a marker, all of the box selected and copied, the marker is still on the
+    ...    clipboard (copying nothing leaves it alone).
+    Wait Until Keyword Succeeds    4x    0.5s    Address In Save Form Is    nothing was copied
+
+Name In Save Form Should Be
+    [Documentation]    The Name box of the Save window with the Web address chosen holds exactly `expected` (`y` is 231 while there is a
+    ...    complaint about the address under its box).
+    [Arguments]    ${expected}    ${y}=${SAVE_URL_NAME_Y}
+    Wait Until Keyword Succeeds    4x    0.5s    Name In Save Form Is    ${expected}    ${y}
+
+Name In Save Form Is
+    [Arguments]    ${expected}    ${y}
+    Set Clipboard    nothing was copied
+    Click In Form    ${SAVE_NAME_X}    ${y}
+    Press Keys    ctrl    a
+    Press Keys    ctrl    c
+    Sleep    0.4s
+    ${text}=    Get Clipboard
+    Should Be Equal    ${text}    ${expected}
+
+Type Name In Url Form
+    [Documentation]    The Name box of the Save window with the Web address chosen, clicked and the name typed over what is in it.
+    [Arguments]    ${name}    ${y}=${SAVE_URL_NAME_Y}
+    Click In Form    ${SAVE_NAME_X}    ${y}
+    Press Keys    ctrl    a
+    Type Text    ${name}
+    Sleep    0.3s

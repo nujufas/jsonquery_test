@@ -183,6 +183,8 @@ class AppLibrary:
         self._main_window_id = None
         self._fixture_server = None
         self._fixture_server_thread = None
+        # What the fixture server was asked for since it was started (see `Fixture Server Requests`).
+        self._fixture_requests = []
         self._shot_test_name = None
         self._shot_seq = 0
         self._hover_proc = None
@@ -548,6 +550,19 @@ class AppLibrary:
             raise AssertionError(f"{rel} could not be read: {error}")
         if actual != expected:
             raise AssertionError(f"{rel} holds {actual!r}, not {expected!r}")
+
+    @keyword("Workspace File Should Hold Bytes")
+    def workspace_file_should_hold_bytes(self, rel, expected):
+        """The file `rel` of the workspace holds exactly the bytes of `expected` (its text in UTF-8, with the
+        line ends it has: `Workspace File Should Be` reads the file as text, and a CR LF is one `\\n` to it)."""
+        try:
+            with open(self._workspace_path(rel), "rb") as f:
+                actual = f.read()
+        except OSError as error:
+            raise AssertionError(f"{rel} could not be read: {error}")
+        wanted = str(expected).encode("utf-8")
+        if actual != wanted:
+            raise AssertionError(f"{rel} holds {actual!r}, not {wanted!r}")
 
     @keyword("Workspace File Should Hold Json")
     def workspace_file_should_hold_json(self, rel, expected):
@@ -2281,10 +2296,21 @@ class AppLibrary:
         reachable from outside the test machine). Runs in a background thread
         inside this same process rather than a subprocess: simpler lifecycle,
         nothing extra to kill on teardown beyond `shutdown()`. Returns the
-        server's base URL (e.g. `http://127.0.0.1:51234`)."""
-        handler = functools.partial(
-            http.server.SimpleHTTPRequestHandler, directory=directory
-        )
+        server's base URL (e.g. `http://127.0.0.1:51234`). Every request is
+        written down, with its query (`Fixture Server Requests`): a path that is
+        not a file is a 404, a file that is not JSON is served as it is."""
+        requests = []
+        self._fixture_requests = requests
+
+        class Recording(http.server.SimpleHTTPRequestHandler):
+            def do_GET(self):
+                requests.append(self.path)
+                super().do_GET()
+
+            def log_message(self, *args):
+                pass
+
+        handler = functools.partial(Recording, directory=directory)
         self._fixture_server = http.server.HTTPServer(("127.0.0.1", 0), handler)
         self._fixture_server_thread = threading.Thread(
             target=self._fixture_server.serve_forever, daemon=True
@@ -2300,3 +2326,23 @@ class AppLibrary:
             self._fixture_server.server_close()
         self._fixture_server = None
         self._fixture_server_thread = None
+
+    @keyword("Fixture Server Requests")
+    def fixture_server_requests(self):
+        """What the fixture server has been asked for since it was started, in order: the
+        path of each request with its query (`/v1/orders.json?page=2`)."""
+        return list(self._fixture_requests)
+
+    @keyword("Fixture Server Should Have Been Asked For")
+    def fixture_server_should_have_been_asked_for(self, *expected, timeout=5, settle=0.6):
+        """Waits until the fixture server has been asked for exactly these paths (with their
+        query), in this order, then `settle` seconds more and checks that nothing else came
+        after them. With no path: it has not been asked for anything."""
+        want = list(expected)
+        deadline = time.time() + float(timeout)
+        while self.fixture_server_requests() != want and time.time() < deadline:
+            time.sleep(0.1)
+        time.sleep(float(settle))
+        got = self.fixture_server_requests()
+        if got != want:
+            raise AssertionError(f"The fixture server was asked for {got}, not {want}")

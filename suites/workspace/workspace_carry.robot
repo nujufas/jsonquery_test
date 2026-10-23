@@ -170,3 +170,27 @@ TC-WSP-290 A Query That Has A Sample Is Opened Without It When It Is Carried Ont
     Query Box Should Hold    ${FAILURES_TEXT}
     Region Should Contain Text    @{WS_SOURCE_PANEL}    Paste JSON here
     Region Should Not Contain Text    @{WS_STATUS_LINE}    result(s)
+
+TC-WSP-333 A Web Address Carried Onto The Query Pane Is Not Lit And Is Not Opened
+    [Documentation]    Only a query is opened as the query; a web address is loaded as the Source by the button under the list, the menu or a double
+    ...    click. Carried over the Query pane it is carried as over any place that takes nothing: the pane is not outlined, nothing says what letting
+    ...    go would do, and let go there it loads nothing -- the server it names is not asked, the box and the Source are as they were.
+    [Tags]    p2
+    [Teardown]    Run Keywords    Stop Fixture Server    AND    Release And Close
+    Close Jsonquery App
+    ${base}=    Launch With Web Addresses    ${SERVED}    ${{ {"Sources/feed.url": "/valid.json"} }}
+    Type In Query Box    .keep
+    ${index}=    Workspace Index
+    # Rows: 0 Logs ... 5 update, 6 Sources, 7 feed, 8 scratch.
+    Carry Row To    ${ROW_RATES}    ${WS_QUERY_X}    ${WS_QUERY_Y}
+    Query Pane Should Not Be Lit
+    ${top}=    Evaluate    ${WS_QUERY_Y} + 6
+    Region Should Not Contain Text    ${WS_QUERY_X}    ${top}    ${GHOST_WIDTH}    ${GHOST_HEIGHT}    as the query
+    Mouse Up
+    Sleep    0.8s
+    Move Mouse To    600    400
+    Query Box Should Hold    .keep
+    Region Should Contain Text    @{WS_SOURCE_PANEL}    Paste JSON here
+    Source Field Should Be Empty
+    Fixture Server Should Have Been Asked For
+    Workspace Files Should Not Have Changed    ${index}

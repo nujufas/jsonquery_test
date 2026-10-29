@@ -400,8 +400,8 @@ TC-VAL-024 Validating Again Or Typing Takes The Highlight Away
     Run Validate
     Click Problem    0
     Document Should Point Out    -1    @{FIRST_BOX}
-    Press Main Button
-    Sleep    0.8s
+    # the new report, before the click: a report that came after it would take the highlight away
+    Run Validate
     Nothing Should Be Pointed Out    @{FIRST_BOX}
     Nothing Should Be Pointed Out    @{SECOND_BOX}
     Click Problem    0

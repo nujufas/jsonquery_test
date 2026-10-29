@@ -13,7 +13,7 @@ A small, dim **🛠** button in the toolbar, just left of the 📖 tutorial butt
 opens the **Tools window**: a second native window (an egui viewport that eframe
 redraws by itself, as it does the panes' windows) titled "JsonQuery — Tools".
 Across its top are the tabs of the tools — **Merge JSON**, **Format JSON**,
-**Diff JSON**, **Patch JSON** and **Validate Schema** — and the selected tool's
+**Diff JSON**, **Patch JSON**, **Validate Schema** and **Create Schema** — and the selected tool's
 page fills the rest. A **⚓** button at the right end of the row docks the Tools in the
 main window as tabs, which is [22_tools_docked.md](22_tools_docked.md)'s.
 
@@ -148,7 +148,42 @@ in main window** (or a double-click) puts its pointer in the main window's query
 box under the Pointer engine and runs it — only for the document that is open in
 the main window. **Copy report** copies the list. A schema that can't be used
 (not a schema, a `$ref` that points outside it) is reported as `The schema can't
-be used: …`; nothing is ever fetched.
+be used: …`; nothing is ever fetched. **A click on a problem** highlights it where it
+is, in orange, and scrolls both boxes to it: in the Document box the value that is
+wrong (for a member that is missing, the object it is missing from; for one that is
+not allowed, that member, key and value), in the Schema box the keyword that said so
+(under `$defs` when the rule was reached through a `$ref`). A box that holds a file or
+the main window's document does not show its text and has nothing highlighted.
+Validating again, or typing in a box, takes the highlight away.
+
+## Create Schema
+
+**Document** → a **Schema** of it, and under the schema the **Patterns** found in its
+strings (`crates/app/src/tools/create.rs`; the walk in `crates/query/src/infer.rs`,
+the strings in `infer/text.rs` and `infer/kinds.rs`). The command row has **Create**
+(Ctrl+Enter) and the options: **Draft** (2020-12, 2019-09, 7, 6, 4), **Patterns**,
+**Required**, **No other keys**, **Enums**, **Bounds**; changing one, or the document,
+drops the schema made. The schema is in a box with **Reset**, **Copy**, **Save…**
+(`<document>.schema.json`, or `schema.json` for a pasted one) and **Use in Validate**
+(the document and the schema into Validate Schema's boxes, that page in front, checked)
+over it. A row of the list is a path as jq writes it (`.orders[].id`) and what was
+found (*like ORD-1357-24681*, *uuid · format uuid*, *comma-separated: IPv4 address*,
+*numbered keys: phone1, phone2*, *keys: uuid*, *enum: open, closed*); its tooltip has
+the pattern and the format, its right-click menu copies the pattern (or enum), the
+path or the row, and **Copy list** copies every row. A list of items with `,`, `;` or
+`|` between may be empty (`^(?:item(?:,item)*)?$`).
+
+A click on a row opens it under the list, at the foot of the pane: a pattern's line
+(*Pattern of .orders[].id*, *1 of 3*, ⏶ ⏷), its box, **Apply** (and Enter), **Plain
+string** (**Any key** for keys) and **Restore**; an enum's line, a tick for each value,
+a box for another, **Add** (and Enter, which keeps the box), **Plain string** and
+**Restore**. The click points it out in orange: in the schema its `pattern` (or `enum`),
+in the document the first place it was found, ⏶ and ⏷ going round the others; the
+row picked stays in view when what opens makes the list shorter. A changed schema says
+*edited* in its header, Reset is bright, the status bar says **Edited — Use in Validate
+checks it** in place of **The document fits it**; the schema can also be typed in, and
+text that is not JSON is said over the box (*Not JSON: …*) and Use in Validate waits.
+The status bar says *7 properties · 5 patterns · 1 enum* and how long it took.
 
 ## Cases
 
@@ -156,16 +191,17 @@ The suites below run with the Tools in their window, which is how the app starts
 with the Tools docked in the main window (`./run_docked.sh`, pass *tools*): the page of a tool is then the
 window's own, pixel for pixel, in a tab of a main window of the Tools window's size, and nothing of a case
 changes but `Open Tool` clicking a tab and the points of the tab row and the status bar (`resources/
-docked_tools.py`). 159 of the 179 cases run docked; 20 are tagged and left out — `window-only` for the 7 of
-`tools.robot` about the window itself (TC-TWIN-001 to 004, 012, 015, 016) and `main-layout` for the 13 that read
+docked_tools.py`). 212 of the 237 cases run docked; 25 are tagged and left out — `window-only` for the 8 of
+`tools.robot` about the window itself (TC-TWIN-001 to 004, 012, 015, 016, 019) and `main-layout` for the 17 that read
 the main window's own layout in the middle of a tool's case (TC-TWIN-008, TC-TWIN-011, TC-PAT-012, TC-PAT-015,
-TC-VAL-014, TC-VAL-015, TC-DIF-021, TC-FMT-021, TC-FMT-080, TC-MRG-011, TC-MRG-029, TC-MRG-042, TC-MRG-044) — and
+TC-VAL-014, TC-VAL-015, TC-VAL-025, TC-DIF-021, TC-DIF-046, TC-DIF-047, TC-FMT-021, TC-FMT-080, TC-MRG-011,
+TC-MRG-029, TC-MRG-042, TC-MRG-044, TC-CSC-023) — and
 [22_tools_docked.md](22_tools_docked.md) has each one's docked counterpart.
 
 The right-click menu of the boxes, the results and the lists of the pages (TC-TXM-017 to 025,
 `tools_menus.robot`) is in [24_text_menus.md](24_text_menus.md); they run docked too.
 
-Six suites in `suites/tools/` share `resources/tools.resource` (every measured
+The suites in `suites/tools/` share `resources/tools.resource` (every measured
 region and click point of the window, and the keywords that use them). The pages
 are driven the way a person drives them — pick the tool's tab, paste JSON into a
 box (through the clipboard, as the main window's suites do) or drop a file on it,
@@ -201,6 +237,7 @@ each case allows:
 | TC-TWIN-016 | The Tools Window Follows The Main Window's Theme | P2 |
 | TC-TWIN-017 | No Line Under A Pane's Header | P2 |
 | TC-TWIN-018 | The Line Between The Panes Can Be Dragged | P2 |
+| TC-TWIN-019 | The Tools Button's Hover Names Every Tool | P3 |
 | TC-MRG-001 | Merge Has Nothing To Run Until There Are Files | P1 |
 | TC-MRG-002 | The Presets Are Listed | P1 |
 | TC-MRG-003 | Picking A Preset Puts Its Filter In The Box | P1 |
@@ -549,6 +586,131 @@ fault that kept the text from scrolling back (each got a test).
 | TC-VAL-016 | Editing A Box Drops The Report | P1 |
 | TC-VAL-017 | Ctrl+Enter Validates | P2 |
 | TC-VAL-018 | Every Problem Is Listed | P2 |
+| TC-VAL-019 | A Click On A Problem Points It Out In Both Boxes | P1 |
+| TC-VAL-020 | A Member That Is Not Allowed Is Pointed Out | P1 |
+| TC-VAL-021 | A Missing Member Points Out The Object It Is Missing From | P1 |
+| TC-VAL-022 | The Boxes Scroll To A Problem Far Down | P1 |
+| TC-VAL-023 | A Rule Reached Through A Reference Is Pointed Out Where It Is Written | P2 |
+| TC-VAL-024 | Validating Again Or Typing Takes The Highlight Away | P2 |
+| TC-VAL-025 | The Open Document Is Not Pointed Out, The Schema Is | P2 |
+| TC-VAL-026 | A Problem's Tooltip Says That A Click Finds It | P3 |
+
+TC-VAL-019 to 026 (2026-10-29) are the click on a problem: what is highlighted in each box is read with the
+orange taken out ([writing_tests.md](writing_tests.md#writing-a-case-about-what-a-box-points-out-create-schema-validate-schema)),
+on a document of forty records for the scroll (`resources/fixtures/validate/forty.json`, the first without an id,
+the last with the address `192.168.1.355`).
+
+### Create Schema — `tools_create.robot`
+
+| ID | Title | Priority |
+|---|---|---|
+| TC-CSC-001 | Create Needs A Document | P1 |
+| TC-CSC-002 | Create Makes A Schema Of The Document | P1 |
+| TC-CSC-003 | Ctrl+Enter Creates | P2 |
+| TC-CSC-004 | The Patterns Found Are Listed | P1 |
+| TC-CSC-005 | Copy List Gives A Row To A Line | P1 |
+| TC-CSC-006 | A Row's Menu Copies Its Pattern, Its Path And The Row | P1 |
+| TC-CSC-007 | A Row's Tooltip Has Its Pattern And Format | P2 |
+| TC-CSC-008 | Without Patterns The Strings Are Plain | P1 |
+| TC-CSC-009 | Without Required Nothing Is Required | P2 |
+| TC-CSC-010 | No Other Keys Allows Only The Members Seen | P2 |
+| TC-CSC-011 | Enums Make An Enum Of A Few Strings | P1 |
+| TC-CSC-012 | Bounds Give The Least And The Most Seen | P2 |
+| TC-CSC-013 | The Draft Is Written And Decides The Formats | P1 |
+| TC-CSC-014 | Changing An Option Drops The Schema | P2 |
+| TC-CSC-015 | Typing In The Document Drops The Schema | P2 |
+| TC-CSC-016 | A Document That Is Not JSON Is Named | P1 |
+| TC-CSC-017 | A List May Be Empty | P1 |
+| TC-CSC-018 | Numbered Keys And Keys That Are Data Are Patterns Of Keys | P2 |
+| TC-CSC-019 | Use In Validate Checks The Document Against The Schema | P1 |
+| TC-CSC-020 | Save Writes The Schema | P1 |
+| TC-CSC-021 | A File Opened Is The Document, And Names The Save | P2 |
+| TC-CSC-022 | A Dropped File Is The Document | P2 |
+| TC-CSC-023 | The Document Open In The Main Window Can Be Used | P1 |
+| TC-CSC-030 | A Click Opens The Pattern Under The List | P1 |
+| TC-CSC-031 | Apply Puts Another Expression In The Schema | P1 |
+| TC-CSC-032 | Enter Applies The Expression | P2 |
+| TC-CSC-033 | An Expression That Cannot Be Read Is Refused | P1 |
+| TC-CSC-034 | Plain String Takes Out The Pattern And The Format | P1 |
+| TC-CSC-035 | After Plain String Apply Waits For An Expression | P1 |
+| TC-CSC-036 | Restore Puts Back What Was Found | P1 |
+| TC-CSC-037 | The Keys Of A Map Can Be Any Key | P2 |
+| TC-CSC-038 | Reset Undoes Every Change | P1 |
+| TC-CSC-039 | The Schema Can Be Typed In | P1 |
+| TC-CSC-040 | Use In Validate Takes The Schema As It Was Changed | P1 |
+| TC-CSC-041 | Copy And Save Take The Schema As It Was Changed | P2 |
+| TC-CSC-045 | A Click Points The Pattern Out In The Document And The Schema | P1 |
+| TC-CSC-046 | The Arrows Go From Place To Place, Round | P1 |
+| TC-CSC-047 | The Document Box Scrolls To The Place | P1 |
+| TC-CSC-048 | Changing The Document Takes The Highlight Away | P2 |
+| TC-CSC-049 | A Changed Pattern Is Pointed Out Where It Is Now | P2 |
+| TC-CSC-050 | A Click Opens The Enum With A Tick For Each Value | P1 |
+| TC-CSC-051 | Unticking A Value Leaves It Out Of The Enum | P1 |
+| TC-CSC-052 | Ticking It Again Puts It Back | P2 |
+| TC-CSC-053 | Another Value Can Be Put In | P1 |
+| TC-CSC-054 | Enter Puts In A Value And Keeps The Box | P2 |
+| TC-CSC-055 | A Value That Is There Already Is Refused | P2 |
+| TC-CSC-056 | Plain String Takes The Enum Out | P1 |
+| TC-CSC-057 | Restore Puts Back The Values Found | P2 |
+| TC-CSC-058 | A Value's Tooltip Says How Often It Is In The Document | P3 |
+
+The documents are files of `resources/fixtures/create/`, pasted into the box (`Create From Fixture`): `orders.json`
+(three orders: an id of one shape, a date-time, a uuid, an IPv4 address, a list of words that is empty once, a
+status of two values), `servers.json` (addresses with commas between, one of them `""`, ports with semicolons,
+`phone1`/`phone2`, owners keyed by uuids) and `forty.json` (forty orders, for ⏶ ⏷ and the scroll). Their strings
+have no `0` where a case reads them. The schema is never read off the screen: **Copy** is pressed and the
+clipboard parsed as JSON (`Copied Schema`, `Copied Schema Should Have  ITEM["id"]["pattern"]  …`), so a member is
+compared exactly; Copy list, a row's menu and the box of what is open (selected and copied) are compared as
+text. The rows, the line of what is open and the status bar are read by OCR; the dim *edited* in the Schema's
+header by its ink (about 95); a button's state by its label's brightness; what is pointed out by the orange.
+
+**The cases found a fault of the app**, fixed: a click on a row low in the list opened what it opens under the
+list, the list became shorter and the row picked went out of view — a click on the status's enum (the sixth row)
+left four rows on show, none of them the one being changed (TC-CSC-051, 052, 056 could not read it). The list
+now keeps the row picked in view when it is made shorter or taller (`found_list` in `create.rs`), and does not
+hold it there when it is scrolled; a test of the app (`the_row_picked_stays_in_view_when_what_opens_under_the_
+list_makes_it_shorter`) fails without either half.
+
+#### Mutation checks of the Create Schema and Validate cases (2026-10-29)
+
+Twenty-four faults put into the app one at a time (R01 to R24; the runner is outside the repository): each was
+built, the cases meant for it were run with that build, and the sources were put back (hashes checked). **All 24
+were killed**, every case failing at the check it was written for (read in its log). R22 to R24 are the tutorial's
+and the smallest window's (in [19_tutorial_pages.md](19_tutorial_pages.md) and [21_settings.md](21_settings.md)).
+
+| Fault | What is broken | Killed by |
+|---|---|---|
+| R01 | Use in Validate does nothing (`app/src/tools/create.rs`) | TC-CSC-019, TC-CSC-040 |
+| R02 | Reset puts nothing back (`app/src/tools/create.rs`) | TC-CSC-038, TC-CSC-039 |
+| R03 | a pattern's Restore does nothing (`app/src/tools/create.rs`) | TC-CSC-036 |
+| R04 | after Plain string the box holds the pattern found (the bug the owner found in review) (`app/src/tools/create.rs`) | TC-CSC-034 |
+| R05 | ⏶ ⏷ stop at the ends instead of going round (`app/src/tools/create.rs`) | TC-CSC-046, TC-CSC-047 |
+| R06 | a click points nothing out in the document (until an arrow) (`app/src/tools/create.rs`) | TC-CSC-045, TC-CSC-047, TC-CSC-048, TC-CSC-050 |
+| R07 | the schema box is not scrolled to the pattern (`app/src/tools/create.rs`) | TC-CSC-023, TC-CSC-050 |
+| R08 | the row picked is not kept in view when the list gets shorter (the fault these cases found) (`app/src/tools/create.rs`) | TC-CSC-051, TC-CSC-052, TC-CSC-056 |
+| R09 | unticking a value of an enum keeps it (`app/src/tools/create.rs`) | TC-CSC-051, TC-CSC-052, TC-CSC-057 |
+| R10 | Enter in the box of another value lets the focus go (`app/src/tools/create.rs`) | TC-CSC-054 |
+| R11 | the status bar says the document fits an edited schema (`app/src/tools/create.rs`) | TC-CSC-031, TC-CSC-038, TC-CSC-039, TC-CSC-051 |
+| R12 | an option changed keeps the old schema (`app/src/tools/create.rs`) | TC-CSC-014 |
+| R13 | Save… of a file's schema suggests schema.json (`app/src/tools/create.rs`) | TC-CSC-021 |
+| R14 | Use in Validate takes the schema as made, not as changed (`app/src/tools/create.rs`) | TC-CSC-040 |
+| R15 | an enum's Restore does nothing (`app/src/tools/create.rs`) | TC-CSC-057 |
+| R16 | a click on a problem points nothing out in the document (`app/src/tools/validate.rs`) | TC-VAL-019, TC-VAL-020, TC-VAL-021, TC-VAL-022 |
+| R17 | a click on a problem points nothing out in the schema (`app/src/tools/validate.rs`) | TC-VAL-019, TC-VAL-023, TC-VAL-025 |
+| R18 | a member that is not allowed: its object is pointed out, not the member (`query/src/schema.rs`) | TC-VAL-020 |
+| R19 | the schema points out the keyword's value, not the keyword (`query/src/schema.rs`) | TC-VAL-019, TC-VAL-020 |
+| R20 | validating again and typing leave the highlight (`app/src/tools/validate.rs`) | TC-VAL-024 |
+| R21 | a list may not be empty (`query/src/infer/text.rs`) | TC-CSC-002, TC-CSC-017 |
+| R22 | Load samples runs the tool (`app/src/tutorial/tools_tab.rs`) | TC-TUT-066 |
+| R23 | the smallest window is 640 wide again (`app/src/settings/interface.rs`) | TC-DOCK-044, TC-SET-027 |
+| R24 | Try it on a Create Schema lesson does not make the schema (`app/src/tools.rs`) | TC-TUT-065 |
+
+Not every case named for a fault fails with it, and that is as it should be: R07 (the schema not scrolled) leaves
+TC-CSC-045 and 049 passing because the id's pattern is on show without scrolling; R19 leaves TC-VAL-021 passing
+because the value of `required` spans two lines and the crop of a highlight over two lines is a rectangle that
+takes in the key beside it; R24 leaves TC-TUT-072 passing, which asks only which tab is in front. TC-VAL-020 was made
+stricter for R18 before the run (the highlight must not have `age` in it): a highlight of the whole object
+contains `extra` as well.
 
 ### TC-TWIN-012 — A maximized Tools window still responds and closes
 Priority: P1

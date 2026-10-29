@@ -53,6 +53,8 @@ ${DT_SECOND_Y}       600
 ${DT_RIGHT_BOX_X}    900
 ${DT_OPEN_IN_MAIN_X}     1125
 ${DT_SHOW_IN_MAIN_X}     1125
+# Create Schema's Use in Validate: the right-most of its Schema header's buttons.
+${DT_USE_IN_VALIDATE_X}    1145
 @{DT_RESULT}         608    74     584    695
 # Where the Search dialog is, in the window's own coordinates (on a tool's tab); on the Json Query tab it
 # is `POPUP_DIALOG_AREA`, which docked_main.py gives in the suites' coordinates.
@@ -84,8 +86,8 @@ TC-DOCK-001 The Tools Window Has A Button That Docks It In The Main Window
     Should Be Equal As Integers    ${windows}    0
 
 TC-DOCK-002 The Row Of Tabs Has Json Query First And A Tab For Each Tool
-    [Documentation]    Json Query, Merge JSON, Format JSON, Diff JSON, Patch JSON and
-    ...    Validate Schema, in that order, left to right.
+    [Documentation]    Json Query, Merge JSON, Format JSON, Diff JSON, Patch JSON, Validate
+    ...    Schema and Create Schema, in that order, left to right.
     [Tags]    p1
     Dock From The Window
     ${json}=    Tab Centre    Query
@@ -94,8 +96,9 @@ TC-DOCK-002 The Row Of Tabs Has Json Query First And A Tab For Each Tool
     ${diff}=    Tab Centre    Diff
     ${patch}=    Tab Centre    Patch
     ${validate}=    Tab Centre    Validate
-    Should Be True    ${json} < ${merge} < ${format} < ${diff} < ${patch} < ${validate}
-    ...    msg=The tabs are not in order: ${json} ${merge} ${format} ${diff} ${patch} ${validate}
+    ${create}=    Tab Centre    Create
+    Should Be True    ${json} < ${merge} < ${format} < ${diff} < ${patch} < ${validate} < ${create}
+    ...    msg=The tabs are not in order: ${json} ${merge} ${format} ${diff} ${patch} ${validate} ${create}
 
 TC-DOCK-003 The Tool That Was In Front In The Window Is In Front Docked
     [Documentation]    The window was on Diff; docked, the Diff tab is the one marked and the
@@ -338,8 +341,8 @@ TC-DOCK-019 A Visit To A Tool And Back Leaves The Json Query Tab As It Was
 
 TC-DOCK-020 Each Tool's Tab Shows Its Page
     [Documentation]    A click on a tab makes it the marked one and shows the page of its tool:
-    ...    Merge's "Merge as", Format's "Indent", Diff's "Side by side", Patch's "Kind" and
-    ...    Validate's "Check formats".
+    ...    Merge's "Merge as", Format's "Indent", Diff's "Side by side", Patch's "Kind",
+    ...    Validate's "Check formats" and Create Schema's "No other keys".
     [Tags]    p1
     [Setup]    Launch Docked
     Show Docked Tab    merge
@@ -358,9 +361,13 @@ TC-DOCK-020 Each Tool's Tab Shows Its Page
     Show Docked Tab    validate
     Docked Tab Should Be Selected    validate
     Wait Until Keyword Succeeds    6x    0.5s    Region Should Contain Text    @{DT_COMMAND_ROW}    Check formats
+    Show Docked Tab    create
+    Docked Tab Should Be Selected    create
+    Docked Tab Should Not Be Selected    validate
+    Wait Until Keyword Succeeds    6x    0.5s    Region Should Contain Text    @{DT_COMMAND_ROW}    No other keys
     Show Docked Tab    json
     Docked Tab Should Be Selected    json
-    Docked Tab Should Not Be Selected    validate
+    Docked Tab Should Not Be Selected    create
 
 TC-DOCK-021 Ctrl+Enter On A Tool's Tab Runs The Tool, Not The Query
     [Documentation]    A query is typed and not run; on Format's tab Ctrl+Enter formats (the
@@ -710,6 +717,47 @@ TC-DOCK-041 The Website Button Opens The Site From Whichever Tab Is In Front
     END
     ${windows}=    Count Windows    ${TOOLS_WINDOW}
     Should Be Equal As Integers    ${windows}    0
+
+TC-DOCK-042 Use In Validate Docked Shows The Validate Tab
+    [Documentation]    Create Schema docked: the schema of a document pasted in its box, then Use
+    ...    in Validate: the Validate Schema tab comes to the front and says the document is valid.
+    [Tags]    p1
+    [Setup]    Launch Docked
+    Show Docked Tab    create
+    Paste Into Box    ${DT_BOX_X}    ${DT_INPUT_Y}    ${MEMBERS_JSON}
+    Click At    ${RUN_X}    ${DT_COMMAND_Y}
+    Wait Until Keyword Succeeds    8x    0.5s    Region Should Contain Text    @{DT_STATUS}    The document fits it
+    Click At    ${DT_USE_IN_VALIDATE_X}    ${DT_HEADER_Y}
+    Sleep    0.8s
+    Docked Tab Should Be Selected    validate
+    Docked Tab Should Not Be Selected    create
+    Wait Until Keyword Succeeds    8x    0.5s    Region Should Contain Text    @{DT_STATUS}    Valid
+
+TC-DOCK-043 Create Schema Takes The Document Open In The Json Query Tab
+    [Documentation]    A document loaded in the Json Query tab, then Create Schema's Open document:
+    ...    the schema is of it.
+    [Tags]    p2
+    [Setup]    Launch Docked
+    Show Docked Tab    json
+    Load Fixture Via Paste    ${MEMBERS_JSON}
+    Show Docked Tab    create
+    Click At    ${DT_OPEN_DOCUMENT_X}    ${DT_HEADER_Y}
+    Sleep    0.3s
+    Click At    ${RUN_X}    ${DT_COMMAND_Y}
+    Wait Until Keyword Succeeds    8x    0.5s    Region Should Contain Text    @{DT_STATUS}    4 properties
+
+TC-DOCK-044 At Its Smallest The Main Window Has Room For Every Tab
+    [Documentation]    The main window kept at 600 wide opens at 700, its smallest: the row of tabs
+    ...    shows Json Query and the six tools, Create Schema whole, and the theme and the
+    ...    tutorial buttons at its right end are clear of it.
+    [Tags]    p2
+    [Setup]    Launch Jsonquery App    settings={"tools": "docked", "window": {"width": 600, "height": 500}}
+    ${width}    ${height}=    Get Window Size
+    Should Be Equal As Integers    ${width}    700
+    Wait Until Keyword Succeeds    6x    0.5s
+    ...    Without Layout Shift    Region Should Contain Text    0    0    640    22    Create Schema
+    ${create}=    Tab Centre    Create
+    Should Be True    ${create} < 600    msg=Create Schema is at ${create}
 
 *** Keywords ***
 Launch Docked With A Low Limit

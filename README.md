@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (October 2026): **1083 test cases in 30 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
+touches your desktop. Status (October 2026): **1157 test cases in 30 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
 
 Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
 app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
@@ -243,13 +243,13 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `saving` | the Save... buttons and menu items through the file dialog: default names, file types, the file written, errors, Ctrl+S | [09](docs/09_saving.md) |
 | `keyboard_shortcuts` | Ctrl+F, Ctrl+Enter, Enter | [10](docs/10_keyboard_shortcuts.md) |
 | `popout` | the Query, Source and Results panes in windows of their own | [12](docs/12_popout_panes.md) |
-| `tools` | the Tools window: Merge, Format, Diff, Patch, Validate, and their file dialogs; and the Tools docked in the main window as tabs: the move both ways, the row of tabs, the Json Query tab, the keys, the drops, what is kept, and the right-click menus of their boxes and lists (eleven files) | [13](docs/13_tools_window.md), [22](docs/22_tools_docked.md), [24](docs/24_text_menus.md) |
+| `tools` | the Tools window: Merge, Format, Diff, Patch, Validate (and what a click on a problem highlights), Create Schema (the schema and the patterns made of a document, the options, changing a pattern or an enum, what a click points out), and their file dialogs; and the Tools docked in the main window as tabs: the move both ways, the row of tabs, the Json Query tab, the keys, the drops, what is kept, and the right-click menus of their boxes and lists (twelve files) | [13](docs/13_tools_window.md), [22](docs/22_tools_docked.md), [24](docs/24_text_menus.md) |
 | `satellites` | the tutorial and About windows, with the list of known issues that opens in it | [14](docs/14_tutorial_and_about_windows.md) |
 | `pane_headers` | the panes' titles and headers, checked in pixels | [15](docs/15_pane_headers.md) |
 | `drag_and_drop` | files dropped on the main window, the Source window and the Tools pages | [16](docs/16_drag_and_drop.md) |
 | `jq_functions` | `IN`, `INDEX`, `JOIN`, `tostream`, `fromstream`, `truncate_stream`, `@csv` and `@tsv`, which the app adds to its jq engine, and its own `fromjson`, `tonumber` and `tojson` (text that is not a number or JSON, a value nested very deep), read back exactly | [17](docs/17_jq_functions.md) |
 | `output_formats` | a query ending in `@csv` or `@tsv`: the CSV/TSV note, the Text view, Copy to Clipboard and Save... write rows, not JSON | [18](docs/18_output_formats.md) |
-| `tutorial_pages` | the eight tutorial pages for those functions: every example run, the buttons, the cheat sheet | [19](docs/19_tutorial_pages.md) |
+| `tutorial_pages` | the eight tutorial pages for those functions: every example run, the buttons, the cheat sheet; and the Tools tab: a topic for each tool, ▶ Try it and Load samples into the tool's page | [19](docs/19_tutorial_pages.md) |
 | `workflows` | whole journeys: a file chosen in the dialog, a lesson, a query, rows or JSON saved to disk | [20](docs/20_workflows.md) |
 | `settings` | the ⚙ Settings window (the limit on keeping a file on disk, the other eight under Advanced, the explanations as tooltips) and what the app keeps for the next start: the theme, 💡, the size of the window and of the panes | [21](docs/21_settings.md) |
 | `website` | the 🌐 button between the ⓘ and the ⚙: where it is, its two-line hover, what a click hands to the browser (a stand-in that writes it down); the About window's Website row and link are in `satellites` | [23](docs/23_website.md) |

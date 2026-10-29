@@ -55,6 +55,7 @@ from PIL import Image, ImageChops
 from robot.api import logger
 from robot.api.deco import keyword, library
 from robot.libraries.BuiltIn import BuiltIn
+from robot.utils import is_truthy
 
 from fake_portal import FakePortal, PrivateBus
 
@@ -1341,6 +1342,82 @@ class AppLibrary:
         r, g, b = img.convert("RGB").split()
         brightest = ImageChops.lighter(ImageChops.lighter(r, g), b)
         return brightest.point(lambda v: 0 if v <= 100 else min(255, (v - 100) * 255 // 80))
+
+    # The orange a text box lays under the part of its text it points out (Create Schema's
+    # pattern, Validate Schema's problem), in the Dark theme.
+    MARK_RGB = (178, 103, 30)
+
+    @staticmethod
+    def _unmark(img):
+        """Grayscale copy in which the orange of a highlight is black and the text on it
+        keeps its brightness: a pixel far from grey (red over blue by more than 40) is the
+        orange or a blend of it with a glyph, and its blue says how much glyph is in it;
+        any other pixel keeps its brightest channel. Tesseract reads light text on the
+        orange as nothing (`"192.168.0.355"` came back as ''), and `_flatten_tints` would
+        make the orange (178) as bright as the text."""
+        rgb = img.convert("RGB")
+        src = rgb.load()
+        width, height = rgb.size
+        out = Image.new("L", (width, height))
+        dst = out.load()
+        for yy in range(height):
+            for xx in range(width):
+                r, g, b = src[xx, yy]
+                if r - b > 40:
+                    dst[xx, yy] = max(0, min(255, (b - 30) * 255 // 150))
+                else:
+                    dst[xx, yy] = max(r, g, b)
+        return out
+
+    @keyword("Read Marked Text")
+    def read_marked_text(self, x, y, width, height, whole_lines=False, psm=6):
+        """What the orange highlight in the region covers, read by OCR: the text a box points
+        out. With `whole_lines`, the lines it is on, from the region's left to its right (the
+        member a value is in, say). Fails when nothing in the region is highlighted. The
+        highlight is part of the box, so a text that is read is a text the box was scrolled
+        to."""
+        img = self.screenshot_region(x, y, width, height, label="marked")
+        rgb = img.convert("RGB")
+        px = rgb.load()
+        w, h = rgb.size
+        target = self.MARK_RGB
+        xs, ys = [], []
+        for yy in range(h):
+            for xx in range(w):
+                if max(abs(a - c) for a, c in zip(px[xx, yy], target)) <= 6:
+                    xs.append(xx)
+                    ys.append(yy)
+        if not xs:
+            raise AssertionError(
+                f"Nothing is highlighted in region ({x},{y},{width},{height})"
+            )
+        top, bottom = max(0, min(ys) - 3), min(h, max(ys) + 4)
+        left, right = (0, w) if is_truthy(whole_lines) else (max(0, min(xs) - 3), min(w, max(xs) + 4))
+        words = self._ocr_words(self._unmark(rgb.crop((left, top, right, bottom))), psm=int(psm))
+        lines = {}
+        for word in words:
+            lines.setdefault(word["line"], []).append(word)
+        return "\n".join(
+            " ".join(w["text"] for w in sorted(lines[k], key=lambda w: w["left"]))
+            for k in sorted(lines)
+        )
+
+    @keyword("Marked Text Should Contain")
+    def marked_text_should_contain(self, x, y, width, height, expected, whole_lines=False):
+        """The highlight in the region is there and OCR reads `expected` in it (the same
+        allowances as `Region Should Contain Text`)."""
+        actual = self.read_marked_text(x, y, width, height, whole_lines=whole_lines)
+        if not self._text_contains(actual, expected):
+            raise AssertionError(
+                f"Expected the highlight in region ({x},{y},{width},{height}) to read "
+                f"{expected!r}, but OCR read: {actual!r}"
+            )
+
+    @keyword("Marked Rows")
+    def marked_rows(self, x, y, width, height):
+        """The rows (y, relative to the region's top) the highlight is on; empty for none."""
+        r, g, b = self.MARK_RGB
+        return self.get_rows_with_color(x, y, width, height, r, g, b, tolerance=6)
 
     @keyword("Read Region Text")
     def read_region_text(self, x, y, width, height, psm=6, flatten_tints=False):

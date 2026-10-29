@@ -26,7 +26,8 @@ DY = 23
 TAB_ROW_Y = 11 - DY
 
 # The centre of each tab. The first is the Json Query tab, which is the main view.
-DOCKED_TAB_X = {"json": 44, "merge": 130, "format": 221, "diff": 304, "patch": 383, "validate": 480}
+DOCKED_TAB_X = {"json": 44, "merge": 130, "format": 221, "diff": 304, "patch": 383, "validate": 480,
+                "create": 586}
 
 # The theme and the tutorial buttons are at the right end of the row of tabs, the tutorial
 # beside the theme (the 🛠 button is gone, and the 💡 is not here but in the source row).

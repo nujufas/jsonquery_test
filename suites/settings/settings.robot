@@ -486,6 +486,17 @@ TC-SET-023 The Size Of The Window Is Kept For The Next Start
     Should Be Equal As Integers    ${width}    1000
     Should Be Equal As Integers    ${height}    700
 
+TC-SET-027 A Kept Size Smaller Than The Smallest Opens At The Smallest
+    [Documentation]    A window of 600 x 300 kept in the file (written there by hand, or by an older
+    ...    version, whose smallest was 640) opens at the smallest the window can be, 700 x 420:
+    ...    as wide as the row of tabs of the Tools docked in it.
+    [Tags]    p2
+    Close Jsonquery App
+    Launch Jsonquery App    settings={"window": {"width": 600, "height": 300}}
+    ${width}    ${height}=    Get Window Size
+    Should Be Equal As Integers    ${width}    700
+    Should Be Equal As Integers    ${height}    420
+
 TC-SET-024 A Maximized Window Is Maximized The Next Time
     [Documentation]    Maximized, the window is kept as maximized, with the size it
     ...    had before; the next start is maximized.

@@ -118,3 +118,38 @@ fails if one of the functions loses its page.
 | M8 | `tostream` leaves out its closing events | TC-TUT-037, 041, 042, 063 |
 | M9 | `INDEX` keeps the first of several elements with one key | **survives**: every example of the page has distinct keys (TC-JQX-023 kills it) |
 | M10 | the page "INDEX & JOIN" is called "INDEX and JOIN" | TC-TUT-003, 007, 015, 034, 035, 036 |
+
+## The Tools tab (`suites/tutorial_pages/tutorial_tools.robot`)
+
+The tutorial window has a fifth tab, **Tools**, after the four query languages (x = 420): a topic
+*Getting started* and one for each tool (Merge JSON, Format JSON, Diff JSON, Patch JSON, Validate
+Schema, Create Schema), each lesson with examples whose samples are the documents the tool's page
+takes (for Merge, files the app writes into its temp folder). **▶ Try it** puts the samples in the
+tool's page, sets it as the lesson says and runs it, and the Tools window opens on that page (with
+the Tools docked, the tool's tab comes to the front: TC-DOCK-045); **Load samples**, 79 points right
+of it, does the same without running. The lesson's *Result — …* is what the tool makes of them.
+
+A case finds a lesson as the other cases do (the filter, the first row), presses the example's
+button by its fill (▶ Try it is filled with the selection blue), and reads the Tools window's status
+bar and its marked tab. The suite is a file of its own because `tools.resource` and
+`tutorial.resource` both have a `${TAB_Y}`; the few points of the Tools window it needs are its
+own. The cases that press Try it are tagged `window-only` (they wait for the Tools window), so the
+docked main-view pass leaves them out.
+
+| ID | Title | Priority |
+|---|---|---|
+| TC-TUT-064 | The Tools Tab Has A Topic For Each Tool | P1 |
+| TC-TUT-065 | Try It Makes The Schema Of A Lesson's Sample | P1 |
+| TC-TUT-066 | Load Samples Puts The Sample In Without Running It | P1 |
+| TC-TUT-067 | Try It On A Validate Lesson Lists The Problems | P1 |
+| TC-TUT-068 | Try It On A Merge Lesson Merges Its Files | P2 |
+| TC-TUT-069 | Try It On A Format Lesson Formats The Sample | P2 |
+| TC-TUT-070 | Try It On A Diff Lesson Compares The Two Samples | P2 |
+| TC-TUT-071 | Try It On A Patch Lesson Patches The Sample | P2 |
+| TC-TUT-072 | A Second Try It Goes To The Window That Is Open | P2 |
+| TC-TUT-073 | A Filter Finds The Lessons Of The Tools | P2 |
+| TC-TUT-074 | The Tools Tab Keeps Its Lesson | P3 |
+
+Mutation check (2026-10-29, with the faults of [13_tools_window.md](13_tools_window.md)): R22, Load samples that
+runs the tool, is killed by TC-TUT-066; R24, Try it on a Create Schema lesson that only loads the sample, by
+TC-TUT-065.

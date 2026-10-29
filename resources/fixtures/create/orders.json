@@ -1,0 +1,28 @@
+{
+  "orders": [
+    {
+      "id": "ORD-1357-24681",
+      "placed": "2024-03-15T11:32:45Z",
+      "customer": "9b2e4c6d-8f1a-4b3c-9d5e-7f6a8b9c1d2e",
+      "ip": "192.168.1.21",
+      "tags": "red,blue",
+      "status": "open"
+    },
+    {
+      "id": "ORD-1357-24682",
+      "placed": "2024-03-16T12:15:41Z",
+      "customer": "8c3f5d7e-9a2b-4c4d-8e6f-6a7b9c8d2e3f",
+      "ip": "172.16.4.35",
+      "tags": "green",
+      "status": "closed"
+    },
+    {
+      "id": "ORD-1357-24683",
+      "placed": "2024-03-17T09:45:12Z",
+      "customer": "7d4a6e8f-1b3c-4d5e-9f7a-5b8c7d9e3f4a",
+      "ip": "10.1.2.3",
+      "tags": "",
+      "status": "open"
+    }
+  ]
+}

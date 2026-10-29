@@ -228,6 +228,9 @@ ${item}=    Workspace Item    Services/scratch.jq      # the index's entry: id, 
 - **A point that the window anchors by itself does not move when the Tools are docked** (the foot of the list, the
   windows the pane opens, the status bar): say it by a variable (`${WS_LIST_FOOT_Y}`) that `resources/docked_main.py`
   overrides, as for the other anchored points above.
+- **A case appended to a file that ends with its Keywords is a keyword**: Robot reads it as one and never runs it, with
+  no word said (TC-DOCK-042 to 044 were, at first: a run of them ran the two cases before them). `scripts/robot_lint.py`
+  says so now ("a case among the keywords").
 - **A file that a script cut and pasted** (moving keywords between files) can be left with a case or a keyword twice, or a
   `*** Keywords ***` section inside another: Robot does not always say so (it ran such a suite, with one case in the
   keywords). `scripts/robot_lint.py suites/workspace resources/workspace.resource` finds a case id or a keyword that is
@@ -282,6 +285,37 @@ ${item}=    Workspace Item    Services/scratch.jq      # the index's entry: id, 
   suite that imports it starts, so a keyword that is changed under a lane that is running breaks the lane (a
   half-written file is a suite that does not parse). A copy with `rsync` (without `results` and `.git`, `.venv`
   linked) is what a long run reads.
+
+## Writing a case about what a box points out (Create Schema, Validate Schema)
+
+A box of the Tools can point a part of its text out: an orange highlight (178, 103, 30 in the Dark theme) under
+the pattern that was clicked, the value of a problem, the keyword of the schema, and the box scrolled to it
+([13_tools_window.md](13_tools_window.md)). A case reads it with the orange taken out:
+
+```robot
+Document Should Point Out    ORD-1357-24681                    # Create Schema's Document box (retried)
+Document Should Point Out    168.1.355    @{FIRST_BOX}         # any box: its region
+Schema Should Point Out      pattern                           # Create Schema's Schema box
+${marked}=    Read Marked Text    @{FIRST_BOX}                 # what the highlight covers; whole_lines=${TRUE} for its lines
+Nothing Should Be Pointed Out    @{CREATE_DOCUMENT}            # no orange at all in the region
+```
+
+- **Tesseract reads light text on the orange as nothing**, and `flatten_tints` makes the orange as bright as the
+  text. `Read Marked Text` crops to the orange (3 pixels round it) and turns it black, keeping what is glyph by the
+  blue of each pixel (`AppLibrary._unmark`).
+- **What is read is what is on show**: the highlight is part of the box, so reading it in the box's region says
+  that the box was scrolled to it (TC-CSC-047, TC-VAL-022 point out a place far down a long document).
+- **Ask for digits without a 0** in a highlighted text: `24681` reads well, `00017` came back as `@8017`, and a
+  quote before a digit is read as a 4 (`"192.` as `492.`): ask for `168.1.355`. The fixtures of
+  `resources/fixtures/create/` and `validate/` are written without zeros where a case reads them.
+- **A highlight over several lines has a ragged edge** (the first line starts at its key, the next ones at the
+  box's left), and OCR may drop a line of it: ask for a word of a line in the middle (an enum's `closed`, not
+  `"enum": [`).
+- **A negative check is next to a positive one**: TC-VAL-020 reads `extra` in the highlight and then that `age` is
+  not in it, so that a highlight of the whole object (a fault: R18) fails.
+- **A row of a list can move when something opens under the list**: Create Schema's list keeps the row picked in
+  view by scrolling, so a row low in the list is not where it was before the click. Read it in the part of the
+  list that is on show (`List Above Enum Should Read`), or on the line of what is open, not at its old y.
 
 ## Writing a case that also runs with the Tools docked
 

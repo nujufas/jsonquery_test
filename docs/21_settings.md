@@ -56,8 +56,13 @@ written as the app ends is part of what is promised (TC-SET-021).
 | TC-SET-024 | A Maximized Window Is Maximized The Next Time | P2 |
 | TC-SET-025 | The Size Of The Panes Is Kept | P2 |
 | TC-SET-026 | The Panes Are As They Were Left | P2 |
+| TC-SET-027 | A Kept Size Smaller Than The Smallest Opens At The Smallest | P2 |
 
-(TC-SET-017 to 019 are left free for more cases about the file and the limits.)
+(TC-SET-017 to 019 are left free for more cases about the file and the limits.) TC-SET-027 (2026-10-29): the
+smallest window is 700 × 420 (it was 640 wide; the docked Tools' row of tabs needs 700), and a size in the
+file that is smaller opens at the smallest. The window manager does not hold a window that `xdotool` resizes to
+the app's least size, so the case starts from the file, which is where the app applies it. Mutation check: the smallest
+back at 640 (R23) is killed by TC-SET-027 and TC-DOCK-044.
 
 ## Mutation checks
 

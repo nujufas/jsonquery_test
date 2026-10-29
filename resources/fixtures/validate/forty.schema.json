@@ -1,0 +1,12 @@
+{
+  "items": {
+    "required": [
+      "id"
+    ],
+    "properties": {
+      "ip": {
+        "format": "ipv4"
+      }
+    }
+  }
+}

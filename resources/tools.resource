@@ -18,6 +18,8 @@ Documentation     Layout constants and keywords shared by the Tools-window suite
 ...               page's Documents view has a margin around its two boxes (header
 ...               at y=71).
 Resource          keywords.resource
+Library           OperatingSystem
+Library           String
 
 *** Variables ***
 # Where the Tools are in this run: `window` (the default) or `docked`, which
@@ -31,7 +33,7 @@ ${TOOLS_Y}             11
 # The tabs: one fixed point each (their names are read by OCR as one word, "FormatJSON",
 # which no name lookup can match).
 ${TAB_Y}               11
-&{TAB_X}               merge=48    format=140    diff=222    patch=302    validate=399
+&{TAB_X}               merge=48    format=140    diff=222    patch=302    validate=399    create=505
 @{TAB_ROW}             0      0      560    22
 @{COMMAND_ROW}         0      23     560    22
 ${COMMAND_Y}           34
@@ -139,6 +141,68 @@ ${MERGE_HEADER_Y}      120
 @{MERGE_FILES}         8      130    433    410
 @{MERGE_RESULT}        456    130    440    410
 
+# Create Schema: the Document box fills the left pane (as Format's Input does); the right
+# pane has the Schema box over the list of the patterns found (60 to 40), and under the list,
+# once a row is clicked, what is open: a pattern's line, box and buttons, or an enum's line,
+# ticks, box and buttons. What is open is at the foot of the pane, so its points do not
+# depend on how many rows there are.
+${CREATE_BOX_X}        200
+${CREATE_BOX_Y}        300
+@{CREATE_DOCUMENT}     8      76     433    472
+@{CREATE_BUTTON}       8      24     50     20
+@{SCHEMA_BOX}          458    76     434    266
+@{SCHEMA_TITLE}        458    54     160    18
+# The options in the command row: the Draft dropdown and its items, then the checkboxes
+# (the box of each).
+${DRAFT_X}             118
+${DRAFT_ITEM_X}        110
+&{DRAFT_ITEM_Y}        2020-12=59    2019-09=80    7=101    6=122    4=143
+&{OPTION_X}            patterns=190    required=262    closed=342    enums=447    bounds=512
+# The Schema's header buttons, right to left from Use in Validate.
+${USE_IN_VALIDATE_X}   845
+${SCHEMA_SAVE_X}       767
+${SCHEMA_COPY_X}       717
+${RESET_X}             670
+@{RESET_BUTTON}        650    54     40     18
+@{USE_IN_VALIDATE_BUTTON}    800    54     92     18
+# The list of the patterns: its header (the title and Copy list), and its rows.
+${FOUND_HEADER_Y}      363
+@{FOUND_HEADER}        458    354    300    20
+${COPY_LIST_X}         862
+${FOUND_ROW_X}         700
+${FOUND_FIRST_ROW_Y}   385
+@{FOUND_LIST}          458    375    434    172
+# What is open under the list. A pattern: its line (which, "1 of 3", ⏶ ⏷), its box, Apply,
+# Plain string (Any key for keys) and Restore, and the reason a change was refused, right of
+# them. An enum: its line, a row of ticks, the box of another value, Add, Plain string and
+# Restore.
+@{EDITOR_LINE}         458    486    434    20
+@{EDITOR_PLACE}        790    486    50     20
+${EDITOR_BOX_X}        670
+${EDITOR_BOX_Y}        518
+${EDITOR_BUTTON_Y}     540
+${APPLY_X}             478
+${PLAIN_X}             543
+${PATTERN_RESTORE_X}   613
+@{APPLY_BUTTON}        459    531    40     18
+@{PLAIN_BUTTON}        506    531    74     18
+@{PATTERN_RESTORE_BUTTON}    587    531    52     18
+@{EDITOR_PROBLEM}      645    531    247    18
+${PREVIOUS_PLACE_X}    853
+${NEXT_PLACE_X}        880
+${PLACE_Y}             496
+@{ENUM_LINE}           458    465    434    20
+@{ENUM_PLACE}          790    465    50     20
+${ENUM_PLACE_Y}        475
+${ENUM_VALUES_Y}       497
+@{ENUM_VALUES}         458    487    434    20
+${ADD_X}               473
+${ENUM_PLAIN_X}        535
+${ENUM_RESTORE_X}      604
+@{ADD_BUTTON}          459    531    30     18
+@{ENUM_PLAIN_BUTTON}   497    531    76     18
+@{ENUM_RESTORE_BUTTON}    578    531    52     18
+
 # The ⚓ that docks the Tools in the main window, at the right end of the window's row of
 # tabs (900 wide: 19 from the edge). The Tools docked are in suites/tools/tools_docked.robot
 # and resources/docked.resource.
@@ -160,8 +224,8 @@ Open Tools Window
     END
 
 Pick Tool
-    [Documentation]    Clicks a tool's tab (merge, format, diff, patch or
-    ...    validate). The Tools window must be the current one.
+    [Documentation]    Clicks a tool's tab (merge, format, diff, patch, validate or
+    ...    create). The Tools window must be the current one.
     [Arguments]    ${tool}
     Click At    ${TAB_X}[${tool}]    ${TAB_Y}
     Sleep    0.5s
@@ -381,3 +445,116 @@ Difference Should Be
     ...    rest, "of 5", is read as "o0f5" at times).
     [Arguments]    ${number}
     Wait Until Region Matches    @{TOOLS_STATUS}    Difference ?${number}    timeout=8
+
+Create From Fixture
+    [Documentation]    Create Schema's Document box holds a fixture of fixtures/create/ (pasted)
+    ...    and Create is pressed: the schema is made, the status bar says how it fits.
+    [Arguments]    ${name}
+    Fill Create Page    ${name}
+    Press Main Button
+    Status Should Read    Created in
+
+Fill Create Page
+    [Documentation]    Pastes a fixture of fixtures/create/ into Create Schema's Document box.
+    [Arguments]    ${name}
+    ${text}=    Get File    ${CURDIR}/fixtures/create/${name}    encoding=UTF-8
+    Paste Into Box    ${CREATE_BOX_X}    ${CREATE_BOX_Y}    ${text}
+
+Copied Schema
+    [Documentation]    The schema as Copy gives it, as JSON (Copy is pressed with a marker on the
+    ...    clipboard: a Copy that does nothing fails, as the text is then no JSON).
+    Set Clipboard    nothing was copied
+    Click At    ${SCHEMA_COPY_X}    ${HEADER_Y}
+    Sleep    0.5s
+    ${text}=    Get Clipboard
+    ${schema}=    Evaluate    json.loads($text)    modules=json
+    RETURN    ${schema}
+
+Copied Schema Should Have
+    [Documentation]    What the schema has at `path`, a Python subscript of it (`["properties"]
+    ...    ["orders"]["items"]...`; the shortcut `ITEM` is the properties of an order of the
+    ...    fixtures' list), is `expected` (a Python expression).
+    [Arguments]    ${path}    ${expected}
+    ${schema}=    Copied Schema
+    ${path}=    Replace String    ${path}    ITEM    ["properties"]["orders"]["items"]["properties"]
+    ${actual}=    Evaluate    $schema${path}
+    ${wanted}=    Evaluate    ${expected}
+    Should Be Equal    ${actual}    ${wanted}
+
+Found Row Y
+    [Arguments]    ${n}
+    ${y}=    Evaluate    int(${FOUND_FIRST_ROW_Y}) + int(${n}) * int(${ROW_PITCH})
+    RETURN    ${y}
+
+Open Found Row
+    [Documentation]    Clicks row `n` (0 is the first) of the list of patterns, which opens it under
+    ...    the list, and moves the pointer off the page (its tooltip would cover the list).
+    [Arguments]    ${n}
+    ${y}=    Found Row Y    ${n}
+    Click At    ${FOUND_ROW_X}    ${y}
+    Sleep    0.5s
+    Move Mouse To    600    ${TAB_Y}
+    Sleep    0.3s
+
+Found Row Should Read
+    [Documentation]    OCR of row `n` of the list of patterns (the path and what was found).
+    [Arguments]    ${n}    ${text}
+    ${y}=    Found Row Y    ${n}
+    ${top}=    Evaluate    ${y} - 10
+    Wait Until Keyword Succeeds    6x    0.5s
+    ...    Region Should Show Text    458    ${top}    434    20    ${text}
+
+Editor Box Should Hold
+    [Documentation]    The box of the pattern that is open (or of an enum's next value) holds exactly
+    ...    `text`: selected and copied. An empty box copies nothing, so the marker stays.
+    [Arguments]    ${text}
+    Set Clipboard    nothing was copied
+    Click At    ${EDITOR_BOX_X}    ${EDITOR_BOX_Y}
+    Sleep    0.2s
+    Press Keys    ctrl    a
+    Press Keys    ctrl    c
+    Sleep    0.3s
+    ${copied}=    Get Clipboard
+    ${wanted}=    Set Variable If    $text == ''    nothing was copied    ${text}
+    Should Be Equal    ${copied}    ${wanted}
+
+Put In Editor Box
+    [Documentation]    Replaces what is in the box of what is open with `text` (pasted: an expression
+    ...    has characters that typing gets wrong).
+    [Arguments]    ${text}
+    Set Clipboard    ${text}
+    Click At    ${EDITOR_BOX_X}    ${EDITOR_BOX_Y}
+    Sleep    0.2s
+    Press Keys    ctrl    a
+    Press Keys    ctrl    v
+    Sleep    0.3s
+
+Button Should Be Dim
+    [Documentation]    Nothing in the button's region is as bright as an enabled label.
+    [Arguments]    @{region}
+    Run Keyword And Expect Error    Nothing as bright as*
+    ...    Get Ink Bounds    @{region}    threshold=150
+
+Button Should Be Bright
+    [Arguments]    @{region}
+    Get Ink Bounds    @{region}    threshold=150
+
+Document Should Point Out
+    [Documentation]    The Document box highlights a text that reads `text`, on screen (retried while
+    ...    the box scrolls to it). With `whole_lines`, the lines it is on read `text`.
+    [Arguments]    ${text}    @{region}    ${whole_lines}=${FALSE}
+    ${region}=    Set Variable If    $region    ${region}    ${CREATE_DOCUMENT}
+    Wait Until Keyword Succeeds    8x    0.5s
+    ...    Marked Text Should Contain    @{region}    ${text}    whole_lines=${whole_lines}
+
+Schema Should Point Out
+    [Documentation]    The Schema box highlights a text that reads `text`, on screen.
+    [Arguments]    ${text}    ${whole_lines}=${FALSE}
+    Wait Until Keyword Succeeds    8x    0.5s
+    ...    Marked Text Should Contain    @{SCHEMA_BOX}    ${text}    whole_lines=${whole_lines}
+
+Nothing Should Be Pointed Out
+    [Documentation]    No part of the region is highlighted.
+    [Arguments]    @{region}
+    ${rows}=    Marked Rows    @{region}
+    Should Be Empty    ${rows}    msg=Something is highlighted in (${region})

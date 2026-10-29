@@ -8,8 +8,12 @@ Documentation     Tools window, the Validate schema page -- see
 ...               is ever fetched. A problem in the document that is open in the
 ...               main window can be shown there.
 ...
+...               A click on a problem highlights it where it is, in the Document box and in
+...               the Schema box, scrolled to it.
+...
 ...               The messages are plain text OCR reads well; the exact report is
-...               checked through the clipboard (Copy report).
+...               checked through the clipboard (Copy report); what is highlighted is read
+...               with the highlight's orange taken out.
 Resource          ../../resources/tools.resource
 Force Tags        tools    validate
 Suite Setup       Start Test Display
@@ -26,6 +30,9 @@ ${SCHEMA}            {"type":"object","properties":{"age":{"type":"integer","min
 # one (the selection colour, half translucent).
 @{FIRST_ROW}         458    76     434    20
 @{PICKED_ROW_RGB}    13     59     77
+${VALIDATE_FIXTURES}    ${CURDIR}/../../resources/fixtures/validate
+# Where the tooltip of the first problem is (under the pointer, over the list).
+@{PROBLEM_TOOLTIP}    450    90     450    200
 
 *** Keywords ***
 Fill Validate Page
@@ -52,6 +59,21 @@ Show In Main Window Should Be Disabled
 
 Show In Main Window Should Be Enabled
     Get Ink Bounds    @{SHOW_IN_MAIN_BUTTON}    threshold=150
+
+Click Problem
+    [Documentation]    Clicks problem `n` (0 is the first) and puts the pointer away (its tooltip
+    ...    would cover the boxes).
+    [Arguments]    ${n}
+    ${y}=    Evaluate    int(${FIRST_ROW_Y}) + int(${n}) * int(${ROW_PITCH})
+    Click At    640    ${y}
+    Sleep    0.5s
+    Move Mouse To    600    ${TAB_Y}
+    Sleep    0.3s
+
+Validate Schema Should Point Out
+    [Documentation]    The Schema box (the second) highlights a text that reads `text`, on show.
+    [Arguments]    ${text}
+    Document Should Point Out    ${text}    @{SECOND_BOX}
 
 *** Test Cases ***
 TC-TWIN-010 Validate Schema Lists The Problems
@@ -301,3 +323,115 @@ TC-VAL-018 Every Problem Is Listed
     Status Should Read    5 problems
     Result Should Read    /a
     Result Should Read    /d
+
+TC-VAL-019 A Click On A Problem Points It Out In Both Boxes
+    [Documentation]    A click on a problem highlights the value that is wrong in the Document box
+    ...    (age's -1) and the keyword that said so in the Schema box (minimum).
+    [Tags]    p1
+    Open Tool    validate
+    Fill Validate Page    ${DOC}    ${SCHEMA}
+    Run Validate
+    Nothing Should Be Pointed Out    @{FIRST_BOX}
+    Click Problem    0
+    Document Should Point Out    -1    @{FIRST_BOX}
+    Validate Schema Should Point Out    minimum
+
+TC-VAL-020 A Member That Is Not Allowed Is Pointed Out
+    [Documentation]    additionalProperties: the member that is not allowed, key and value, is
+    ...    highlighted (and not the object it is in), and the keyword in the schema.
+    [Tags]    p1
+    Open Tool    validate
+    Fill Validate Page    ${DOC}    ${SCHEMA}
+    Run Validate
+    Click Problem    2
+    Document Should Point Out    extra    @{FIRST_BOX}
+    # The member alone, not the object it is in.
+    ${marked}=    Read Marked Text    @{FIRST_BOX}
+    Should Not Contain    ${marked}    age
+    Validate Schema Should Point Out    additionalProperties
+
+TC-VAL-021 A Missing Member Points Out The Object It Is Missing From
+    [Documentation]    required: there is no value to point at, so the object is highlighted --
+    ...    the whole document here, from age to extra -- and the schema's required.
+    [Tags]    p1
+    Open Tool    validate
+    Fill Validate Page    ${DOC}    ${SCHEMA}
+    Run Validate
+    Click Problem    3
+    Document Should Point Out    age    @{FIRST_BOX}
+    Document Should Point Out    extra    @{FIRST_BOX}
+    Validate Schema Should Point Out    required
+
+TC-VAL-022 The Boxes Scroll To A Problem Far Down
+    [Documentation]    Forty records, the last one's address no IPv4 address: its click scrolls
+    ...    the Document box down to it, and the Schema box to the format; the first record's
+    ...    problem (no id) scrolls back up to that record.
+    [Tags]    p1
+    Open Tool    validate
+    ${document}=    Get File    ${VALIDATE_FIXTURES}/forty.json
+    ${schema}=    Get File    ${VALIDATE_FIXTURES}/forty.schema.json
+    Fill Validate Page    ${document}    ${schema}
+    Run Validate
+    Status Should Read    2 problems
+    Click Problem    1
+    Document Should Point Out    168.1.355    @{FIRST_BOX}
+    Validate Schema Should Point Out    ipv4
+    Click Problem    0
+    Document Should Point Out    172.16.1.1    @{FIRST_BOX}
+    Validate Schema Should Point Out    required
+
+TC-VAL-023 A Rule Reached Through A Reference Is Pointed Out Where It Is Written
+    [Documentation]    The integer that n is held to is a definition under $defs, reached through
+    ...    $ref: the schema highlights the definition's type, not the $ref.
+    [Tags]    p2
+    Open Tool    validate
+    Fill Validate Page    {"n":"text"}    {"properties":{"n":{"$ref":"#/$defs/count"}},"$defs":{"count":{"type":"integer"}}}
+    Run Validate
+    Click Problem    0
+    Document Should Point Out    text    @{FIRST_BOX}
+    Validate Schema Should Point Out    integer
+
+TC-VAL-024 Validating Again Or Typing Takes The Highlight Away
+    [Documentation]    The highlight is of the report it was clicked in: Validate again drops it
+    ...    from both boxes, and so does typing in a box.
+    [Tags]    p2
+    Open Tool    validate
+    Fill Validate Page    ${DOC}    ${SCHEMA}
+    Run Validate
+    Click Problem    0
+    Document Should Point Out    -1    @{FIRST_BOX}
+    Press Main Button
+    Sleep    0.8s
+    Nothing Should Be Pointed Out    @{FIRST_BOX}
+    Nothing Should Be Pointed Out    @{SECOND_BOX}
+    Click Problem    0
+    Validate Schema Should Point Out    minimum
+    Click At    ${FIRST_BOX_X}    ${SECOND_BOX_Y}
+    Press Keys    ctrl    end
+    Type Text    ${SPACE}
+    Sleep    0.5s
+    Nothing Should Be Pointed Out    @{FIRST_BOX}
+    Nothing Should Be Pointed Out    @{SECOND_BOX}
+
+TC-VAL-025 The Open Document Is Not Pointed Out, The Schema Is
+    [Documentation]    The main window's document is not shown in the box: nothing is highlighted
+    ...    there, and the keyword is in the schema.
+    [Tags]    p2    main-layout
+    Load Fixture Via Paste    {"age": -1, "name": "Ann"}
+    Open Tool    validate
+    Click At    ${OPEN_DOCUMENT_X}    ${HEADER_Y}
+    Sleep    0.3s
+    Paste Into Box    ${FIRST_BOX_X}    ${SECOND_BOX_Y}    {"properties":{"age":{"minimum":0}}}
+    Run Validate
+    Click Problem    0
+    Validate Schema Should Point Out    minimum
+    Nothing Should Be Pointed Out    @{FIRST_BOX}
+
+TC-VAL-026 A Problem's Tooltip Says That A Click Finds It
+    [Tags]    p3
+    Open Tool    validate
+    Fill Validate Page    ${DOC}    ${SCHEMA}
+    Run Validate
+    Move Mouse To    640    ${FIRST_ROW_Y}
+    Sleep    1.2s
+    Wait Until Keyword Succeeds    6x    0.5s    Region Should Contain Text    @{PROBLEM_TOOLTIP}    find it in the document

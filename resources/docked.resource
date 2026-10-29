@@ -14,8 +14,8 @@ Resource          keywords.resource
 
 *** Variables ***
 ${DOCKED}            {"tools": "docked"}
-# The row of tabs (y 0-22): Json Query, the five tools; the 🗗 is not here but in the status bar.
-@{DT_TAB_ROW}        0      0      640    22
+# The row of tabs (y 0-22): Json Query, the six tools; the 🗗 is not here but in the status bar.
+@{DT_TAB_ROW}        0      0      660    22
 ${DT_TAB_Y}          11
 # The status bar, y 778-800: the buttons from the right are the info, the website (the 🌐),
 # the settings and the undock; at the left is the button of the workspace pane, and the text of
@@ -64,7 +64,7 @@ Tab Centre
     RETURN    ${x}
 
 Docked Tab Should Be Selected
-    [Documentation]    The tab (json, merge, format, diff, patch or validate) is the one
+    [Documentation]    The tab (json, merge, format, diff, patch, validate or create) is the one
     ...    marked: its fill, the selection blue, is somewhere in a strip across it.
     [Arguments]    ${tab}
     ${x}=    Evaluate    int(${DOCKED_TAB_X}[${tab}]) - 30
@@ -76,7 +76,7 @@ Docked Tab Should Not Be Selected
     Without Layout Shift    Region Should Not Contain Color    ${x}    5    60    12    0    92    128    tolerance=10
 
 Show Docked Tab
-    [Documentation]    Clicks a tab of the row (json, merge, format, diff, patch or validate)
+    [Documentation]    Clicks a tab of the row (json, merge, format, diff, patch, validate or create)
     ...    in the main window. From then on the layout is the Json Query tab's (the suites'
     ...    own, `DY` lower) or a page's (the window's), whichever the tab is.
     [Arguments]    ${tab}

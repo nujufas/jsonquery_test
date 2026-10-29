@@ -16,7 +16,7 @@ TOOLS_WINDOW = "JsonQuery"
 
 # The centre of each tab of the row, which begins with Json Query (43..77) and has no gap
 # for the 🛠 button: 130 is the middle of "Merge JSON", and so on.
-TAB_X = {"merge": 130, "format": 221, "diff": 304, "patch": 383, "validate": 480}
+TAB_X = {"merge": 130, "format": 221, "diff": 304, "patch": 383, "validate": 480, "create": 586}
 
 # What the status bar of the page says is after the button of the workspace pane (x 8-31) at the left end, from x 41; the
 # icons (🗗 ⚙ 🌐 ⓘ) are at x 786-892: the 🗗 is the first of them. The regions are what is between.

@@ -16,6 +16,8 @@ keyboard_shortcuts,saving}/`. Run any of them, or all of them, via
 baseline; the third pass added 17 more query-correctness cases to
 `query_engines`, below.)
 
+**Status as of 2026-10-29: 30 suites, 1157 test cases** — the Tools have a sixth page, **Create Schema** (a JSON Schema made of a document, with the patterns its strings have, the options, the schema and its patterns and enums changed by hand, and a click that points a pattern out in the document and the schema), **Validate Schema** points a problem out in both boxes when it is clicked, the tutorial has a **Tools** tab whose examples go into the tools' pages, and the main window is no narrower than 700 ([13_tools_window.md](13_tools_window.md), [19_tutorial_pages.md](19_tutorial_pages.md), [22_tools_docked.md](22_tools_docked.md), [21_settings.md](21_settings.md)). 74 cases are new: TC-CSC-001 to 058 (`tools_create.robot`, 49), TC-VAL-019 to 026, TC-TUT-064 to 074 (`tutorial_tools.robot`), TC-DOCK-042 to 045, TC-SET-027 and TC-TWIN-019; TC-TWIN-005, TC-DOCK-002 and 020 take the seventh tab in. What a box highlights is read by OCR with the highlight's orange taken out (`Read Marked Text`). The runs, on the debug build: the suite as it was, before the new cases, `run_parallel.sh -j 5` 1082 of 1083 (TC-FMT-026, an OCR misreading of `result(s)`, 3 of 3 alone) and `run_docked.sh -j 5` (on the build before the fix below, which only changes Create Schema's list) the tools pass 164 of 164 and the main-view pass 829 of 830 (TC-OPEN-003, an OCR misreading of the address, 3 of 3 alone, docked); the new and changed cases in their last form, 49 of 49 for Create Schema, 28 of 28 for Validate, 11 of 11 for the tutorial's tab, the docked and settings ones 9 of 9, and docked the Tools suites they are in 82 of 82 and the main-view ones 4 of 4. **24 faults put into the app one at a time, all killed** ([13_tools_window.md](13_tools_window.md)). **The cases found a fault of the app**: a click on a row low in Create Schema's list opened what it opens under the list, which made the list shorter, and the row picked went out of view; the list now keeps it in view (fixed, with a test of the app). Seen and left as it is: a schema made again keeps the Schema box scrolled where it was.
+
 **Status as of 2026-10-23: 30 suites, 1083 test cases** — web addresses as items of the workspace: a `.url` file (a Windows Internet Shortcut) is listed with a yellow `url` tag and a chip of its own (URLs), is told under the list by its address, is loaded as the Source at once by *Load from the web* (the button under the list, the menu and a double click), has a fifth choice in the window that saves (Web address: offered the address of the document that is open, else the one in the Source field, else typed; the name follows it), and never has a sample, whatever file is called after it ([25_workspace.md](25_workspace.md)). 47 cases are new (TC-WSP-292 to 338: `workspace_urls.robot` with 42, and five in the files of the carried queries, the states of the window and the docked pane); two of the 276 that were there changed (TC-WSP-071 and 077: the Save window has five choices and is 13 points wider). The addresses that are loaded are served by a server on 127.0.0.1 that the case starts and that writes down what it is asked for. The runs, on the debug build: `run_parallel.sh -j 6 --include workspace` before anything was changed, 274 of 276 (TC-WSP-071 and 077); with the new cases 323 of 323, and with every case in its last form 322 of 323 (TC-WSP-249, an older case whose first double click did not register, 3 of 3 alone); `run_docked.sh -j 6 main --include workspace`, 305 of 306 (TC-WSP-314, a label read among the text behind the window: changed, 3 of 3 alone undocked and docked) and then 306 of 306. **60 faults put into the app one at a time, 59 killed**; the one that is not (u39, the byte-order mark taken off in `address_in` alone) cannot be seen from outside, because `read_text` has taken it off before. **The cases found no fault of the app.** Seen and left as it is: at the least width of the pane (208) the sixth chip is on a row of its own and the list begins 20 points lower; a file that holds no address, used after a load that failed, leaves what that load said; a `.url` file dropped on the window is opened as JSON and fails.
 
 **Status as of 2026-10-21 (night): 30 suites, 1036 test cases** — the second round on the workspace, after the window had been looked at: the pane's button (in the status bar and in the strip) is a window with its left column filled, the button that makes a folder is a folder with a plus left out of it (the rows keep the plain folder), the pane's button is the first thing at the left end of the status bar, a file that is dropped on the window and ends like a query (`.jq`, `.jsonpath`, `.jmespath`, `.jsonptr`) goes in the query box, and a query that is carried out of the list onto the Query pane is opened ([25_workspace.md](25_workspace.md)). 46 cases are new (47 with TC-WSP-291, written after the owner's answer): TC-WSP-243 to 247, 249 to 258 and 260 to 290, in three new files (`workspace_statusbar.robot`, `workspace_drop.robot`, `workspace_carry.robot`) and in the files of the docked pane, the panes in windows of their own and the states of the window; nine of the 229 that were there changed (TC-WSP-002, 003, 004, 019, 020, 021, 113, 210, 222), and four older ones about the status bar (TC-DOCK-006, 008, 009 and TC-WEB-001) say where the buttons are now. The runs, on the debug build: `run_parallel.sh -j 6` before the new cases, 988 of 989 (TC-DIF-026, which did not find its text on a busy lane and passed twice alone); `run_docked.sh -j 6`, the tools pass 164 of 164 and the main-view pass 780 of 782 (TC-WSP-246, which clicked a point that the docked profile moves, fixed; TC-QRY-031, an OCR read that passed 3 of 3 alone); the workspace suites in their last form, 275 of 275 and docked 258 of 258; after the owner's answer (a good query file takes away the message about a bad one), the workspace cases (276, with TC-WSP-291) and the drag-and-drop suite again, 294 of 294 and docked 268 of 268. **197 faults put into the app one at a time were all killed**, 64 of them in this round (45 of them new; one got through a check that was too loose, which was made stricter). **The cases found two faults of the app**: a file that was let go from a workspace that is reached through a link was not the item it is (TC-WSP-289; fixed in `WorkspacePane::note_dropped`, with a test of the app), and the message about a query file that could not be used, which stayed after a good file was dropped (seen while the cases were written and left for the owner to say; fixed when they said that a good drop should clear it: `use_query_file`, a test of the app that fails without it, TC-WSP-262 made stricter and TC-WSP-291 new, three faults put in for it and killed). Seen and left as it is: a file that is gone when it is let go is not handed to the window by the toolkit at all, and a query that is opened from the list does not take that message away (only the drop was asked for).
@@ -547,6 +549,7 @@ the sign that the text landed.
 | TC-MRG-004 | A Filter Of One's Own Is Called Custom | P1 | **Passing** | `suites/tools/` |
 | TC-MRG-005 | Picking A Preset Replaces A Custom Filter | P2 | **Passing** | `suites/tools/` |
 | TC-TWIN-018 | The Line Between The Panes Can Be Dragged | P2 | **Passing** | `suites/tools/` |
+| TC-TWIN-019 | The Tools Button's Hover Names Every Tool | P3 | **Passing** | `suites/tools/` |
 | TC-MRG-010 | Files Dropped On The Main Window Open The Merge Page | P1 | **Passing** | `suites/tools/` |
 | TC-MRG-011 | One File Dropped On The Main Window Is Opened | P1 | **Passing** | `suites/tools/` |
 | TC-MRG-012 | Files Dropped On The Tools Window Are Added | P1 | **Passing** | `suites/tools/` |
@@ -691,6 +694,63 @@ the sign that the text landed.
 | TC-VAL-016 | Editing A Box Drops The Report | P1 | **Passing** | `suites/tools/` |
 | TC-VAL-017 | Ctrl+Enter Validates | P2 | **Passing** | `suites/tools/` |
 | TC-VAL-018 | Every Problem Is Listed | P2 | **Passing** | `suites/tools/` |
+| TC-VAL-019 | A Click On A Problem Points It Out In Both Boxes | P1 | **Passing** | `suites/tools/` |
+| TC-VAL-020 | A Member That Is Not Allowed Is Pointed Out | P1 | **Passing** | `suites/tools/` |
+| TC-VAL-021 | A Missing Member Points Out The Object It Is Missing From | P1 | **Passing** | `suites/tools/` |
+| TC-VAL-022 | The Boxes Scroll To A Problem Far Down | P1 | **Passing** | `suites/tools/` |
+| TC-VAL-023 | A Rule Reached Through A Reference Is Pointed Out Where It Is Written | P2 | **Passing** | `suites/tools/` |
+| TC-VAL-024 | Validating Again Or Typing Takes The Highlight Away | P2 | **Passing** | `suites/tools/` |
+| TC-VAL-025 | The Open Document Is Not Pointed Out, The Schema Is | P2 | **Passing** | `suites/tools/` |
+| TC-VAL-026 | A Problem's Tooltip Says That A Click Finds It | P3 | **Passing** | `suites/tools/` |
+| TC-CSC-001 | Create Needs A Document | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-002 | Create Makes A Schema Of The Document | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-003 | Ctrl+Enter Creates | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-004 | The Patterns Found Are Listed | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-005 | Copy List Gives A Row To A Line | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-006 | A Row's Menu Copies Its Pattern, Its Path And The Row | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-007 | A Row's Tooltip Has Its Pattern And Format | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-008 | Without Patterns The Strings Are Plain | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-009 | Without Required Nothing Is Required | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-010 | No Other Keys Allows Only The Members Seen | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-011 | Enums Make An Enum Of A Few Strings | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-012 | Bounds Give The Least And The Most Seen | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-013 | The Draft Is Written And Decides The Formats | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-014 | Changing An Option Drops The Schema | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-015 | Typing In The Document Drops The Schema | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-016 | A Document That Is Not JSON Is Named | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-017 | A List May Be Empty | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-018 | Numbered Keys And Keys That Are Data Are Patterns Of Keys | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-019 | Use In Validate Checks The Document Against The Schema | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-020 | Save Writes The Schema | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-021 | A File Opened Is The Document, And Names The Save | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-022 | A Dropped File Is The Document | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-023 | The Document Open In The Main Window Can Be Used | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-030 | A Click Opens The Pattern Under The List | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-031 | Apply Puts Another Expression In The Schema | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-032 | Enter Applies The Expression | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-033 | An Expression That Cannot Be Read Is Refused | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-034 | Plain String Takes Out The Pattern And The Format | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-035 | After Plain String Apply Waits For An Expression | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-036 | Restore Puts Back What Was Found | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-037 | The Keys Of A Map Can Be Any Key | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-038 | Reset Undoes Every Change | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-039 | The Schema Can Be Typed In | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-040 | Use In Validate Takes The Schema As It Was Changed | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-041 | Copy And Save Take The Schema As It Was Changed | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-045 | A Click Points The Pattern Out In The Document And The Schema | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-046 | The Arrows Go From Place To Place, Round | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-047 | The Document Box Scrolls To The Place | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-048 | Changing The Document Takes The Highlight Away | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-049 | A Changed Pattern Is Pointed Out Where It Is Now | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-050 | A Click Opens The Enum With A Tick For Each Value | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-051 | Unticking A Value Leaves It Out Of The Enum | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-052 | Ticking It Again Puts It Back | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-053 | Another Value Can Be Put In | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-054 | Enter Puts In A Value And Keeps The Box | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-055 | A Value That Is There Already Is Refused | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-056 | Plain String Takes The Enum Out | P1 | **Passing** | `suites/tools/` |
+| TC-CSC-057 | Restore Puts Back The Values Found | P2 | **Passing** | `suites/tools/` |
+| TC-CSC-058 | A Value's Tooltip Says How Often It Is In The Document | P3 | **Passing** | `suites/tools/` |
 | TC-TDLG-001 | Format Saves Under formatted.json | P1 | **Passing** | `suites/tools/` |
 | TC-TDLG-002 | Format Minified Saves Under min.json | P2 | **Passing** | `suites/tools/` |
 | TC-TDLG-003 | A File Opened Through The Dialog Is Formatted And Saved Next To Its Name | P1 | **Passing** | `suites/tools/` |
@@ -982,6 +1042,17 @@ engine edge) are covered by `cargo test`.
 | TC-TUT-061 | Cheat Sheet: A Lookup Table Keyed By Name | P1 | **Passing** | `suites/tutorial_pages/` |
 | TC-TUT-062 | Cheat Sheet: Keep When The Value Is One Of Several | P1 | **Passing** | `suites/tutorial_pages/` |
 | TC-TUT-063 | Cheat Sheet: The Value As Events | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-064 | The Tools Tab Has A Topic For Each Tool | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-065 | Try It Makes The Schema Of A Lesson's Sample | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-066 | Load Samples Puts The Sample In Without Running It | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-067 | Try It On A Validate Lesson Lists The Problems | P1 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-068 | Try It On A Merge Lesson Merges Its Files | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-069 | Try It On A Format Lesson Formats The Sample | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-070 | Try It On A Diff Lesson Compares The Two Samples | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-071 | Try It On A Patch Lesson Patches The Sample | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-072 | A Second Try It Goes To The Window That Is Open | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-073 | A Filter Finds The Lessons Of The Tools | P2 | **Passing** | `suites/tutorial_pages/` |
+| TC-TUT-074 | The Tools Tab Keeps Its Lesson | P3 | **Passing** | `suites/tutorial_pages/` |
 
 ## Workflows — [20_workflows.md](20_workflows.md)
 
@@ -1025,6 +1096,7 @@ engine edge) are covered by `cargo test`.
 | TC-SET-024 | A Maximized Window Is Maximized The Next Time | P2 | **Passing** | `suites/settings/` |
 | TC-SET-025 | The Size Of The Panes Is Kept | P2 | **Passing** | `suites/settings/` |
 | TC-SET-026 | The Panes Are As They Were Left | P2 | **Passing** | `suites/settings/` |
+| TC-SET-027 | A Kept Size Smaller Than The Smallest Opens At The Smallest | P2 | **Passing** | `suites/settings/` |
 
 ## Tools docked — [22_tools_docked.md](22_tools_docked.md)
 
@@ -1071,6 +1143,10 @@ engine edge) are covered by `cargo test`.
 | TC-DOCK-039 | A Double-Click On A Problem Shows It In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-040 | A Big Merge Result Opened In The Main Window Is A File In The Json Query Tab | P1 | **Passing** | `suites/tools/` |
 | TC-DOCK-041 | The Website Button Opens The Site From Whichever Tab Is In Front | P2 | **Passing** | `suites/tools/` |
+| TC-DOCK-042 | Use In Validate Docked Shows The Validate Tab | P1 | **Passing** | `suites/tools/` |
+| TC-DOCK-043 | Create Schema Takes The Document Open In The Json Query Tab | P2 | **Passing** | `suites/tools/` |
+| TC-DOCK-044 | At Its Smallest The Main Window Has Room For Every Tab | P2 | **Passing** | `suites/tools/` |
+| TC-DOCK-045 | An Example Of The Tools Tab Is Tried In The Tool's Tab | P1 | **Passing** | `suites/tools/` |
 
 ## The website — [23_website.md](23_website.md)
 
@@ -1442,6 +1518,8 @@ engine edge) are covered by `cargo test`.
 | TC-WSP-337 | A Web Address Opened From The List While The Page Of A Tool Is In Front Brings The Json Query Tab Forward And Loads It | P1 | **Passing** | `suites/workspace/` |
 
 ## Coverage summary
+
+**2026-10-29, Create Schema, Validate's highlight, the tutorial's Tools tab:** 1083 → 1157 cases in 30 suites (TC-CSC-001 to 058, TC-VAL-019 to 026, TC-TUT-064 to 074, TC-DOCK-042 to 045, TC-SET-027, TC-TWIN-019). The cases: a schema made of three orders read back member by member through Copy (the types, `required`, a code of one shape, a date-time, a uuid, an IPv4 address, a list of words that may be empty), the list of patterns, Copy list and a row's menu exactly, every option (Draft, Patterns, Required, No other keys, Enums, Bounds), lists of addresses with an empty one, numbered keys and a map of uuids, Use in Validate, Save…, Open file…, a drop and the open document (001 to 023); a pattern opened, applied, refused, made plain, put back, any key, Reset, the schema typed in, and Use in Validate, Copy and Save… taking the changed schema (030 to 041); what a click points out, ⏶ ⏷ round the places, a box scrolled to the fortieth of forty (045 to 049); an enum's values ticked, unticked, put in, refused, made plain and put back (050 to 058); a problem's value, member, object and keyword (under `$defs` too) highlighted and scrolled to, and taken away (TC-VAL-019 to 026); the tutorial's Tools tab, ▶ Try it and Load samples for every tool (TC-TUT-064 to 074) and docked (TC-DOCK-045); the seventh tab docked and the smallest window (TC-DOCK-042 to 044, TC-SET-027). Twenty-four faults, one at a time, each killed. The cases found one fault of the app (the row picked of Create Schema's list going out of view when what it opens shortens the list), fixed.
 
 **2026-10-20, the right-click menu of a text:** 731 → 760 cases in 29 suites (TC-TXM-001 to 026, TC-SAT-049 to 051). Before the change a text had no menu (egui gives a box its keys and nothing else), and a right click on a selection threw the selection away. The cases: Paste, Cut, Copy and Select All in the query box and the source field, a right click inside a word that was taken keeps it (and Copy gives that word), one outside it does not (001 to 007); Paste in the empty Source pane loads a document (008); the Results' Text view, a file's Text view, a message in the status bar, the Find field and the hits of Find All (009 to 016, 026); every box of the Tools, Paste and Cut in one, the result and the error of Format as text that can be copied (017 to 021); the lines of the side-by-side view copy their text, the line being typed over has a box's menu and goes on being typed over, the Changes list and Validate's problems copy their path, message or line (022 to 025); the About window's version, its links and a known issue (TC-SAT-049 to 051). Run in a window of the Tools and docked (the main-view pass has 17 of them, the tools pass 9). Thirty-three faults, one at a time, each killed ([24_text_menus.md](24_text_menus.md), T1 to T33). The whole suite found two things: the error text's font (above, a fault of the change, fixed) and the menu of a changed side-by-side line, which now opens above the pointer near the foot of the window (TC-DIF-010 found its item by distance, and now by OCR).
 

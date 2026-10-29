@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Looks for damage that a slice of a Robot file can leave: a section header twice, a case id twice (in a suite or across
+"""Looks for damage that a slice of a Robot file can leave: a section header twice, a case among the keywords (appended
+after a Keywords section, Robot takes it as a keyword and never runs it), a case id twice (in a suite or across
 the suites of a folder), a keyword defined twice in one file or in a file and the resources it imports, a keyword whose
 name line has arguments in it. Prints what it finds; prints nothing else.
 
@@ -28,6 +29,8 @@ for path in files:
         if section in ("test cases", "test case") and re.match(r"^TC-", line):
             ids[line.split()[0]].append(f"{os.path.basename(path)}:{number}")
         if section in ("keywords", "keyword") and line and not line[0].isspace() and not line.startswith("#"):
+            if re.match(r"^TC-[A-Z]+-\d+ ", line):
+                print(f"{path}:{number}: a case among the keywords (written after the last section, Keywords?): {line[:60]!r}")
             if re.search(r"\s{2,}", line.strip()):
                 print(f"{path}:{number}: a keyword name with more than one cell: {line[:80]!r}")
             names[line.strip()] += 1

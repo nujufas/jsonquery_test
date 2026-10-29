@@ -24,6 +24,8 @@ Test Setup        Launch Jsonquery App
 Test Teardown     Close Jsonquery App
 
 *** Variables ***
+# Where the 🛠's hover is, under the toolbar at the right.
+@{TOOLS_HOVER}       700    20     500    80
 # The Merge page: the dropdown's current preset (its label), and the text of the
 # filter box under the command row.
 @{PRESET_LABEL}      120    24     225    20
@@ -78,9 +80,9 @@ TC-TWIN-004 Pressing The Button With The Window Open Brings It Forward
     Tools Window Should Read    Merge as    @{COMMAND_ROW}
 
 TC-TWIN-005 Every Tool Is In The List And Opens Its Page
-    [Documentation]    The tabs are Merge, Format, Diff, Patch and Validate
-    ...    schema; picking one shows its page, whose first box has a title of
-    ...    its own.
+    [Documentation]    The tabs are Merge, Format, Diff, Patch, Validate schema
+    ...    and Create schema; picking one shows its page, whose first box has a
+    ...    title of its own.
     [Tags]    p1
     Open Tool    format
     Page Should Show    Input    @{LEFT_HEADER}
@@ -90,6 +92,10 @@ TC-TWIN-005 Every Tool Is In The List And Opens Its Page
     Page Should Show    Document    @{LEFT_HEADER}
     Pick Tool    validate
     Page Should Show    Document    @{LEFT_HEADER}
+    Pick Tool    create
+    Page Should Show    Document    @{LEFT_HEADER}
+    Tools Window Should Read    No other keys    @{COMMAND_ROW}
+    Switch To Window    ${TOOLS_WINDOW}
     Pick Tool    merge
     Page Should Show    Files    @{MERGE_LEFT_HEADER}
 
@@ -277,3 +283,14 @@ TC-TWIN-018 The Line Between The Panes Can Be Dragged
     Sleep    0.8s
     ${after}    ${y}=    Find Text In Region    452    54    260    24    Result
     Should Be True    ${after} > 580    msg=The Result title is still at x=${after}
+
+TC-TWIN-019 The Tools Button's Hover Names Every Tool
+    [Documentation]    Hovering the 🛠 in the toolbar says what the Tools are: merge, format,
+    ...    diff, patch, validate and create schemas.
+    [Tags]    p3    window-only
+    Switch To Main Window
+    Move Mouse To    ${TOOLS_X}    ${TOOLS_Y}
+    Sleep    1.2s
+    Wait Until Keyword Succeeds    6x    0.5s
+    ...    Region Should Contain Text    @{TOOLS_HOVER}    create schemas
+    Region Should Contain Text    @{TOOLS_HOVER}    validate

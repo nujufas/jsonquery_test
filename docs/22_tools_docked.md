@@ -87,6 +87,17 @@ shift for the tab it goes to. The row, the buttons and the status bar are read b
 | TC-DOCK-039 | A Double-Click On A Problem Shows It In The Json Query Tab | P1 |
 | TC-DOCK-040 | A Big Merge Result Opened In The Main Window Is A File In The Json Query Tab | P1 |
 | TC-DOCK-041 | The Website Button Opens The Site From Whichever Tab Is In Front | P2 |
+| TC-DOCK-042 | Use In Validate Docked Shows The Validate Tab | P1 |
+| TC-DOCK-043 | Create Schema Takes The Document Open In The Json Query Tab | P2 |
+| TC-DOCK-044 | At Its Smallest The Main Window Has Room For Every Tab | P2 |
+| TC-DOCK-045 | An Example Of The Tools Tab Is Tried In The Tool's Tab | P1 |
+
+The row has a seventh tab since 2026-10-29, **Create Schema** (centre x = 586 docked, 505 in the Tools
+window), and the main window cannot be made narrower than 700 (it was 640), which is what the row of tabs
+needs with the theme and the tutorial beside it: TC-DOCK-002 and 020 take the new tab in, TC-DOCK-044 opens
+a window kept at 600 wide (it is 700, and Create Schema is whole in it), TC-DOCK-042 and 043 are the page's
+links to the others (Use in Validate, Open document) and TC-DOCK-045 is the docked counterpart of the
+tutorial's Try it on a tool's lesson (`tutorial_tools.robot`, tagged `window-only`).
 
 ## The other suites, docked
 

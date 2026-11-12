@@ -15,7 +15,7 @@
 # Environment (all optional):
 #   JQ_TEST_RESULTS            where the results go          (default: results/parallel/)
 #   JQ_PARALLEL_DISPLAY_BASE   first display, one per lane   (default: 120, so :120, :121, ...)
-#   JQ_APP_DIR, JQ_TEST_BINARY, JQ_TEST_NO_BUILD             as for run.sh
+#   JQ_APP_DIR, JQ_TEST_BINARY, JQ_TEST_MCP_BINARY, JQ_TEST_NO_BUILD    as for run.sh
 # Each lane starts its own virtual display, window manager and D-Bus (for the file dialogs), and
 # a lane needs 1-2 GB of memory with a debug build of the app: about 6 lanes suit a 16-thread
 # machine with 32 GB. More lanes than that run, but timing-sensitive cases get less reliable.
@@ -55,9 +55,13 @@ export JQ_APP_DIR="$APP_DIR"
 if [ -z "${JQ_TEST_NO_BUILD:-}" ]; then
     log "Building jsonquery_gui..."
     (cd "$APP_DIR" && cargo build -p jsonquery_gui)
+    # The build with the MCP server, for suites/mcp/, in a target folder of its own (see run.sh).
+    log "Building jsonquery_gui with the MCP server, and jsonquery-mcp (target/mcp)..."
+    (cd "$APP_DIR" && cargo build -p jsonquery_gui -p jsonquery-mcp --features jsonquery_gui/mcp --target-dir target/mcp)
 fi
 BINARY="${JQ_TEST_BINARY:-$APP_DIR/target/debug/jsonquery_gui}"
 [ -x "$BINARY" ] || { log "No binary at $BINARY." >&2; exit 1; }
+MCP_BINARY="${JQ_TEST_MCP_BINARY:-$APP_DIR/target/mcp/debug/jsonquery_gui}"
 
 RESULTS="${JQ_TEST_RESULTS:-$TEST_DIR/results/parallel}"
 BASE="${JQ_PARALLEL_DISPLAY_BASE:-120}"
@@ -66,6 +70,17 @@ mkdir -p "$RESULTS/.bin"
 FROZEN="$RESULTS/.bin/jsonquery_gui"
 trap 'rm -rf "$RESULTS/.bin" "$RESULTS/tmp"' EXIT
 cp --reflink=auto "$BINARY" "$FROZEN"
+# The MCP build and jsonquery-mcp, frozen together: the app looks for the program beside itself.
+FROZEN_MCP="$RESULTS/.bin/mcp/jsonquery_gui"
+if [ -x "$MCP_BINARY" ]; then
+    mkdir -p "$RESULTS/.bin/mcp"
+    cp --reflink=auto "$MCP_BINARY" "$FROZEN_MCP"
+    if [ -x "$(dirname "$MCP_BINARY")/jsonquery-mcp" ]; then
+        cp --reflink=auto "$(dirname "$MCP_BINARY")/jsonquery-mcp" "$RESULTS/.bin/mcp/"
+    fi
+else
+    log "No MCP build at $MCP_BINARY: the cases of suites/mcp/ will fail." >&2
+fi
 
 # -- split the suite files over the lanes: the biggest first, each to the emptiest lane -------
 mapfile -t ASSIGNMENT < <("$VENV_DIR/bin/python" - "$TEST_DIR" "$LANES" <<'PY'
@@ -106,7 +121,7 @@ for line in "${ASSIGNMENT[@]}"; do
         # the results: /tmp is often a small tmpfs, and a full one fails cases with "Disk quota exceeded".
         TMPDIR="$RESULTS/tmp/lane$lane" \
             JQ_TEST_DISPLAY="$display" JQ_TEST_RESULTS="$RESULTS/lane$lane" \
-            JQ_TEST_NO_BUILD=1 JQ_TEST_BINARY="$FROZEN" \
+            JQ_TEST_NO_BUILD=1 JQ_TEST_BINARY="$FROZEN" JQ_TEST_MCP_BINARY="$FROZEN_MCP" \
             "$TEST_DIR/run.sh" "${lane_files[0]}" "${ROBOT_ARGS[@]}" --runemptysuite "${lane_files[@]:1}" \
             >"$RESULTS/lane$lane.log" 2>&1
     ) &

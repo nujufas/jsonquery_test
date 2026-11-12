@@ -76,6 +76,12 @@ APP_DIR = os.path.abspath(
 BINARY_PATH = os.environ.get(
     "JQ_TEST_BINARY", os.path.join(APP_DIR, "target", "debug", "jsonquery_gui")
 )
+# The build with the MCP server (`--features jsonquery_gui/mcp`, built by run.sh into a target
+# folder of its own so that it never takes the place of the build above), with its stdio bridge
+# `jsonquery-mcp` beside it, where the app looks for it. `Launch Jsonquery App  build=mcp`.
+MCP_BINARY_PATH = os.environ.get(
+    "JQ_TEST_MCP_BINARY", os.path.join(APP_DIR, "target", "mcp", "debug", "jsonquery_gui")
+)
 
 XVFB_DISPLAY = os.environ.get("JQ_TEST_DISPLAY", ":99")
 XVFB_SCREEN_SIZE = "1280x900x24"
@@ -313,7 +319,14 @@ class AppLibrary:
 
     @keyword("Launch Jsonquery App")
     def launch_jsonquery_app(
-        self, timeout=10, settings=None, keep_home=False, temp_dir=None, workspace=None
+        self,
+        timeout=10,
+        settings=None,
+        keep_home=False,
+        temp_dir=None,
+        workspace=None,
+        build=None,
+        home_files=None,
     ):
         """Starts a fresh jsonquery_gui process and waits for its window.
 
@@ -326,16 +339,33 @@ class AppLibrary:
         the folder the app makes its temporary files in (TMPDIR), to look into it.
         `workspace`: files to be in the workspace (the `workspace` folder of the settings
         folder, which is where the app keeps it unless the user chose another) before the
-        app starts: a dictionary from the path of a file in it, with `/`, to its text."""
-        if not os.path.exists(BINARY_PATH):
-            raise AssertionError(
-                f"{BINARY_PATH} not found -- run `cargo build -p jsonquery_gui` first."
+        app starts: a dictionary from the path of a file in it, with `/`, to its text.
+        `build`: `mcp` for the build with the MCP server (MCP_BINARY_PATH), or the path of
+        another binary; none is the usual one. `home_files`: files to be in the settings
+        folder before the app starts (`mcp.json`), as `workspace` is for the workspace."""
+        binary = BINARY_PATH
+        if build == "mcp":
+            binary = MCP_BINARY_PATH
+        elif build:
+            binary = str(build)
+        if not os.path.exists(binary):
+            how = (
+                "run `cargo build -p jsonquery_gui -p jsonquery-mcp --features jsonquery_gui/mcp"
+                " --target-dir target/mcp` in the app's checkout (run.sh does) first"
+                if build == "mcp"
+                else "run `cargo build -p jsonquery_gui` first"
             )
+            raise AssertionError(f"{binary} not found -- {how}.")
         if not (keep_home and self._app_home and os.path.isdir(self._app_home)):
             self._forget_app_home()
             self._app_home = self._make_app_home()
         if workspace:
             self._write_workspace(workspace)
+        for rel, text in dict(home_files or {}).items():
+            path = os.path.join(self._app_home, *[p for p in str(rel).split("/") if p])
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text)
         # Every app starts as the run's profile says, whatever the case before it set.
         self._docked_dy = int(os.environ.get("JQ_DOCKED_DY", "0") or 0)
         # With `keep_home` and no text of its own the file is the one the last launch left.
@@ -370,7 +400,7 @@ class AppLibrary:
         # there instead of nowhere.
         app_log = os.environ.get("JQ_TEST_APP_LOG")
         self._app_proc = subprocess.Popen(
-            [BINARY_PATH],
+            [binary],
             env=env,
             stdout=subprocess.DEVNULL,
             stderr=open(app_log, "a") if app_log else subprocess.DEVNULL,

@@ -1517,7 +1517,95 @@ engine edge) are covered by `cargo test`.
 | TC-WSP-336 | With The Tools Docked The URLs Chip Is Where It Is Under The Row Of Tabs And Narrows The List | P2 | **Passing** | `suites/workspace/` |
 | TC-WSP-337 | A Web Address Opened From The List While The Page Of A Tool Is In Front Brings The Json Query Tab Forward And Loads It | P1 | **Passing** | `suites/workspace/` |
 
+## The MCP server — [26_mcp_server.md](26_mcp_server.md)
+
+| ID | Title | Priority | Status | Suite |
+|---|---|---|---|---|
+| TC-MCP-001 | The Plug Is The Last Of The Buttons At The Right Of The Status Bar | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-002 | Hovering The Plug Says What It Is For And That A Click Sets It Up | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-003 | A Click On The Plug Opens Its Panel And A Click Elsewhere Closes It | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-004 | The Panel Of A First Start: Off, On Port 7457, Read, Answers Of 24 KB, And Nothing Written | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-005 | Start Makes The Server Answer On Its Address, Turns The Plug Green And Writes mcp.json For Its Owner | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-006 | Stop Stops The Server, Greys The Plug And Says Not Running | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-007 | Hovering The Plug While The Server Runs Gives Its Address | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-008 | The Port Is Changed While The Server Is Stopped, Kept, And Listened On | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-009 | What Is Not A Port Is Not Taken | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-010 | A Port Another Program Holds Is Said In Red, And The Plug Stays Grey | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-011 | Read, The Default, Lets The Assistant Look But Not Change What The Window Shows | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-012 | Edit, Chosen While The Server Runs, Works From The Next Call And Is Kept | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-013 | Going Back To Read Refuses The Next Call That Would Show | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-014 | Claude Code's Button Copies The Command That Adds The Server, With Its Token | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-015 | VS Code's And JSON's Buttons Copy Entries Of Type http With The Address And The Token | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-016 | Claude Desktop's And QuickAI's Buttons Copy What Starts jsonquery-mcp, With No Token | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-017 | What Claude Code's Command Holds Reaches The Server | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-018 | Copied Is Said At The End Of The Last Row For A Few Seconds, And Nothing Moves | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-019 | Without jsonquery-mcp Beside The App, Claude Desktop And QuickAI Are Greyed Out And Say Why | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-020 | Start It With JsonQuery Is Kept, And The Next Start Of The App Starts The Server | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-021 | Without It, The Next Start Leaves The Server Off, Even If It Ran When The App Was Closed | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-022 | The Panel Names The Assistant That Connected And Counts Its Calls | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-023 | The Last Calls Are Listed Newest First, A Refused One In Red | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-024 | Only The Last Five Calls Are Listed, All Of Them Counted | P3 | **Passing** | `suites/mcp/` |
+| TC-MCP-025 | New Token: The Old One Is Refused, The New One Taken, And The Server Goes On | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-026 | The Token Is Kept Between Starts Of The App | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-027 | A Request Without The Token, From A Web Page Or For Another Host Is Refused | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-028 | A Spinner Turns Beside The Plug While An Assistant's Call Runs | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-029 | Closing The App Stops The Server | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-030 | An mcp.json That Cannot Be Used Is Said In The Panel, And The Defaults Stand In | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-031 | With The Tools Docked The Plug Is Left Of The Undock Button, And Its Panel Opens Above It | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-032 | Answers: A Size Chosen Is Said In Tokens, Kept, And Used From The Next Call | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-033 | Always Allow Is Greyed Out With Read, Is Ticked With Edit, And Is Kept | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-040 | get_state Says What The Window Shows: The Document, The Query And Its Results | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-041 | run_query Answers The Assistant And Changes Nothing In The Window | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-042 | set_query Puts The Query In The Box And Runs It, And get_results Gives What The Window Shows | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-043 | set_query In JSONPath Picks JSONPath In The Window | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-044 | open_document Opens A File As The Source, And The Window Shows It | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-045 | open_document With JSON Text Shows It As The Source | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-046 | open_document Refuses A Web Address And A Relative Path, And The Window Keeps Its Document | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-047 | reveal Opens The Source Tree Down To A Value | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-048 | workspace_list Gives The Saved Queries, And workspace_open Opens One In The Query Box | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-049 | workspace_open Never Loads A Web Address, And workspace_read Gives It | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-050 | A Call That Shows Something Works While The Window Is Minimized | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-051 | The User's Own Query Runs While The Assistant's Long Query Runs | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-052 | search Finds A Value With Its Pointer | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-053 | describe Gives The Shape Of The Document Without Its Data | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-054 | query_help Gives The App's Lessons And Where Its jq Differs From jq | P3 | **Passing** | `suites/mcp/` |
+| TC-MCP-055 | Read Refuses Every Call That Would Change The Window, And The Panel Lists Them In Red | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-056 | A Long Answer Comes A Page At A Time | P3 | **Passing** | `suites/mcp/` |
+| TC-MCP-070 | jsonquery-mcp Answers The Handshake And Lists The Tools While The App Is Closed | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-071 | A Call Before The Server Was Ever Set Up Says How To Set It Up | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-072 | A Call While The App Is Closed Says That JsonQuery Is Not Running | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-073 | A Call Through jsonquery-mcp Reaches The Running App, Which Shows It And Names The Assistant | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-074 | jsonquery-mcp Follows A New Token And A New Port By Itself | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-075 | jsonquery-mcp Says What It Is When Run By Hand | P3 | **Passing** | `suites/mcp/` |
+| TC-MCP-076 | Through jsonquery-mcp An Answer Is Kept To The Size Of Page The User Set | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-080 | Deleting From The Workspace Is Asked First, And Don't Allow Keeps The Item | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-081 | Allow Deletes It: A Folder With What Is In It | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-082 | Escape Is Don't Allow | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-083 | Always Allow In The Question Does It, Ticks The Panel's Box, And Nothing Is Asked After | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-084 | With Always Allow Ticked Nothing Is Asked, And Unticking It Brings The Questions Back | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-085 | A New Item Is Saved Without A Question, And Replacing One Is Asked First | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-086 | Folders Are Made, And Items Moved And Renamed, Without A Question | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-087 | A File Is Saved After The User Allows It, As Indented As Asked, And Replaced Only With replace | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-088 | A Web Address Is Loaded As The Source Only When The User Allows It | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-089 | A Page Of The Tools Is Shown With The Assistant's Values In Its Boxes, Run | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-090 | With Read Nothing Is Written, Moved, Deleted, Fetched Or Shown, And Nothing Is Asked | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-091 | While A Question Waits The Panel Says So | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-100 | format_json Gives The Document Formatted, And The Window Keeps What It Shows | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-101 | diff_documents Gives The Differences By Pointer, And Its Patch, Kept As last, Turns The Left Into The Right | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-102 | merge_documents Appends Or Merges Deep, And Keeps The Merge As last | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-103 | validate_json Says What Is Wrong And Where, A Page At A Time | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-104 | create_schema Describes The Document, And The Schema Kept As last Checks It | P2 | **Passing** | `suites/mcp/` |
+| TC-MCP-105 | document_info Says What The Open Document Is, Without Its Data | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-106 | A File Is Read Out Of Sight, And The Window Keeps Its Own Document | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-107 | What run_query Gives Is Kept As last: Queried Again, And Saved Without Passing Through The Answer | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-108 | With Answers Of 4 KB Every Long Answer Is A Page Of 4 KB At Most, And Its Pages Give All Of It | P1 | **Passing** | `suites/mcp/` |
+| TC-MCP-109 | What A Model Reads Of The Tools Before It Does Anything Is Short | P3 | **Passing** | `suites/mcp/` |
+
 ## Coverage summary
+
+**2026-11-12, the MCP server's second round (Edit, Always allow, Answers, out of sight):** 1211 → 1236 cases in 31 suites (TC-MCP-032, 033, 076, 080 to 091, 100 to 109; the 54 before them adapted). The panel's Allow became Read and Edit with Always allow (greyed out with Read), and an Answers row came (the most an answer holds, 4 to 200 KB, said in tokens); the rows above it moved up by one. New: the question over the main window (Allow, Always allow, Don't allow, Escape, and the panel saying an assistant waits) before a delete, a replace, a save to a file or a web address; saving, making folders and moving in the workspace without a question; save_file, open_url and show_in_tool; Read refusing all of it; the six Tools as tools; documents read out of sight (a file, JSON given, "last"); document_info; pages of the size set, through jsonquery-mcp too; the list of tools a model reads. Twelve faults planted in the app were each caught (see [26_mcp_server.md](26_mcp_server.md)).
+
+**2026-11-11, the MCP server (the build with MCP):** 1157 → 1211 cases in 31 suites (TC-MCP-001 to 031, 040 to 056, 070 to 075). The 🔌 and its panel (where it is, its tooltips, Start and Stop, the port, Allow, the Add to buttons and what each copies, Copied, Start it with JsonQuery, who is connected and the last calls, New token, a port that is taken, an mcp.json that cannot be used, docked); an assistant's calls seen in the window (get_state, run_query, set_query, open_document, reveal, the workspace, a minimized window, the user's query beside the assistant's, Read only refusing what would change the window); and `jsonquery-mcp` (the tools while the app is closed, a call before the server was set up and while the app is closed, a call that reaches the app and names its assistant, a new token and a new port). The suite runs the MCP build (`target/mcp`, built by run.sh and frozen by run_parallel.sh) and is tagged `undocked-only`. The cases found three faults of the app, fixed (see [26_mcp_server.md](26_mcp_server.md)).
 
 **2026-10-29, Create Schema, Validate's highlight, the tutorial's Tools tab:** 1083 → 1157 cases in 30 suites (TC-CSC-001 to 058, TC-VAL-019 to 026, TC-TUT-064 to 074, TC-DOCK-042 to 045, TC-SET-027, TC-TWIN-019). The cases: a schema made of three orders read back member by member through Copy (the types, `required`, a code of one shape, a date-time, a uuid, an IPv4 address, a list of words that may be empty), the list of patterns, Copy list and a row's menu exactly, every option (Draft, Patterns, Required, No other keys, Enums, Bounds), lists of addresses with an empty one, numbered keys and a map of uuids, Use in Validate, Save…, Open file…, a drop and the open document (001 to 023); a pattern opened, applied, refused, made plain, put back, any key, Reset, the schema typed in, and Use in Validate, Copy and Save… taking the changed schema (030 to 041); what a click points out, ⏶ ⏷ round the places, a box scrolled to the fortieth of forty (045 to 049); an enum's values ticked, unticked, put in, refused, made plain and put back (050 to 058); a problem's value, member, object and keyword (under `$defs` too) highlighted and scrolled to, and taken away (TC-VAL-019 to 026); the tutorial's Tools tab, ▶ Try it and Load samples for every tool (TC-TUT-064 to 074) and docked (TC-DOCK-045); the seventh tab docked and the smallest window (TC-DOCK-042 to 044, TC-SET-027). Twenty-four faults, one at a time, each killed. The cases found one fault of the app (the row picked of Create Schema's list going out of view when what it opens shortens the list), fixed.
 

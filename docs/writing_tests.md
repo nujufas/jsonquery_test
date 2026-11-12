@@ -317,6 +317,33 @@ Nothing Should Be Pointed Out    @{CREATE_DOCUMENT}            # no orange at al
   view by scrolling, so a row low in the list is not where it was before the click. Read it in the part of the
   list that is on show (`List Above Enum Should Read`), or on the line of what is open, not at its old y.
 
+## Writing a case about the MCP server (the build with MCP)
+
+The 🔌 and its server are only in the build with the cargo feature `mcp` ([26_mcp_server.md](26_mcp_server.md)). A case of
+`suites/mcp/` starts that build and talks to its server as an assistant would:
+
+| Keyword | What it does |
+|---|---|
+| `Launch Mcp App  access=…  start_with_app=…  always_allow=…  answer_kb=…` | the MCP build, with an `mcp.json` that gives it a free port (`${MCP_PORT}`): never 7457, which a JsonQuery of your own may hold |
+| `Launch Mcp App Serving  access=edit` | the same, the server started with the app, and an assistant's handshake made |
+| `Open Mcp Panel`, `Start Mcp Server From Panel`, `Close Mcp Panel` | the panel at its fixed points (`resources/mcp.resource`) |
+| `Choose Access  read\|edit`, `Click Always Allow`, `Choose Answer Size  8` | the panel's Allow row and Answers row, waiting for `mcp.json` to have the choice |
+| `Question Should Ask  text…`, `Answer The Question  Allow\|Always allow\|Don't allow`, `No Question Should Be Shown` | the question over the main window, found by its buttons' fill (`Question Buttons`) |
+| `Mcp Tool Should Succeed  name  {json}`, `Mcp Tool Should Fail  name  {json}  expected=…` | a `tools/call`; gives the answer as JSON, or the error's text |
+| `Start Mcp Call` / `Wait For Mcp Call` | a call on a thread of its own, for what the window does while it is out |
+| `Bridge Tool Call  name  {json}  home=…` | the same call through `jsonquery-mcp`, as Claude Desktop makes it |
+| `Mcp Settings`, `Wait Until Mcp Setting Is  key  value` | what `mcp.json` holds |
+
+- Take the pointer off a button before reading it: egui lights the button under the pointer, and OCR then reads nothing of
+  its label (the panel's Start/Stop).
+- `NONE` is Python's `None` to Robot for an argument whose default is `None`: a request without its token is
+  `Mcp Post  …  send_token=${False}`, not `token=NONE`.
+- A tool's arguments are a JSON object in one cell (`{"query": ".a"}`); a number given as text is taken, as the server does.
+- A call that asks the user waits for the answer: make it with `Start Mcp Call`, answer, then `Wait For Mcp Call`. A
+  call that must ask nothing (Always allow) is `Call Mcp Tool  …  timeout=10`, which fails if a question holds it.
+- OCR does not read the question's small buttons on the dimmed window, nor a size of the Answers row ("24 KB" comes back
+  as "24KB"): the keywords find them by their fill and by fixed points.
+
 ## Writing a case that also runs with the Tools docked
 
 `./run_docked.sh` runs the suites a second time with the Tools docked in the main window as tabs

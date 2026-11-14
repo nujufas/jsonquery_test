@@ -535,12 +535,12 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-283 | A Query File Dropped On The Query Pane That Is In Its Own Window Goes In The Box There | P2 |
 | TC-WSP-284 | A Query Carried Out Of The List Opens Nothing While The Query Pane Is In A Window Of Its Own | P2 |
 
-### With the Tools docked (`suites/workspace/workspace_docked.robot`, 9 cases)
+### With the Tools docked (`suites/workspace/workspace_docked.robot`, 10 cases)
 
 | ID | Title | Priority |
 |---|---|---|
 | TC-WSP-210 | With The Tools Docked The Pane Is Under The Row Of Tabs | P1 |
-| TC-WSP-211 | The Chips Follow The Page That Is In Front | P1 |
+| TC-WSP-211 | The Chips Stay As They Are Whatever Page Comes In Front | P1 |
 | TC-WSP-212 | A Chip That Was Picked By Hand Stays While The Same Page Is In Front | P2 |
 | TC-WSP-279 | With The Page Of A Tool In Front The Status Bar Has The Button First And The Text Of The Page After It | P1 |
 | TC-WSP-280 | With The Page Of A Tool In Front A Query File Dropped On The Window Is The Page's And Not The Query Box's | P1 |
@@ -548,6 +548,26 @@ store's every refusal) is checked there, in the app repository; what these cases
 | TC-WSP-282 | A Query Opened From The List While The Page Of A Tool Is In Front Brings The Json Query Tab Forward | P1 |
 | TC-WSP-336 | With The Tools Docked The URLs Chip Is Where It Is Under The Row Of Tabs And Narrows The List | P2 |
 | TC-WSP-337 | A Web Address Opened From The List While The Page Of A Tool Is In Front Brings The Json Query Tab Forward And Loads It | P1 |
+| TC-WSP-347 | A Schema Opened From The List Brings Validate Forward And Leaves The Chips As They Were | P1 |
+
+### A document opened on the page in front (`suites/workspace/workspace_docked_open.robot`, 8 cases)
+
+With the Tools docked, a document of the list goes to the page that is in front: Validate's, Patch's and Create Schema's
+**Document** box, Format's **Input**, Diff's first empty side (else its right), one more file of Merge's list (once); the
+page stays in front. With the Json Query tab in front it is the Source, as it always was. The button under the list and the
+menu of a right click say where it goes (*Open in Validate*, *Add to Merge*, *Open as Source*). The chips are the user's
+alone: no page coming in front, and no item opened, picks one (TC-WSP-211, TC-WSP-347).
+
+| ID | Title | Priority |
+|---|---|---|
+| TC-WSP-339 | A Document Opened From The List With Validate In Front Goes In Its Document Box | P1 |
+| TC-WSP-340 | A Document Opened From The List With Format In Front Goes In Its Input Box, Ready To Format | P1 |
+| TC-WSP-341 | A Document Opened From The List With Diff In Front Goes In Its Left Side, And The Next In Its Right | P1 |
+| TC-WSP-342 | A Document Opened From The List With Patch In Front Goes In Its Document Box, Not The Patch Box | P1 |
+| TC-WSP-343 | A Document Opened From The List With Create Schema In Front Goes In Its Document Box | P1 |
+| TC-WSP-344 | A Document Opened From The List With Merge In Front Is One More File Of Its List, Once | P1 |
+| TC-WSP-345 | The Menu Of A Right Click On A Document Says Where It Goes, And Puts It There | P2 |
+| TC-WSP-346 | With The Json Query Tab In Front A Document Opened From The List Is The Source, As Ever | P1 |
 
 ## Run both ways
 
@@ -556,7 +576,7 @@ The suites run with the Tools in a window of their own (`./run_parallel.sh`) and
 cases that need the **Tools window** — `Save schema…` on Validate, `Use as schema` and the like, which bring a window
 forward, and the files that go to Merge — are tagged `window-only` and run in a window of their own only;
 `workspace_docked.robot` has the cases that are about the docked Tools and the pane (the pane is under the row of tabs;
-the chips follow the page in front; with a page in front there is no Query pane, a dropped file is the page's, and the
+the chips stay as the user picked them; with a page in front there is no Query pane, a dropped file is the page's, and the
 button of the status bar is first with the page's text after it). `undocked-only` is TC-WSP-247, which reads the right end
 of the status bar as it is without the 🗗. The two cases of the web addresses that are docked (TC-WSP-336, the sixth chip under the
 row of tabs, and TC-WSP-337, a web address opened from the list while a tool's page is in front brings the Json Query tab forward
@@ -671,6 +691,14 @@ What failed on the way, and what was done:
   label is on the line of that text (`Kiama items`): it is read in a crop of its own now, and passed 3 of 3 alone undocked and 3 of 3 docked.
 - **The last full run, 322 of 323.** TC-WSP-249 (an older case about a file that is dropped: its first step, a double click right after the launch, did not
   register, and the Query row never said `scratch.jq`) failed in that one run; it passed 3 of 3 alone, and in the baseline run and in the first full run.
+
+**2026-11-13, a document on the page in front, and chips that are the user's.** With the Tools docked, a document opened
+from the list goes to the page in front (`workspace_docked_open.robot`, TC-WSP-339 to 346), and no page coming in front, nor
+an item opened, picks a chip any more (TC-WSP-211 now says that, TC-WSP-347 new). Found while they were written: OCR reads
+the file's name in a box's title without its dot ("people json"). Eight faults planted one at a time (documents always to
+the Source; Validate's Schema box and Patch's Patch box taking the document; Diff always the left side; Merge given nothing;
+the button's label and the menu's label left as "Open as Source"; the chips following Validate again): all killed. Runs: the
+docked workspace suites 18 of 18; the whole suite and the docked pass, see the matrix.
 
 ## Faults put into the app, one at a time
 

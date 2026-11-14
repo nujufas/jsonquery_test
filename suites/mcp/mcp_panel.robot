@@ -1,7 +1,7 @@
 *** Settings ***
-Documentation     The 🔌 of the build with the MCP server and the panel it opens -- see docs/26_mcp_server.md.
+Documentation     The 🔌 of the MCP server and the panel it opens -- see docs/26_mcp_server.md.
 ...
-...               The build with MCP (`--features jsonquery_gui/mcp`, which run.sh builds into target/mcp) has a 🔌
+...               The app (every build but those named _nomcp, made with --no-default-features) has a 🔌
 ...               at the right of the status bar, the last of its buttons there, so the others stay where they are in
 ...               both builds. A click on it opens a panel that keeps one size: Start/Stop, the address, what the
 ...               assistant may do (Read or Edit, and Always allow), how big an answer may be, buttons that copy what
@@ -22,11 +22,16 @@ Test Teardown     Run Keywords    Release Ports    AND    Close Jsonquery App
 *** Variables ***
 ${ABOUT_WINDOW}       JsonQuery — About
 ${SETTINGS_WINDOW}    JsonQuery — Settings
+# The tooltip of the green button, whose first line is longer than the grey one's; and the tooltip of QuickAI's button,
+# near the second row of Add to.
+@{WORKING_TIP}        560    720    640    60
+@{QUICKAI_TIP}        440    560    760    110
 
 *** Test Cases ***
-TC-MCP-001 The Plug Is The Last Of The Buttons At The Right Of The Status Bar
-    [Documentation]    From the right: ⓘ, 🌐, ⚙ where they are in the build without MCP, then the 🔌, and nothing left of
-    ...    it; the workspace's button is at the other end of the bar.
+TC-MCP-001 The MCP Button Is Beside The Settings Button At The Right Of The Status Bar
+    [Documentation]    From the right: ⓘ, 🌐, ⚙ where they are in the build without MCP, then the MCP button (a plug with
+    ...    "AI"), grey, and nothing left of it with the Tools in a window; the workspace's button is at the other end of
+    ...    the bar.
     [Tags]    p1
     # The first app on a display that has just started draws its first frames late.
     Wait Until Keyword Succeeds    10x    0.3s    Something Should Be Drawn At    1181
@@ -75,7 +80,7 @@ TC-MCP-004 The Panel Of A First Start: Off, On Port 7457, Read, Answers Of 24 KB
     ...    6,000 tokens), it would not start with the app, and looking at the panel writes no mcp.json (the token in
     ...    it is made when it is first needed).
     [Tags]    p1
-    [Setup]    Launch Jsonquery App    build=mcp
+    [Setup]    Launch Jsonquery App
     ${exists}=    Mcp Settings File Exists
     Should Not Be True    ${exists}    msg=mcp.json is there before anything was done
     Open Mcp Panel
@@ -94,17 +99,17 @@ TC-MCP-004 The Panel Of A First Start: Off, On Port 7457, Read, Answers Of 24 KB
     ${exists}=    Mcp Settings File Exists
     Should Not Be True    ${exists}    msg=Looking at the panel wrote mcp.json
 
-TC-MCP-005 Start Makes The Server Answer On Its Address, Turns The Plug Green And Writes mcp.json For Its Owner
-    [Documentation]    Start: the server listens on the port the address shows, the 🔌 turns green, the panel says that
-    ...    no assistant has connected yet, and mcp.json has the port, a token of 64 hex digits and the access, and can
-    ...    be read by its owner only.
+TC-MCP-005 Start Makes The Server Answer On Its Address And Writes mcp.json For Its Owner, The Button Still Grey
+    [Documentation]    Start: the server listens on the port the address shows, the panel says that no assistant has
+    ...    connected yet, and mcp.json has the port, a token of 64 hex digits and the access, and can be read by its
+    ...    owner only. The button stays grey: no assistant works with the app yet, and a handshake is no work.
     [Tags]    p1
     Open Mcp Panel
     Start Mcp Server From Panel
     Region Should Contain Text    @{MCP_ADDRESS_ROW}    127.0.0.1:${MCP_PORT}/mcp
     Panel Line Should Say    No assistant has connected yet
     Panel Line Should Say    No calls yet
-    Plug Should Be Green
+    Plug Should Not Be Green
     ${kept}=    Mcp Settings
     Should Be Equal As Integers    ${kept}[port]    ${MCP_PORT}
     Should Match Regexp    ${kept}[token]    ^[0-9a-f]{64}$
@@ -113,19 +118,23 @@ TC-MCP-005 Start Makes The Server Answer On Its Address, Turns The Plug Green An
     Should Be Equal    ${mode}    600
     ${answer}=    Mcp Initialize
     Should Be Equal    ${answer}[serverInfo][name]    jsonquery
+    Plug Should Not Be Green
 
-TC-MCP-006 Stop Stops The Server, Greys The Plug And Says Not Running
-    [Documentation]    Stop: nothing listens on the port any more, the 🔌 is no longer green, the panel says Not running
-    ...    and offers Start again, in the same place.
+TC-MCP-006 Stop Stops The Server, Greys The Button At Once And Says Not Running
+    [Documentation]    Stop: nothing listens on the port any more, the button that an assistant's call had turned green
+    ...    is grey at once (not a minute later), the panel says Not running and offers Start again, in the same place;
+    ...    started again, it stays grey until an assistant calls.
     [Tags]    p1
     Open Mcp Panel
     Start Mcp Server From Panel
+    Make An Assistant Call
     Plug Should Be Green
     Stop Mcp Server From Panel
     Panel Line Should Say    Not running
     Plug Should Not Be Green
+    Mcp Server Should Not Answer    port=${MCP_PORT}
     Start Mcp Server From Panel
-    Plug Should Be Green
+    Plug Should Not Be Green
 
 TC-MCP-007 Hovering The Plug While The Server Runs Gives Its Address
     [Tags]    p2
@@ -186,7 +195,7 @@ TC-MCP-010 A Port Another Program Holds Is Said In Red, And The Plug Stays Grey
     Start Mcp Server From Panel
     Panel Line Should Say    No assistant has connected yet
     Region Should Not Contain Color    @{MCP_STATUS_LINE}    @{MCP_ERROR_COLOR}    tolerance=30
-    Plug Should Be Green
+    Plug Should Not Be Green
 
 TC-MCP-011 Read, The Default, Lets The Assistant Look But Not Change What The Window Shows
     [Documentation]    With Read an assistant reads the state, but its set_query is refused with a message that says
@@ -259,8 +268,8 @@ TC-MCP-015 VS Code's And JSON's Buttons Copy Entries Of Type http With The Addre
 
 TC-MCP-016 Claude Desktop's And QuickAI's Buttons Copy What Starts jsonquery-mcp, With No Token
     [Documentation]    The assistants that start their servers themselves are given `jsonquery-mcp`, beside the app,
-    ...    which reads the token from mcp.json: what is copied for them has none. QuickAI's is the line for its
-    ...    Extra command-line arguments, the JSON in single quotes.
+    ...    which reads the token from mcp.json: what is copied for them has none. QuickAI's is the same mcpServers
+    ...    entry, which its MCP servers take as "the JSON of a server's instructions".
     [Tags]    p1
     Open Mcp Panel
     Start Mcp Server From Panel
@@ -271,12 +280,14 @@ TC-MCP-016 Claude Desktop's And QuickAI's Buttons Copy What Starts jsonquery-mcp
     Should Be Equal    ${entry}[command]    ${bridge}
     Should Be Empty    ${entry}[args]
     Should Not Contain    ${text}    ${kept}[token]
+    ${desktop}=    Set Variable    ${text}
     ${text}=    Copy Configuration    ${MCP_QUICKAI_X}    ${MCP_ADD_Y2}
-    Should Start With    ${text}    --mcp-servers-json '
-    Should End With    ${text}    '
-    ${entry}=    Evaluate    json.loads($text[len("--mcp-servers-json '"):-1])['mcpServers']['jsonquery']    modules=json
+    Should Be Equal    ${text}    ${desktop}
+    ${entry}=    Evaluate    json.loads($text)['mcpServers']['jsonquery']    modules=json
     Should Be Equal    ${entry}[command]    ${bridge}
+    Should Be Empty    ${entry}[args]
     Should Not Contain    ${text}    ${kept}[token]
+    Should Not Contain    ${text}    --mcp-servers-json
 
 TC-MCP-017 What Claude Code's Command Holds Reaches The Server
     [Documentation]    The address and the header of the copied command are the server's: an assistant that uses them
@@ -325,6 +336,7 @@ TC-MCP-019 Without jsonquery-mcp Beside The App, Claude Desktop And QuickAI Are 
     Sleep    1.5s
     Wait Until Keyword Succeeds    6x    0.5s
     ...    Region Should Contain Text    440    540    760    80    is not beside JsonQuery
+    Region Should Contain Text    440    540    760    80    each release
     ${text}=    Copy Configuration    ${MCP_CLAUDE_CODE_X}
     Should Start With    ${text}    claude mcp add
 
@@ -336,16 +348,17 @@ TC-MCP-020 Start It With JsonQuery Is Kept, And The Next Start Of The App Starts
     Close Mcp Panel
     Mcp Server Should Not Answer    port=${MCP_PORT}
     Close Jsonquery App    keep_home=${True}
-    Launch Jsonquery App    build=mcp    keep_home=${True}
+    Launch Jsonquery App    keep_home=${True}
     Wait Until Mcp Server Answers    timeout=8    port=${MCP_PORT}
+    Plug Should Not Be Green
+    Make An Assistant Call
     Plug Should Be Green
-    Mcp Initialize
 
 TC-MCP-021 Without It, The Next Start Leaves The Server Off, Even If It Ran When The App Was Closed
     [Tags]    p1
     Start Mcp Server
     Close Jsonquery App    keep_home=${True}
-    Launch Jsonquery App    build=mcp    keep_home=${True}
+    Launch Jsonquery App    keep_home=${True}
     Sleep    1.5s
     Mcp Server Should Not Answer    port=${MCP_PORT}
     Plug Should Not Be Green
@@ -416,6 +429,7 @@ TC-MCP-025 New Token: The Old One Is Refused, The New One Taken, And The Server 
     ${new}=    Mcp Post    {"jsonrpc": "2.0", "id": 2, "method": "ping"}    token=${now}[token]
     Should Be Equal As Integers    ${new}[status]    200
     Region Should Contain Text    @{MCP_TITLE_ROW}    Stop
+    Make An Assistant Call    token=${now}[token]
     Plug Should Be Green
 
 TC-MCP-026 The Token Is Kept Between Starts Of The App
@@ -423,7 +437,7 @@ TC-MCP-026 The Token Is Kept Between Starts Of The App
     Start Mcp Server
     ${before}=    Mcp Settings
     Close Jsonquery App    keep_home=${True}
-    Launch Jsonquery App    build=mcp    keep_home=${True}
+    Launch Jsonquery App    keep_home=${True}
     Start Mcp Server
     ${after}=    Mcp Settings
     Should Be Equal    ${after}[token]    ${before}[token]
@@ -460,6 +474,7 @@ TC-MCP-028 A Spinner Turns Beside The Plug While An Assistant's Call Runs
     Nothing Should Be Drawn At    ${MCP_LEFT_OF_PLUG_X}
     ${call}=    Start Mcp Call    run_query    {"query": "[range(40000000)] | length", "timeout_ms": 60000}
     Wait Until Keyword Succeeds    20x    0.25s    Something Should Be Drawn At    ${MCP_LEFT_OF_PLUG_X}
+    Plug Should Be Green
     ${result}=    Wait For Mcp Call    ${call}    timeout=90
     Should Not Be True    ${result}[error]    msg=${result}[text]
     Wait Until Keyword Succeeds    10x    0.3s    Nothing Should Be Drawn At    ${MCP_LEFT_OF_PLUG_X}
@@ -493,21 +508,26 @@ TC-MCP-030 An mcp.json That Cannot Be Used Is Said In The Panel, And The Default
     Wait Until Mcp Setting Is    port    ${port}
     Wait Until Mcp Setting Is    access    read
 
-TC-MCP-031 With The Tools Docked The Plug Is Left Of The Undock Button, And Its Panel Opens Above It
-    [Documentation]    Docked, the 🗗 takes the plug's place and the plug is the next one left; its panel opens above it,
-    ...    29 pixels further left, and works.
+TC-MCP-031 With The Tools Docked The Button Stays Beside The Settings Button, The Undock Button Left Of It
+    [Documentation]    Docked, the 🗗 that undocks the Tools comes left of the MCP button, which stays where it is with the
+    ...    Tools in a window, beside the ⚙: its panel opens where it always does, and works, and an assistant's call
+    ...    turns the button green there.
     [Tags]    p2
-    [Setup]    Launch Mcp App    settings={"tools": "docked"}
-    Something Should Be Drawn At    1095
-    Something Should Be Drawn At    ${MCP_PLUG_DOCKED_X}
-    Click At    ${MCP_PLUG_DOCKED_X}    ${MCP_BAR_Y}
-    Wait Until Region Contains Text    683    453    394    24    MCP server    timeout=3
-    Click At    1052    ${MCP_START_Y}
-    Move Mouse To    ${MCP_OUTSIDE_X}    ${MCP_OUTSIDE_Y}
-    Wait Until Mcp Server Answers    timeout=5    port=${MCP_PORT}
-    Wait Until Region Contains Text    683    453    394    24    Stop    timeout=2
-    Wait Until Keyword Succeeds    6x    0.3s
-    ...    Region Should Contain Color    1057    781    20    16    @{MCP_ON_COLOR}    tolerance=40
+    [Setup]    Launch Mcp App    settings={"tools": "docked"}    start_with_app=${True}
+    Wait Until Mcp Server Answers    timeout=8    port=${MCP_PORT}
+    Something Should Be Drawn At    ${MCP_PLUG_X}
+    Something Should Be Drawn At    ${MCP_UNDOCK_X}
+    Nothing Should Be Drawn At    ${MCP_LEFT_OF_UNDOCK_X}
+    # Which is which, before anything is clicked (a click on the 🗗 would undock the Tools): an assistant's call turns
+    # the button beside the ⚙ green, and the one left of it stays as it was.
+    Make An Assistant Call
+    Plug Should Be Green
+    ${left}=    Evaluate    int(${MCP_UNDOCK_X}) - 10
+    Region Should Not Contain Color    ${left}    781    20    16    @{MCP_ON_COLOR}    tolerance=40
+    Open Mcp Panel
+    Region Should Contain Text    @{MCP_TITLE_ROW}    Stop
+    Close Mcp Panel
+    Something Should Be Drawn At    ${MCP_UNDOCK_X}
 
 TC-MCP-032 Answers: A Size Chosen Is Said In Tokens, Kept, And Used From The Next Call
     [Documentation]    Answers → 8 while the server runs: the row fills 8 and says about 2,000 tokens, mcp.json keeps it,
@@ -527,7 +547,7 @@ TC-MCP-032 Answers: A Size Chosen Is Said In Tokens, Kept, And Used From The Nex
     Should Be True    4000 < ${bytes} <= 8000    msg=The page is ${bytes} bytes
     Should Be True    0 < ${page}[value][next_offset] < 400    msg=${page}[value]
     Close Jsonquery App    keep_home=${True}
-    Launch Jsonquery App    build=mcp    keep_home=${True}
+    Launch Jsonquery App    keep_home=${True}
     Open Mcp Panel
     Answer Size Should Be Chosen    8
 
@@ -549,6 +569,80 @@ TC-MCP-033 Always Allow Is Greyed Out With Read, Is Ticked With Edit, And Is Kep
     Always Allow Should Not Be Ticked
     Wait Until Mcp Setting Is    always_allow    ${False}
 
+TC-MCP-034 An Assistant's Call Turns The Button Green, Not The Server Or The Handshake
+    [Documentation]    The server running, and an assistant's handshake made, the button is grey: no assistant works with
+    ...    the app yet. The call of a tool turns it green (through jsonquery-mcp too, TC-MCP-077).
+    [Tags]    p1
+    [Setup]    Launch Mcp App    access=read    start_with_app=${True}
+    Wait Until Mcp Server Answers    timeout=8    port=${MCP_PORT}
+    Plug Should Not Be Green
+    Mcp Initialize
+    Sleep    1s
+    Plug Should Not Be Green
+    ${result}=    Call Mcp Tool    get_state
+    Should Not Be True    ${result}[error]    msg=${result}[text]
+    Plug Should Be Green
+
+TC-MCP-035 Hovering The Green Button Says That An Assistant Is Working With The App
+    [Documentation]    While it is green the tooltip says so, and where the server is: still two lines.
+    [Tags]    p2
+    [Setup]    Launch Mcp App    access=read    start_with_app=${True}
+    Wait Until Mcp Server Answers    timeout=8    port=${MCP_PORT}
+    Make An Assistant Call
+    Plug Should Be Green
+    Move Mouse To    ${MCP_PLUG_X}    ${MCP_BAR_Y}
+    Sleep    1.5s
+    Wait Until Keyword Succeeds    6x    0.5s
+    ...    Region Should Contain Text    @{WORKING_TIP}    is working with the app
+    Region Should Contain Text    @{WORKING_TIP}    127.0.0.1:${MCP_PORT}/mcp
+    Region Should Contain Text    @{WORKING_TIP}    click for its settings
+    Region Should Not Contain Text    @{MCP_ABOVE_TIP}    MCP
+
+TC-MCP-036 A Minute After The Last Call The Button Is Grey Again, And The Next Call Turns It Green
+    [Documentation]    Green while the assistant works: its calls come seconds or a minute apart. A minute after the last
+    ...    one the button is grey, with the server still on; another call turns it green again.
+    [Tags]    p3    slow
+    [Setup]    Launch Mcp App    access=read    start_with_app=${True}
+    Wait Until Mcp Server Answers    timeout=8    port=${MCP_PORT}
+    Make An Assistant Call
+    Plug Should Be Green
+    Sleep    45s
+    Plug Should Be Green
+    Wait Until Plug Is Grey    timeout=25
+    Wait Until Mcp Server Answers    timeout=3    port=${MCP_PORT}
+    ${result}=    Call Mcp Tool    get_state
+    Should Not Be True    ${result}[error]    msg=${result}[text]
+    Plug Should Be Green
+
+TC-MCP-037 QuickAI's Button Says Where Its Entry Goes And Where QuickAI Is
+    [Documentation]    On hover: the entry is pasted in QuickAI's MCP servers, and QuickAI is at quickai.everybodyai.dev.
+    [Tags]    p2
+    Open Mcp Panel
+    Start Mcp Server From Panel
+    Move Mouse To    ${MCP_QUICKAI_X}    ${MCP_ADD_Y2}
+    Sleep    1.5s
+    Wait Until Keyword Succeeds    6x    0.5s
+    ...    Region Should Contain Text    @{QUICKAI_TIP}    paste in
+    # (OCR reads the I of "QuickAI's" as an l: the words around it are read.)
+    Region Should Contain Text    @{QUICKAI_TIP}    MCP servers
+    Region Should Contain Text    @{QUICKAI_TIP}    quickai.everybodyai.dev
+
+TC-MCP-038 The Build Without MCP Has No MCP Button, And The Others Are Where They Always Are
+    [Documentation]    The build of the _nomcp downloads (--no-default-features): ⓘ, 🌐 and ⚙ where they are in every build,
+    ...    nothing beside the ⚙, a click there opens nothing, and no mcp.json is written.
+    [Tags]    p1
+    [Setup]    Launch Jsonquery App    build=nomcp
+    Wait Until Keyword Succeeds    10x    0.3s    Something Should Be Drawn At    1181
+    Something Should Be Drawn At    1152
+    Something Should Be Drawn At    1123
+    Nothing Should Be Drawn At    ${MCP_PLUG_X}
+    Nothing Should Be Drawn At    ${MCP_LEFT_OF_PLUG_X}
+    Click At    ${MCP_PLUG_X}    ${MCP_BAR_Y}
+    Sleep    0.6s
+    Region Should Not Contain Text    @{MCP_TITLE_ROW}    MCP server
+    ${home}=    App Home
+    File Should Not Exist    ${home}${/}mcp.json
+
 *** Keywords ***
 Token Should Have Changed
     [Arguments]    ${before}
@@ -562,5 +656,5 @@ Launch Lonely Mcp App
 
 Launch With Damaged Mcp Json
     &{files}=    Create Dictionary    mcp.json={"port": "seven", "access": "everything"}
-    Launch Jsonquery App    build=mcp    home_files=${files}
+    Launch Jsonquery App    home_files=${files}
     Set Test Variable    ${MCP_PORT}    7457

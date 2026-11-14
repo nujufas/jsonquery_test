@@ -140,13 +140,14 @@ TC-DOCK-005 The Theme And The Tutorial Are At The Right End Of The Row Of Tabs
     Nothing Should Be At    ${NO_UNDOCK_X}    ${DT_TAB_Y}
 
 TC-DOCK-006 The Status Bar Has The Info, The Website, The Settings And The Undock Buttons
-    [Documentation]    From the right: ⓘ, 🌐, ⚙, then 🗗, and nothing left of that; the workspace's button is at the other end
-    ...    of the bar, the first thing at its left.
+    [Documentation]    From the right: ⓘ, 🌐, ⚙, the MCP server's button, then 🗗, and nothing left of that; the
+    ...    workspace's button is at the other end of the bar, the first thing at its left.
     [Tags]    p1
     [Setup]    Launch Docked
     Icon Should Be At    ${SB_INFO_X}    ${SB_Y}
     Icon Should Be At    ${SB_WEBSITE_X}    ${SB_Y}
     Icon Should Be At    ${SB_SETTINGS_X}    ${SB_Y}
+    Icon Should Be At    ${SB_MCP_X}    ${SB_Y}
     Icon Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
     Nothing Should Be At    ${SB_LEFT_OF_UNDOCK_X}    ${SB_Y}
     Icon Should Be At    ${SB_WORKSPACE_X}    ${SB_Y}
@@ -165,17 +166,19 @@ TC-DOCK-007 The Undock Button Is In The Status Bar Whichever Tab Is In Front
 
 TC-DOCK-008 The Window Has No Undock Button
     [Documentation]    With the Tools in a window of their own there is nothing to undock:
-    ...    the status bar has the ⚙, the 🌐 and the ⓘ, and nothing where the 🗗 would be; the workspace's button is at the
-    ...    left end, as it is with the Tools docked.
+    ...    the status bar has the ⚙, the 🌐, the ⓘ and the MCP server's button, and nothing where the 🗗 would be; the
+    ...    workspace's button is at the left end, as it is with the Tools docked.
     [Tags]    p1
     Icon Should Be At    ${SB_INFO_X}    ${SB_Y}
     Icon Should Be At    ${SB_WEBSITE_X}    ${SB_Y}
     Icon Should Be At    ${SB_SETTINGS_X}    ${SB_Y}
     Icon Should Be At    ${SB_WORKSPACE_X}    ${SB_Y}
+    Icon Should Be At    ${SB_MCP_X}    ${SB_Y}
     Nothing Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
     Open Tools Window
     Switch To Main Window
     Icon Should Be At    ${SB_WORKSPACE_X}    ${SB_Y}
+    Icon Should Be At    ${SB_MCP_X}    ${SB_Y}
     Nothing Should Be At    ${SB_UNDOCK_X}    ${SB_Y}
 
 TC-DOCK-009 The Undock Button Takes The Tools Out Into A Window

@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation     The workspace pane with the Tools docked in the main window as tabs: the pane is under the row of
-...               tabs, and its chips follow the page that is in front (Validate narrows the list to the schemas,
-...               Patch to the patches, Json Query to everything) -- see docs/25_workspace.md and
+...               tabs, and its chips stay as the user picked them whatever page is in front; a document opened from
+...               it goes to the page in front (workspace_docked_open.robot) -- see docs/25_workspace.md and
 ...               docs/22_tools_docked.md.
 Resource          ../../resources/workspace.resource
 Resource          ../../resources/docked.resource
@@ -34,18 +34,35 @@ TC-WSP-210 With The Tools Docked The Pane Is Under The Row Of Tabs
     Without Layout Shift    Region Should Contain Text    0    31    140    20    Workspace
     Without Layout Shift    New Folder Icon Should Be At    ${WS_NEWFOLDER_ICON_LEFT}    35
 
-TC-WSP-211 The Chips Follow The Page That Is In Front
-    [Documentation]    The Validate page uses schemas and the Patch page patches: the list is narrowed to them when the page
-    ...    comes to the front, once; the Json Query tab brings everything back.
+TC-WSP-211 The Chips Stay As They Are Whatever Page Comes In Front
+    [Documentation]    Only the user picks a chip: Validate, Patch and the Json Query tab coming in front leave All picked, and
+    ...    leave a chip the user picked as it is.
     [Tags]    p1
     Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_ALL_X}
     Show Docked Tab    validate
-    Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_SCHEMAS_X}
-    Without Layout Shift    Chip Should Not Be Picked    ${WS_CHIP_ALL_X}
-    Show Docked Tab    patch
-    Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_PATCHES_X}
-    Show Docked Tab    json
     Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_ALL_X}
+    Without Layout Shift    Chip Should Not Be Picked    ${WS_CHIP_SCHEMAS_X}
+    Show Docked Tab    patch
+    Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_ALL_X}
+    Without Layout Shift    Chip Should Not Be Picked    ${WS_CHIP_PATCHES_X}
+    Without Layout Shift    Click At    ${WS_CHIP_QUERIES_X}    ${CHIPS_Y_DOCKED}
+    Sleep    0.6s
+    Show Docked Tab    validate
+    Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_QUERIES_X}
+    Show Docked Tab    json
+    Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_QUERIES_X}
+
+TC-WSP-347 A Schema Opened From The List Brings Validate Forward And Leaves The Chips As They Were
+    [Documentation]    A schema goes to Validate's Schema box and its page comes in front; the list is not narrowed to the
+    ...    schemas by that.
+    [Tags]    p1
+    Show Docked Tab    json
+    Set Layout Shift    ${DY}
+    Double Click Row    ${ROW_ORDERS}
+    Docked Tab Should Be Selected    validate
+    Without Layout Shift    Chip Should Be Picked    ${WS_CHIP_ALL_X}
+    Without Layout Shift    Chip Should Not Be Picked    ${WS_CHIP_SCHEMAS_X}
+    List Should Show    scratch    orders
 
 TC-WSP-212 A Chip That Was Picked By Hand Stays While The Same Page Is In Front
     [Tags]    p2

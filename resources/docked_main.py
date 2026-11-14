@@ -55,10 +55,11 @@ LOAD_BUTTON_X = 957
 CLEAR_BUTTON_X = 1001
 STATUS_AREA = [790, 0, 380, 20]
 
-# The status bar has the 🗗 as well, at x 1086-1105 (left of the ⚙, the 🌐 and the ⓘ): with it in
-# the region OCR misreads the text beside it (as it did with the ⚙ and the ⓘ, see keywords.resource);
-# the region begins after the button of the workspace pane at the left end, for the same reason.
-STATUS_BAR = [36, 705, 1034, 95]
+# The status bar has the 🗗 as well, at x 1050-1069, left of the MCP button (1078-1104), the ⚙, the
+# 🌐 and the ⓘ: with an icon in the region OCR misreads the text beside it (as it did with the ⚙ and
+# the ⓘ, see keywords.resource); the region begins after the button of the workspace pane at the
+# left end, for the same reason.
+STATUS_BAR = [36, 705, 1004, 95]
 
 # The "..." button that opens the file dialog is in the source row too: 90 px to the right.
 BROWSE_X = 920

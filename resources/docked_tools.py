@@ -19,6 +19,7 @@ TOOLS_WINDOW = "JsonQuery"
 TAB_X = {"merge": 130, "format": 221, "diff": 304, "patch": 383, "validate": 480, "create": 586}
 
 # What the status bar of the page says is after the button of the workspace pane (x 8-31) at the left end, from x 41; the
-# icons (🗗 ⚙ 🌐 ⓘ) are at x 786-892: the 🗗 is the first of them. The regions are what is between.
-TOOLS_STATUS = [36, 558, 734, 22]
-STATUS_LINE = [36, 560, 734, 18]
+# icons (🗗, the MCP button, ⚙ 🌐 ⓘ) are at x 750-892: the 🗗 is the first of them (its frame from 750). The regions are
+# what is between: an icon in them is read by OCR as noise, and the text beside it is misread.
+TOOLS_STATUS = [36, 558, 706, 22]
+STATUS_LINE = [36, 560, 706, 18]

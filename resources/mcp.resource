@@ -1,11 +1,11 @@
 *** Settings ***
-Documentation     The 🔌 of the build with the MCP server, its panel, the questions an assistant asks the user, and an
+Documentation     The MCP server's button (a plug with "AI"), its panel, the questions an assistant asks the user, and an
 ...               assistant of the server (resources/mcp_client.py): the points and keywords the suites of suites/mcp/
 ...               share. See docs/26_mcp_server.md.
 ...
-...               The panel hangs above the 🔌 and keeps one size and the same rows whatever happens (the app's
-...               layout test `the_plug_comes_last_in_the_status_bar_and_opens_the_mcp_panel` holds it to that), so its
-...               points are fixed. They are the points of the window with no row of tabs: the panel hangs from the
+...               The panel hangs above the button and keeps one size and the same rows whatever happens (the app's
+...               layout test `the_plug_sits_beside_the_settings_button_and_opens_the_mcp_panel` holds it to that), so
+...               its points are fixed. They are the points of the window with no row of tabs: the panel hangs from the
 ...               status bar, which the docked profile does not move, so the suites are tagged `undocked-only` and
 ...               dock the app themselves where it matters (TC-MCP-031).
 Resource          keywords.resource
@@ -13,16 +13,19 @@ Library           OperatingSystem
 Library           mcp_client.py
 
 *** Variables ***
-# The status bar, from the right: ⓘ 1181, 🌐 1152, ⚙ 1123, then the 🔌, the last of them (with the Tools docked it is
-# left of the 🗗, at 1066). The spinner of a call that runs is at the plug's left.
+# The status bar, from the right: ⓘ 1181, 🌐 1152, ⚙ 1123, then the MCP button (a plug, 1083-1093, and "AI", 1095-1100),
+# beside the ⚙ whether the Tools are docked or not; docked, the 🗗 is left of it, at 1059, and nothing is left of that.
+# The spinner of a call that runs is at the button's left.
 ${MCP_BAR_Y}              789
 ${MCP_PLUG_X}             1095
 ${MCP_LEFT_OF_PLUG_X}     1066
-${MCP_PLUG_DOCKED_X}      1066
-# What the 🔌 is drawn in while the server runs (the app's ON_COLOR), and the panel's red (tools' ERROR_COLOR).
+${MCP_UNDOCK_X}           1059
+${MCP_LEFT_OF_UNDOCK_X}   1030
+# What the button is drawn in while an assistant works with the app (the app's ON_COLOR: for a minute after its last
+# call), and the panel's red (tools' ERROR_COLOR).
 @{MCP_ON_COLOR}           46     160    67
 @{MCP_ERROR_COLOR}        220    80     80
-# The plug's own square, to look for its colour in.
+# The button's own square (the plug and the "AI"), to look for its colour in.
 @{MCP_PLUG_BOX}           1086   781    20     16
 # Its tooltip: above the status bar, its right end near the plug's; and a strip above that, which a tooltip of more
 # than its two lines would reach.
@@ -80,12 +83,12 @@ ${NUMBERS_FIXTURE}        ${CURDIR}/fixtures/many_numbers.json
 
 *** Keywords ***
 Launch Mcp App
-    [Documentation]    Starts the build with the MCP server, as a first start of a new user but for its `mcp.json`, which
+    [Documentation]    Starts the app, as a first start of a new user but for its `mcp.json`, which
     ...    gives the server a port nothing listens on (so that two lanes of a run, and the JsonQuery of whoever runs
     ...    the suite, never meet on 7457) and, if asked, an access and whether it starts with the app. Sets
     ...    `${MCP_PORT}` for the case.
     [Arguments]    ${access}=${None}    ${start_with_app}=${None}    ${settings}=${None}    ${workspace}=${None}
-    ...    ${build}=mcp    ${always_allow}=${None}    ${answer_kb}=${None}
+    ...    ${build}=${None}    ${always_allow}=${None}    ${answer_kb}=${None}
     ${port}=    Free Port
     ${text}=    Mcp Json    port=${port}    access=${access}    start_with_app=${start_with_app}
     ...    always_allow=${always_allow}    answer_kb=${answer_kb}
@@ -95,7 +98,7 @@ Launch Mcp App
     IF    $start_with_app is not None and $start_with_app    Wait Until Mcp Server Answers    timeout=8
 
 Launch Mcp App Serving
-    [Documentation]    The build with the MCP server, which starts its server with the app and allows `access`, and an
+    [Documentation]    The app, which starts its MCP server with itself and allows `access`, and an
     ...    assistant that has made its handshake with it.
     [Arguments]    ${access}=edit    ${settings}=${None}    ${workspace}=${None}    ${always_allow}=${None}
     ...    ${answer_kb}=${None}
@@ -140,14 +143,30 @@ Start Mcp Server
     Close Mcp Panel
 
 Plug Should Be Green
+    [Documentation]    The MCP button is green: an assistant is working with the app (a call runs, or one ended less
+    ...    than a minute ago).
     Wait Until Keyword Succeeds    6x    0.3s
     ...    Region Should Contain Color    @{MCP_PLUG_BOX}    @{MCP_ON_COLOR}    tolerance=40
-    ...    msg=The 🔌 is not green: the server should be running
+    ...    msg=The MCP button is not green: an assistant should be working with the app
 
 Plug Should Not Be Green
+    [Documentation]    The MCP button is grey: no assistant is working with the app, whether the server runs or not.
     Wait Until Keyword Succeeds    6x    0.3s
     ...    Region Should Not Contain Color    @{MCP_PLUG_BOX}    @{MCP_ON_COLOR}    tolerance=40
-    ...    msg=The 🔌 is green: the server should not be running
+    ...    msg=The MCP button is green: no assistant should be working with the app
+
+Wait Until Plug Is Grey
+    [Documentation]    The MCP button turns grey within `timeout` seconds.
+    [Arguments]    ${timeout}=10
+    Wait Until Keyword Succeeds    ${timeout}s    0.5s
+    ...    Region Should Not Contain Color    @{MCP_PLUG_BOX}    @{MCP_ON_COLOR}    tolerance=40
+
+Make An Assistant Call
+    [Documentation]    What an assistant does that turns the button green: its handshake, then a call of a tool.
+    [Arguments]    ${token}=${None}
+    Mcp Initialize    token=${token}
+    ${result}=    Call Mcp Tool    get_state    token=${token}
+    Should Not Be True    ${result}[error]    msg=${result}[text]
 
 Something Should Be Drawn At
     [Documentation]    A button of the status bar is there (an icon, which OCR cannot read: its pixels).

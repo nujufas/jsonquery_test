@@ -13,12 +13,15 @@ Test Setup        Launch Jsonquery App
 Test Teardown     Close Jsonquery App
 
 *** Variables ***
-# The status bar's buttons at the right, from the left: the ⚙, the 🌐 and the ⓘ (and, with the Tools docked, the 🗗 at 1095).
+# The status bar's buttons at the right, from the left: the MCP server's (a plug with "AI"), the ⚙, the 🌐 and the ⓘ
+# (with the Tools docked, the 🗗 left of the MCP button, at 1059).
 ${GEAR_X}                 1123
 ${GLOBE_X}                1152
 ${INFO_X}                 1181
-# Where the pane's button was when it was the last of the status bar's buttons from the right (it is no longer: nothing is there).
+# Where the pane's button was when it was the last of the status bar's buttons from the right: the 🔌 is there now, the
+# last of them, and nothing is left of it.
 ${OLD_PLACE_X}            1094
+${LEFT_OF_OLD_PLACE_X}    1065
 # The text of the bar is read from here on, the left edge of the first letter of it being at 41.
 ${TEXT_FROM_X}            33
 # Where the tooltip of the button is when the pointer rests on it: over the bar, at the left.
@@ -130,19 +133,21 @@ TC-WSP-246 A Message Too Long For One Line Wraps Beside The Button And Leaves It
     Pane Should Be Open
 
 TC-WSP-247 The Buttons At The Right End Are Where They Were Before There Was A Pane
-    [Documentation]    The ⚙, the 🌐 and the ⓘ, and nothing at the place where the pane's button was when it was the last of them
-    ...    (x 1094): that button is at the other end now.
+    [Documentation]    The ⚙, the 🌐 and the ⓘ, the 🔌 of the MCP server at the place where the pane's button was when it was
+    ...    the last of them (x 1094), and nothing left of it: the pane's button is at the other end now.
     [Tags]    p1    undocked-only
     Icon Should Be At    ${GEAR_X}    ${WS_STATUS_Y}
     Icon Should Be At    ${GLOBE_X}    ${WS_STATUS_Y}
     Icon Should Be At    ${INFO_X}    ${WS_STATUS_Y}
-    Nothing Should Be Drawn At    ${OLD_PLACE_X}    ${WS_STATUS_Y}    10
+    Icon Should Be At    ${OLD_PLACE_X}    ${WS_STATUS_Y}
+    Nothing Should Be Drawn At    ${LEFT_OF_OLD_PLACE_X}    ${WS_STATUS_Y}    10
     Click At    ${WS_STATUS_X}    ${WS_STATUS_Y}
     Pane Should Be Open
     Icon Should Be At    ${GEAR_X}    ${WS_STATUS_Y}
     Icon Should Be At    ${GLOBE_X}    ${WS_STATUS_Y}
     Icon Should Be At    ${INFO_X}    ${WS_STATUS_Y}
-    Nothing Should Be Drawn At    ${OLD_PLACE_X}    ${WS_STATUS_Y}    10
+    Icon Should Be At    ${OLD_PLACE_X}    ${WS_STATUS_Y}
+    Nothing Should Be Drawn At    ${LEFT_OF_OLD_PLACE_X}    ${WS_STATUS_Y}    10
 
 *** Keywords ***
 Nothing Should Be Drawn At

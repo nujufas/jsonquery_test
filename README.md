@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (November 2026): **1236 test cases in 31 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
+touches your desktop. Status (November 2026): **1257 test cases in 31 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
 
 Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
 app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
@@ -146,7 +146,8 @@ All optional; unset, nothing changes.
 | `JQ_TEST_BINARY` | `$JQ_APP_DIR/target/debug/jsonquery_gui` | The binary under test. |
 | `JQ_TEST_NO_BUILD` | unset | Set it (to anything) to skip `cargo build`. |
 | `JQ_TEST_DISPLAY` | `:99` | The X display to start (or to reuse, if an Xvfb is already running there). |
-| `JQ_TEST_RESULTS` | `results/` | Where Robot writes its output. |
+| `JQ_TEST_RESULTS` | `results/` | Where Robot writes its output. Keep its path short: `run_parallel.sh` gives each lane a temporary folder under it, and a case that types the path of a file made there (`Type And Submit Source`) reads the file's name back from the Source field, which a path much longer than `results/parallel/tmp/lane1/` pushes out of sight. |
+| `JQ_TEST_NOMCP_BINARY` | `$JQ_APP_DIR/target/nomcp/debug/jsonquery_gui` | The build without the MCP server, for TC-MCP-038 (`Launch Jsonquery App  build=nomcp`); run.sh builds it when the run takes `suites/mcp/` in. |
 | `JQ_TEST_APP_LOG` | unset | File that receives the app's stderr (the tracing of a debug build). |
 | `JQ_TEST_HOME_ROOT` | `/tmp` | Where each launch's settings folder is made (a short path matters: the Settings window wraps a long one). |
 | `JQ_PARALLEL_DISPLAY_BASE` | `120` | `run_parallel.sh` only: the first display; lane *n* uses base + *n* - 1. |

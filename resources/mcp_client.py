@@ -1,6 +1,6 @@
 """Robot Framework library: an assistant of the app's MCP server, for the cases of suites/mcp/.
 
-The build with the MCP server (`Launch Jsonquery App  build=mcp`) listens on 127.0.0.1 once the
+The app's MCP server listens on 127.0.0.1 once the
 🔌 panel's Start is clicked, and keeps its port and token in `mcp.json`, in the folder of the
 launch's settings (`App Home`). The keywords here read that file and talk to the server as an
 assistant does, over Streamable HTTP (JSON-RPC 2.0, the `initialize` handshake, then
@@ -435,11 +435,11 @@ class mcp_client:
 
     @keyword("Mcp Build Without Bridge")
     def mcp_build_without_bridge(self):
-        """The path of the MCP build's binary in a folder that has no `jsonquery-mcp` beside it (a
-        hard link, next to the build's own folder; a copy where no link can be made), for the case
-        of an app whose download lost the bridge. Removed when the run ends."""
+        """The path of the app's binary in a folder that has no `jsonquery-mcp` beside it (a hard
+        link, next to the build's own folder; a copy where no link can be made), for the case of an
+        app without the bridge (built alone, or the Microsoft Store's). Removed when the run ends."""
         library_module = sys.modules[type(_app()).__module__]
-        source = library_module.MCP_BINARY_PATH
+        source = library_module.BINARY_PATH
         folder = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(source))), f"mcp-alone-{os.getpid()}"
         )
@@ -503,10 +503,10 @@ class mcp_client:
 
     @keyword("Bridge Path")
     def bridge_path(self, binary=None):
-        """`jsonquery-mcp`, beside the app's binary (the MCP build's, or `binary`)."""
-        # The module of the library the suites load (AppLibrary.py), for where the MCP build is.
+        """`jsonquery-mcp`, beside the app's binary (the one under test, or `binary`)."""
+        # The module of the library the suites load (AppLibrary.py), for where the binary is.
         library_module = sys.modules[type(_app()).__module__]
-        app_binary = binary or library_module.MCP_BINARY_PATH
+        app_binary = binary or library_module.BINARY_PATH
         # As the app names it: its own path with the links resolved (std::env::current_exe).
         return os.path.realpath(os.path.join(os.path.dirname(app_binary), BRIDGE_NAME))
 

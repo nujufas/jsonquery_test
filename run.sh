@@ -10,9 +10,10 @@
 #   ./run.sh suites --include p1               # run only P1-tagged cases
 # A second run beside the first: JQ_TEST_DISPLAY=:98 JQ_TEST_RESULTS=/some/dir
 #   JQ_TEST_BINARY=/copy/of/jsonquery_gui JQ_TEST_NO_BUILD=1 ./run.sh ...
-# The suites of the build with the MCP server (suites/mcp/) run the app built with
-# `--features jsonquery_gui/mcp` into target/mcp (JQ_TEST_MCP_BINARY, with jsonquery-mcp
-# beside it), which this script builds too when the run takes them in.
+# The app is built with jsonquery-mcp, the program of its MCP server, which the cases of
+# suites/mcp/ take from beside the app (beside JQ_TEST_BINARY, if that is set). When the run
+# takes suites/mcp/ in, the build without the server is made too, into target/nomcp
+# (JQ_TEST_NOMCP_BINARY), for the case that it has none.
 # The app is its own repository (https://github.com/nujufas/jsonquery_gui). It is
 # taken from JQ_APP_DIR if that is set, else from ../jsonquery_gui (where `git clone`
 # puts it beside this repository), else from ../jsonquery.
@@ -51,8 +52,8 @@ log() { echo "[run.sh] $*"; }
 
 log "App checkout: $APP_DIR; binary under test: ${JQ_TEST_BINARY:-$APP_DIR/target/debug/jsonquery_gui}"
 
-# Does the run take in the suites of the build with the MCP server? A path of suites/mcp, or a
-# folder that has it (the whole suite).
+# Does the run take in the suites of the MCP server? A path of suites/mcp, or a folder that has it
+# (the whole suite).
 runs_mcp() {
     local arg
     for arg in "${@:-$TEST_DIR/suites}"; do
@@ -68,12 +69,12 @@ runs_mcp() {
 # JQ_TEST_NO_BUILD=1 (with JQ_TEST_BINARY pointing at a copy) runs against a
 # binary a rebuild will not replace; see AppLibrary.py.
 if [ -z "${JQ_TEST_NO_BUILD:-}" ]; then
-    log "Building jsonquery_gui..."
-    (cd "$APP_DIR" && cargo build -p jsonquery_gui)
+    log "Building jsonquery_gui and jsonquery-mcp..."
+    (cd "$APP_DIR" && cargo build -p jsonquery_gui -p jsonquery-mcp)
     if runs_mcp "$@"; then
         # A target folder of its own: it never takes the place of the build above.
-        log "Building jsonquery_gui with the MCP server, and jsonquery-mcp (target/mcp)..."
-        (cd "$APP_DIR" && cargo build -p jsonquery_gui -p jsonquery-mcp --features jsonquery_gui/mcp --target-dir target/mcp)
+        log "Building jsonquery_gui without the MCP server (target/nomcp)..."
+        (cd "$APP_DIR" && cargo build -p jsonquery_gui --no-default-features --target-dir target/nomcp)
     fi
 fi
 

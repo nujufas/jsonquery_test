@@ -76,11 +76,12 @@ APP_DIR = os.path.abspath(
 BINARY_PATH = os.environ.get(
     "JQ_TEST_BINARY", os.path.join(APP_DIR, "target", "debug", "jsonquery_gui")
 )
-# The build with the MCP server (`--features jsonquery_gui/mcp`, built by run.sh into a target
-# folder of its own so that it never takes the place of the build above), with its stdio bridge
-# `jsonquery-mcp` beside it, where the app looks for it. `Launch Jsonquery App  build=mcp`.
-MCP_BINARY_PATH = os.environ.get(
-    "JQ_TEST_MCP_BINARY", os.path.join(APP_DIR, "target", "mcp", "debug", "jsonquery_gui")
+# The app has the MCP server (its default cargo feature `mcp`), and run.sh builds its stdio bridge
+# `jsonquery-mcp` beside it, where the app looks for it (suites/mcp/). The build without the server
+# (`--no-default-features`, what the _nomcp downloads are) is built into target/nomcp when a run takes
+# suites/mcp/ in: `Launch Jsonquery App  build=nomcp`.
+NOMCP_BINARY_PATH = os.environ.get(
+    "JQ_TEST_NOMCP_BINARY", os.path.join(APP_DIR, "target", "nomcp", "debug", "jsonquery_gui")
 )
 
 XVFB_DISPLAY = os.environ.get("JQ_TEST_DISPLAY", ":99")
@@ -340,22 +341,22 @@ class AppLibrary:
         `workspace`: files to be in the workspace (the `workspace` folder of the settings
         folder, which is where the app keeps it unless the user chose another) before the
         app starts: a dictionary from the path of a file in it, with `/`, to its text.
-        `build`: `mcp` for the build with the MCP server (MCP_BINARY_PATH), or the path of
-        another binary; none is the usual one. `home_files`: files to be in the settings
-        folder before the app starts (`mcp.json`), as `workspace` is for the workspace."""
-        binary = BINARY_PATH
-        if build == "mcp":
-            binary = MCP_BINARY_PATH
-        elif build:
-            binary = str(build)
+        `build`: `nomcp` for the build without the MCP server (NOMCP_BINARY_PATH), or the
+        path of another binary; none is the usual one. `home_files`: files to be in the
+        settings folder before the app starts (`mcp.json`), as `workspace` is for the
+        workspace."""
+        if build == "nomcp":
+            binary = NOMCP_BINARY_PATH
+        else:
+            binary = str(build) if build else BINARY_PATH
         if not os.path.exists(binary):
             how = (
-                "run `cargo build -p jsonquery_gui -p jsonquery-mcp --features jsonquery_gui/mcp"
-                " --target-dir target/mcp` in the app's checkout (run.sh does) first"
-                if build == "mcp"
-                else "run `cargo build -p jsonquery_gui` first"
+                "run `cargo build -p jsonquery_gui --no-default-features --target-dir target/nomcp`"
+                " in the app's checkout (run.sh does for suites/mcp/)"
+                if build == "nomcp"
+                else "run `cargo build -p jsonquery_gui -p jsonquery-mcp`"
             )
-            raise AssertionError(f"{binary} not found -- {how}.")
+            raise AssertionError(f"{binary} not found -- {how} first.")
         if not (keep_home and self._app_home and os.path.isdir(self._app_home)):
             self._forget_app_home()
             self._app_home = self._make_app_home()

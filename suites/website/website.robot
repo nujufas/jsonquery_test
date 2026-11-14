@@ -18,16 +18,17 @@ Test Setup        Launch Jsonquery App
 Test Teardown     Close Jsonquery App
 
 *** Variables ***
-# The status bar's buttons (icon only: fixed points), from the right: the ⓘ, the 🌐, the ⚙.
-# With the Tools docked there is a 🗗 left of the ⚙ (tools_docked.robot).
+# The status bar's buttons (icon only: fixed points), from the right: the ⓘ, the 🌐, the ⚙ and the 🔌 of the MCP
+# server. With the Tools docked there is a 🗗 between the ⚙ and the 🔌 (tools_docked.robot).
 ${BAR_Y}               789
 ${INFO_X}              1181
 ${GLOBE_X}             1152
 ${GEAR_X}              1123
-# The button of the workspace pane is at the other end of the bar, the first thing at its left; nothing is left of the ⚙
-# (where the 🗗 is with the Tools docked).
+${PLUG_X}              1095
+# The button of the workspace pane is at the other end of the bar, the first thing at its left; nothing is left of the 🔌
+# (where it is with the Tools docked).
 ${WORKSPACE_X}         20
-${NO_BUTTON_X}         1095
+${NO_BUTTON_X}         1066
 # Where the tooltip of the 🌐 is: above the status bar, its right end near the window's.
 @{GLOBE_TIP}           800    730    380    44
 @{ABOVE_THE_TIP}       600    560    600    170
@@ -37,12 +38,13 @@ ${SETTINGS_WINDOW}     JsonQuery — Settings
 
 *** Test Cases ***
 TC-WEB-001 The Status Bar Has A Globe Between The Info And The Settings Buttons
-    [Documentation]    From the right: ⓘ, 🌐, ⚙, and nothing left of that (the 🗗 is only there with the Tools docked); the
-    ...    workspace's button is at the other end of the bar.
+    [Documentation]    From the right: ⓘ, 🌐, ⚙, the 🔌 of the MCP server, and nothing left of that (the 🗗 is only there
+    ...    with the Tools docked); the workspace's button is at the other end of the bar.
     [Tags]    p1    undocked-only
     Status Bar Icon Should Be At    ${INFO_X}
     Status Bar Icon Should Be At    ${GLOBE_X}
     Status Bar Icon Should Be At    ${GEAR_X}
+    Status Bar Icon Should Be At    ${PLUG_X}
     Status Bar Icon Should Be At    ${WORKSPACE_X}
     Nothing Should Be In The Status Bar At    ${NO_BUTTON_X}
 

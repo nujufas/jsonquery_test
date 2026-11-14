@@ -1,21 +1,24 @@
 # The MCP server — test requirements
 
-Source: the app's cargo feature `mcp` — `crates/mcp` (the protocol, the HTTP server, the tools' list, `jsonquery-mcp`)
-and `crates/app/src/app/mcp.rs` with `app/mcp/` (the 🔌 and its panel, `mcp.json`, what the tools do in the app). What
-a person reads of it is the app's `docs/mcp.md`, the README ("With an MCP server, for AI assistants") and `PRIVACY.md`
-("The build with the MCP server").
+Source: the app's cargo feature `mcp`, a default one — `crates/mcp` (the protocol, the HTTP server, the tools' list,
+`jsonquery-mcp`) and `crates/app/src/app/mcp.rs` with `app/mcp/` (the 🔌 and its panel, `mcp.json`, what the tools do
+in the app, the line that starts `jsonquery-mcp`). What a person reads of it is the app's `docs/mcp.md`, the README
+("For AI assistants", "Without the MCP server") and `PRIVACY.md` ("The MCP server").
 
-The build with **mcp** in its name (a GitHub release download only, never the stores) is the app with a
-[Model Context Protocol](https://modelcontextprotocol.io) server that an AI assistant can use:
+Every build of the app but those with **_nomcp** in their name (made with `--no-default-features`, a GitHub release
+download only) has a [Model Context Protocol](https://modelcontextprotocol.io) server that an AI assistant can use:
 
-- a **🔌** at the right of the status bar, the last of its buttons there (left of the ⚙, or of the 🗗 with the Tools
-  docked), so that every other button is where it is in the build without MCP; grey while the server is off, green
-  while it runs, with a spinner at its left while an assistant's call is answered;
+- a **button** at the right of the status bar, a plug with "AI", just left of the ⚙ whether the Tools are docked or
+  not (the 🗗 of the docked Tools and the ⚠ of a Wayland desktop come left of it), so that the ⓘ, 🌐 and ⚙ are where
+  they are in the build without MCP; **green while an assistant works with the app** (a call runs, or the last one
+  ended less than a minute ago) and grey otherwise, the server on or not, with a spinner at its left while a call is
+  answered;
 - one click opens a **panel** above it that keeps one size and the same rows whatever happens (Start and Stop are in
   the same place): Start/Stop, the address (`http://127.0.0.1:<port>/mcp`, the port editable while stopped, 7457 at
   first), **Allow** (Read, the default; Edit) and **Always allow** (greyed out with Read), **Answers** (the most an
   answer holds: 4, 8, 16, 24, 64 or 200 KB, 24 at first, with about how many tokens that is), **Add to** buttons that
-  copy what adds the server to Claude Code, Claude Desktop, VS Code, QuickAI or any other assistant (JSON), **Start it
+  copy what adds the server to Claude Code, Claude Desktop, VS Code, QuickAI (the same `mcpServers` entry as Claude
+  Desktop's, for its MCP servers; its tooltip names quickai.everybodyai.dev) or any other assistant (JSON), **Start it
   with JsonQuery**, who is connected, how many calls and the last five (a refused one in red), and **New token**;
 - with Edit, a **question** over the main window before anything is deleted or replaced, written outside the
   workspace, or fetched from the web — Allow, Always allow (which ticks the panel's box), Don't allow, Escape — unless
@@ -23,18 +26,24 @@ The build with **mcp** in its name (a GitHub release download only, never the st
 - the tools that only read work **out of sight**, on any document (the open one, the results, a file, a workspace item,
   JSON given, or `"last"`: what the assistant's last query or tool of the Tools made), and every answer is a page of
   at most the size the user set;
+- what a model gives is taken **as it means it**: the JSON itself or its text where a document goes, a JSON file's full
+  path, an argument by another name, `workspace_save` without a kind (the name's ending or the content says it), and a
+  call that still cannot be done ends with a call of that tool that works;
 - the server listens on 127.0.0.1 only, answers only with its token, refuses web pages and other hosts, and keeps its
   port, token, access and start-with-app in `mcp.json` beside `settings.json`, mode 600;
-- **`jsonquery-mcp`**, a program beside the app, is what Claude Desktop and llama-server (QuickAI) start: it answers the
-  handshake and the list of tools by itself and takes each call to the app, with the token of `mcp.json`.
+- **`jsonquery-mcp`**, a program beside the app, is what Claude Desktop and QuickAI start: it answers the handshake
+  and the list of tools by itself and takes each call to the app, with the token of `mcp.json`;
+- the build without the server (`_nomcp`) has no button and writes no `mcp.json` (TC-MCP-038).
 
 ## How the cases work
 
-- **The build.** `run.sh` builds the MCP variant too (`cargo build -p jsonquery_gui -p jsonquery-mcp --features
-  jsonquery_gui/mcp --target-dir target/mcp`) when the run takes `suites/mcp/` in, so it never takes the place of the
-  usual binary; `run_parallel.sh` builds both and freezes both, the app and `jsonquery-mcp` together (the app looks for
-  the program beside itself). `Launch Jsonquery App  build=mcp` starts it (`JQ_TEST_MCP_BINARY`), and `home_files=`
-  puts an `mcp.json` in the launch's settings folder first.
+- **The build.** `run.sh` builds the app and `jsonquery-mcp` (`cargo build -p jsonquery_gui -p jsonquery-mcp`), and
+  `run_parallel.sh` freezes the two together (the app looks for the program beside itself). Every case of the suite
+  starts the app with its server; `home_files=` puts an `mcp.json` in the launch's settings folder first. The build
+  without the server (`_nomcp`, `--no-default-features`) is built into `target/nomcp` too when the run takes
+  `suites/mcp/` in, and frozen by `run_parallel.sh`: `Launch Jsonquery App  build=nomcp` starts it
+  (`JQ_TEST_NOMCP_BINARY`) for TC-MCP-038; the rest of it is the app's own tests (`cargo test -p jsonquery_gui
+  --no-default-features`). To run other cases on it, give its binary in `JQ_TEST_BINARY` and leave `suites/mcp/` out.
 - **A port of its own.** `Launch Mcp App` gives every app an `mcp.json` with a port nothing listens on (`Free Port`), so
   that the lanes of a run, and the JsonQuery of whoever runs the suite, never meet on 7457. TC-MCP-004 starts without
   one, to see the defaults, and starts nothing.
@@ -63,16 +72,60 @@ The build with **mcp** in its name (a GitHub release download only, never the st
 
 `suites/mcp/mcp_panel.robot` (the 🔌 and the panel), `mcp_calls.robot` (an assistant's calls, seen in the window),
 `mcp_bridge.robot` (`jsonquery-mcp`), `mcp_edit.robot` (what Edit changes of what is kept, and the questions),
-`mcp_tools.robot` (the Tools as tools, out of sight, `"last"`, `document_info`, pages).
+`mcp_tools.robot` (the Tools as tools, out of sight, `"last"`, `document_info`, pages), `mcp_friendly.robot` (what a
+model gives, taken as it means it).
 
 | ID | Title | Priority |
 |---|---|---|
-| TC-MCP-001 | The Plug Is The Last Of The Buttons At The Right Of The Status Bar | P1 |
+| TC-MCP-070 | jsonquery-mcp Answers The Handshake And Lists The Tools While The App Is Closed | P1 |
+| TC-MCP-071 | A Call Before The Server Was Ever Set Up Says How To Set It Up | P1 |
+| TC-MCP-072 | A Call While The App Is Closed Says That JsonQuery Is Not Running | P1 |
+| TC-MCP-073 | A Call Through jsonquery-mcp Reaches The Running App, Which Shows It And Names The Assistant | P1 |
+| TC-MCP-074 | jsonquery-mcp Follows A New Token And A New Port By Itself | P2 |
+| TC-MCP-075 | jsonquery-mcp Says What It Is When Run By Hand | P3 |
+| TC-MCP-076 | Through jsonquery-mcp An Answer Is Kept To The Size Of Page The User Set | P2 |
+| TC-MCP-077 | A Call Through jsonquery-mcp Turns The Button Green | P2 |
+| TC-MCP-040 | get_state Says What The Window Shows: The Document, The Query And Its Results | P1 |
+| TC-MCP-041 | run_query Answers The Assistant And Changes Nothing In The Window | P1 |
+| TC-MCP-042 | set_query Puts The Query In The Box And Runs It, And get_results Gives What The Window Shows | P1 |
+| TC-MCP-043 | set_query In JSONPath Picks JSONPath In The Window | P2 |
+| TC-MCP-044 | open_document Opens A File As The Source, And The Window Shows It | P1 |
+| TC-MCP-045 | open_document With JSON Text Shows It As The Source | P2 |
+| TC-MCP-046 | open_document Refuses A Web Address And A Relative Path, And The Window Keeps Its Document | P2 |
+| TC-MCP-047 | reveal Opens The Source Tree Down To A Value | P1 |
+| TC-MCP-048 | workspace_list Gives The Saved Queries, And workspace_open Opens One In The Query Box | P1 |
+| TC-MCP-049 | workspace_open Never Loads A Web Address, And workspace_read Gives It | P1 |
+| TC-MCP-050 | A Call That Shows Something Works While The Window Is Minimized | P1 |
+| TC-MCP-051 | The User's Own Query Runs While The Assistant's Long Query Runs | P2 |
+| TC-MCP-052 | search Finds A Value With Its Pointer | P2 |
+| TC-MCP-053 | describe Gives The Shape Of The Document Without Its Data | P2 |
+| TC-MCP-054 | query_help Gives The App's Lessons And Where Its jq Differs From jq | P3 |
+| TC-MCP-055 | Read Refuses Every Call That Would Change The Window, And The Panel Lists Them In Red | P1 |
+| TC-MCP-056 | A Long Answer Comes A Page At A Time | P3 |
+| TC-MCP-080 | Deleting From The Workspace Is Asked First, And Don't Allow Keeps The Item | P1 |
+| TC-MCP-081 | Allow Deletes It: A Folder With What Is In It | P1 |
+| TC-MCP-082 | Escape Is Don't Allow | P2 |
+| TC-MCP-083 | Always Allow In The Question Does It, Ticks The Panel's Box, And Nothing Is Asked After | P1 |
+| TC-MCP-084 | With Always Allow Ticked Nothing Is Asked, And Unticking It Brings The Questions Back | P2 |
+| TC-MCP-085 | A New Item Is Saved Without A Question, And Replacing One Is Asked First | P1 |
+| TC-MCP-086 | Folders Are Made, And Items Moved And Renamed, Without A Question | P2 |
+| TC-MCP-087 | A File Is Saved After The User Allows It, As Indented As Asked, And Replaced Only With replace | P1 |
+| TC-MCP-088 | A Web Address Is Loaded As The Source Only When The User Allows It | P1 |
+| TC-MCP-089 | A Page Of The Tools Is Shown With The Assistant's Values In Its Boxes, Run | P1 |
+| TC-MCP-090 | With Read Nothing Is Written, Moved, Deleted, Fetched Or Shown, And Nothing Is Asked | P1 |
+| TC-MCP-091 | While A Question Waits The Panel Says So | P2 |
+| TC-MCP-110 | The Tools Take The JSON Itself, Or Its Text, As What They Work On | P1 |
+| TC-MCP-111 | workspace_save Saves The JSON Itself, And Knows What An Item Is From Its Name Or What It Holds | P1 |
+| TC-MCP-112 | Arguments By The Names A Model Gives Them Are Taken, And Arguments Sent As JSON Text | P1 |
+| TC-MCP-113 | A Call That Cannot Be Done Says Why, And Ends With A Call Of That Tool That Works | P1 |
+| TC-MCP-114 | Through jsonquery-mcp, As QuickAI Calls, The JSON Itself Is Taken Too | P2 |
+| TC-MCP-115 | A JSON File's Full Path Is Read As The File, With Edit | P2 |
+| TC-MCP-001 | The MCP Button Is Beside The Settings Button At The Right Of The Status Bar | P1 |
 | TC-MCP-002 | Hovering The Plug Says What It Is For And That A Click Sets It Up | P1 |
 | TC-MCP-003 | A Click On The Plug Opens Its Panel And A Click Elsewhere Closes It | P1 |
 | TC-MCP-004 | The Panel Of A First Start: Off, On Port 7457, Read, Answers Of 24 KB, And Nothing Written | P1 |
-| TC-MCP-005 | Start Makes The Server Answer On Its Address, Turns The Plug Green And Writes mcp.json For Its Owner | P1 |
-| TC-MCP-006 | Stop Stops The Server, Greys The Plug And Says Not Running | P1 |
+| TC-MCP-005 | Start Makes The Server Answer On Its Address And Writes mcp.json For Its Owner, The Button Still Grey | P1 |
+| TC-MCP-006 | Stop Stops The Server, Greys The Button At Once And Says Not Running | P1 |
 | TC-MCP-007 | Hovering The Plug While The Server Runs Gives Its Address | P2 |
 | TC-MCP-008 | The Port Is Changed While The Server Is Stopped, Kept, And Listened On | P1 |
 | TC-MCP-009 | What Is Not A Port Is Not Taken | P2 |
@@ -97,45 +150,14 @@ The build with **mcp** in its name (a GitHub release download only, never the st
 | TC-MCP-028 | A Spinner Turns Beside The Plug While An Assistant's Call Runs | P2 |
 | TC-MCP-029 | Closing The App Stops The Server | P2 |
 | TC-MCP-030 | An mcp.json That Cannot Be Used Is Said In The Panel, And The Defaults Stand In | P2 |
-| TC-MCP-031 | With The Tools Docked The Plug Is Left Of The Undock Button, And Its Panel Opens Above It | P2 |
+| TC-MCP-031 | With The Tools Docked The Button Stays Beside The Settings Button, The Undock Button Left Of It | P2 |
 | TC-MCP-032 | Answers: A Size Chosen Is Said In Tokens, Kept, And Used From The Next Call | P1 |
 | TC-MCP-033 | Always Allow Is Greyed Out With Read, Is Ticked With Edit, And Is Kept | P1 |
-| TC-MCP-040 | get_state Says What The Window Shows: The Document, The Query And Its Results | P1 |
-| TC-MCP-041 | run_query Answers The Assistant And Changes Nothing In The Window | P1 |
-| TC-MCP-042 | set_query Puts The Query In The Box And Runs It, And get_results Gives What The Window Shows | P1 |
-| TC-MCP-043 | set_query In JSONPath Picks JSONPath In The Window | P2 |
-| TC-MCP-044 | open_document Opens A File As The Source, And The Window Shows It | P1 |
-| TC-MCP-045 | open_document With JSON Text Shows It As The Source | P2 |
-| TC-MCP-046 | open_document Refuses A Web Address And A Relative Path, And The Window Keeps Its Document | P2 |
-| TC-MCP-047 | reveal Opens The Source Tree Down To A Value | P1 |
-| TC-MCP-048 | workspace_list Gives The Saved Queries, And workspace_open Opens One In The Query Box | P1 |
-| TC-MCP-049 | workspace_open Never Loads A Web Address, And workspace_read Gives It | P1 |
-| TC-MCP-050 | A Call That Shows Something Works While The Window Is Minimized | P1 |
-| TC-MCP-051 | The User's Own Query Runs While The Assistant's Long Query Runs | P2 |
-| TC-MCP-052 | search Finds A Value With Its Pointer | P2 |
-| TC-MCP-053 | describe Gives The Shape Of The Document Without Its Data | P2 |
-| TC-MCP-054 | query_help Gives The App's Lessons And Where Its jq Differs From jq | P3 |
-| TC-MCP-055 | Read Refuses Every Call That Would Change The Window, And The Panel Lists Them In Red | P1 |
-| TC-MCP-056 | A Long Answer Comes A Page At A Time | P3 |
-| TC-MCP-070 | jsonquery-mcp Answers The Handshake And Lists The Tools While The App Is Closed | P1 |
-| TC-MCP-071 | A Call Before The Server Was Ever Set Up Says How To Set It Up | P1 |
-| TC-MCP-072 | A Call While The App Is Closed Says That JsonQuery Is Not Running | P1 |
-| TC-MCP-073 | A Call Through jsonquery-mcp Reaches The Running App, Which Shows It And Names The Assistant | P1 |
-| TC-MCP-074 | jsonquery-mcp Follows A New Token And A New Port By Itself | P2 |
-| TC-MCP-075 | jsonquery-mcp Says What It Is When Run By Hand | P3 |
-| TC-MCP-076 | Through jsonquery-mcp An Answer Is Kept To The Size Of Page The User Set | P2 |
-| TC-MCP-080 | Deleting From The Workspace Is Asked First, And Don't Allow Keeps The Item | P1 |
-| TC-MCP-081 | Allow Deletes It: A Folder With What Is In It | P1 |
-| TC-MCP-082 | Escape Is Don't Allow | P2 |
-| TC-MCP-083 | Always Allow In The Question Does It, Ticks The Panel's Box, And Nothing Is Asked After | P1 |
-| TC-MCP-084 | With Always Allow Ticked Nothing Is Asked, And Unticking It Brings The Questions Back | P2 |
-| TC-MCP-085 | A New Item Is Saved Without A Question, And Replacing One Is Asked First | P1 |
-| TC-MCP-086 | Folders Are Made, And Items Moved And Renamed, Without A Question | P2 |
-| TC-MCP-087 | A File Is Saved After The User Allows It, As Indented As Asked, And Replaced Only With replace | P1 |
-| TC-MCP-088 | A Web Address Is Loaded As The Source Only When The User Allows It | P1 |
-| TC-MCP-089 | A Page Of The Tools Is Shown With The Assistant's Values In Its Boxes, Run | P1 |
-| TC-MCP-090 | With Read Nothing Is Written, Moved, Deleted, Fetched Or Shown, And Nothing Is Asked | P1 |
-| TC-MCP-091 | While A Question Waits The Panel Says So | P2 |
+| TC-MCP-034 | An Assistant's Call Turns The Button Green, Not The Server Or The Handshake | P1 |
+| TC-MCP-035 | Hovering The Green Button Says That An Assistant Is Working With The App | P2 |
+| TC-MCP-036 | A Minute After The Last Call The Button Is Grey Again, And The Next Call Turns It Green | P3 |
+| TC-MCP-037 | QuickAI's Button Says Where Its Entry Goes And Where QuickAI Is | P2 |
+| TC-MCP-038 | The Build Without MCP Has No MCP Button, And The Others Are Where They Always Are | P1 |
 | TC-MCP-100 | format_json Gives The Document Formatted, And The Window Keeps What It Shows | P2 |
 | TC-MCP-101 | diff_documents Gives The Differences By Pointer, And Its Patch, Kept As last, Turns The Left Into The Right | P1 |
 | TC-MCP-102 | merge_documents Appends Or Merges Deep, And Keeps The Merge As last | P2 |
@@ -194,4 +216,16 @@ counting the top only; a file read as the open document; the page the user set n
 keeping nothing; the tokens said wrong; `show_in_tool` showing nothing; a new item asked about): each made its case fail,
 for its own reason.
 
-The last runs (2026-11-12, the debug build, five lanes, one to a suite file): 79 of 79.
+The runs of 2026-11-12 (the debug build, five lanes, one to a suite file): 79 of 79.
+
+**2026-11-13: the server in every build, its button beside the ⚙, green while an assistant works, what a model gives.**
+Twelve cases are new (TC-MCP-034 to 038, 077, 110 to 115) and ten changed (TC-MCP-001, 005, 006, 010, 016, 019, 020,
+025, 028, 031). Found while they were written: the button's ink is 1083-1100 (the plug, then "AI"), docked the 🗗 is at
+1059 and nothing at 1030; a handshake alone leaves the button grey (it is the call of a tool that is work); OCR reads the
+I of "QuickAI's" as an l. Eighteen faults planted one at a time (green while the server runs; never grey again; QuickAI's
+old line and old tooltip; the button drawn last again; documents always to the Source; Validate's and Patch's other box;
+Diff always left; Merge given nothing; the button's and the menu's label; the chips following the page; inputs strict
+again; `kind` needed again; no other names of arguments; no example after an error; a file's path taken as text): all
+killed, after the button drawn last had got through TC-MCP-031 at first (it clicked the 🗗, which undocked the Tools and
+let the plug's click work): the case now tells the two apart by an assistant's call before it clicks anything. Runs: the
+91 cases of `suites/mcp/`, 91 of 91 on a clean build; the whole suite, see the matrix.

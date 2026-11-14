@@ -65,9 +65,9 @@ and TC-DOCK-041 in `suites/tools/tools_docked.robot` ([22_tools_docked.md](22_to
 
 The buttons are read by their pixels (an icon is "something bright there": a glyph cannot be read by OCR), the
 tooltip by OCR in the strip above the status bar, and every click is checked by what the stand-in browser was
-asked to open. TC-WEB-001 is tagged `undocked-only`: it says that nothing is left of the ⚙ (at 1095, where the 🗗 is
-docked: TC-DOCK-006 reads the docked bar, with the 🗗), and that the button of the workspace pane is at the other end of
-the bar, the first thing at the left. The other four run docked as well (`./run_docked.sh`).
+asked to open. TC-WEB-001 is tagged `undocked-only`: it says that the MCP button is left of the ⚙ (at 1095) and nothing
+left of that (with the Tools docked the 🗗 is, at 1059: TC-DOCK-006 reads the docked bar), and that the button of the
+workspace pane is at the other end of the bar, the first thing at the left. The other four run docked as well (`./run_docked.sh`).
 
 What moved because of the 🌐, in the cases that were already there: the ⚙ is at x = 1123 now (it was 1152, where
 the 🌐 is), the 🗗 at 1095 (it was 1124); the status line that OCR reads stops at 1100 undocked, 1070 docked and

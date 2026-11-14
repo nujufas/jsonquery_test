@@ -21,8 +21,10 @@ in the **main** window as tabs —
   query's, on the Json Query tab);
 - the window is gone, and the page that was in front in it is the one in front now; a page keeps what it
   holds;
-- the **🗗** button in the status bar, beside the ⚙ (the status bar reads, from the right, ⓘ 🌐 ⚙ 🗗 — and
-  nothing of the four on the row of tabs; the 🌐 is the website's, [23_website.md](23_website.md)), takes the
+- the **🗗** button in the status bar, left of the MCP server's button, which is beside the ⚙ (the status bar
+  reads, from the right, ⓘ 🌐 ⚙, the MCP button, 🗗 — and nothing of them on the row of tabs; the 🌐 is the
+  website's, [23_website.md](23_website.md), the MCP button the server's, [26_mcp_server.md](26_mcp_server.md);
+  the regions of the docked Tools' status line end before the 🗗, `resources/docked_tools.py`), takes the
   Tools out into a window again, on the page that was in front, and is on every tab while the Tools are docked
   and never when they are a window;
 - where the Tools are is kept in `settings.json` (`"tools": "docked"`; the window is the default, so nothing

@@ -1,5 +1,5 @@
 *** Settings ***
-Documentation     `jsonquery-mcp`, the program beside the app in the build with MCP -- see docs/26_mcp_server.md.
+Documentation     `jsonquery-mcp`, the program beside the app -- see docs/26_mcp_server.md.
 ...
 ...               Claude Desktop and llama-server (QuickAI) start their MCP servers themselves and talk to them over
 ...               stdin and stdout. `jsonquery-mcp` is that program: it answers the handshake and the list of tools by
@@ -127,6 +127,17 @@ TC-MCP-076 Through jsonquery-mcp An Answer Is Kept To The Size Of Page The User 
     ${bytes}=    Get Length    ${result}[text]
     Should Be True    2000 < ${bytes} <= 4000    msg=The page is ${bytes} bytes
     Should Be True    0 < ${result}[value][next_offset] < 300    msg=${result}[value]
+
+TC-MCP-077 A Call Through jsonquery-mcp Turns The Button Green
+    [Documentation]    QuickAI and Claude Desktop call through the program: their calls are an assistant working with the
+    ...    app as much as one over HTTP (TC-MCP-034).
+    [Tags]    p2
+    [Setup]    Launch Mcp App    access=read    start_with_app=${True}
+    Wait Until Mcp Server Answers    timeout=8    port=${MCP_PORT}
+    Plug Should Not Be Green
+    ${result}=    Bridge Tool Call    get_state
+    Should Not Be True    ${result}[error]    msg=${result}[text]
+    Plug Should Be Green
 
 *** Keywords ***
 Token Should Differ From

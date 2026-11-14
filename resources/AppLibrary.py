@@ -328,6 +328,9 @@ class AppLibrary:
         workspace=None,
         build=None,
         home_files=None,
+        args=None,
+        cwd=None,
+        stdin_text=None,
     ):
         """Starts a fresh jsonquery_gui process and waits for its window.
 
@@ -344,7 +347,9 @@ class AppLibrary:
         `build`: `nomcp` for the build without the MCP server (NOMCP_BINARY_PATH), or the
         path of another binary; none is the usual one. `home_files`: files to be in the
         settings folder before the app starts (`mcp.json`), as `workspace` is for the
-        workspace."""
+        workspace. `args`: the app's command line (a list); `cwd`: the folder it is started
+        in; `stdin_text`: text piped into it (written, then the pipe closed, as `echo … |`
+        does); without it the app's input is the suite's own, which is no pipe."""
         if build == "nomcp":
             binary = NOMCP_BINARY_PATH
         else:
@@ -380,6 +385,9 @@ class AppLibrary:
         env["JSONQUERY_HOME"] = self._app_home
         if temp_dir:
             env["TMPDIR"] = temp_dir
+        if cwd:
+            # As a shell that is in the folder starts it: $PWD names the folder as the shell does.
+            env["PWD"] = str(cwd)
         env.pop("WAYLAND_DISPLAY", None)
         # An address the app hands to a browser (a link, the 🌐) goes to the stand-in's log:
         # $BROWSER is the stand-in and the PATH holds nothing else the app could run to open one.
@@ -401,11 +409,30 @@ class AppLibrary:
         # there instead of nowhere.
         app_log = os.environ.get("JQ_TEST_APP_LOG")
         self._app_proc = subprocess.Popen(
-            [binary],
+            [binary, *[str(a) for a in (args or [])]],
             env=env,
+            cwd=cwd,
+            stdin=subprocess.PIPE if stdin_text is not None else None,
             stdout=subprocess.DEVNULL,
             stderr=open(app_log, "a") if app_log else subprocess.DEVNULL,
         )
+        if stdin_text is not None:
+            # From a thread of its own: a pipe holds only so much until the app reads it.
+            data = stdin_text.encode("utf-8") if isinstance(stdin_text, str) else stdin_text
+            pipe = self._app_proc.stdin
+
+            def feed():
+                try:
+                    pipe.write(data)
+                except OSError:
+                    pass
+                finally:
+                    try:
+                        pipe.close()
+                    except OSError:
+                        pass
+
+            threading.Thread(target=feed, daemon=True).start()
 
         deadline = time.time() + timeout
         wid = None
@@ -429,6 +456,52 @@ class AppLibrary:
             env={**os.environ, "DISPLAY": XVFB_DISPLAY},
         )
         time.sleep(0.5)
+
+    @keyword("Run Jsonquery Command Line")
+    def run_jsonquery_command_line(self, *args, timeout=10, build=None, stdin_terminal=False):
+        """Runs the app with the command line `args` where printing is all it should do
+        (`--help`, `--version`, a command line that cannot be done), and returns its exit
+        status, what it printed and what it said on its error output, as a dictionary
+        (`rc`, `stdout`, `stderr`). It runs on the suite's display with a settings folder of its
+        own, so that if it opened a window it would be seen there and not on anyone's desktop;
+        a run that does not end within `timeout` seconds is killed and fails the case: it is
+        one that opened its window. With `stdin_terminal` its input is a terminal (a pty), as
+        when it is started at a prompt with nothing piped in; else it is empty."""
+        binary = NOMCP_BINARY_PATH if build == "nomcp" else BINARY_PATH
+        home = self._make_app_home()
+        env = dict(os.environ)
+        env["DISPLAY"] = XVFB_DISPLAY
+        env["JSONQUERY_HOME"] = home
+        env.pop("WAYLAND_DISPLAY", None)
+        env.pop("DBUS_SESSION_BUS_ADDRESS", None)
+        terminal = None
+        stdin = subprocess.DEVNULL
+        if stdin_terminal is True or str(stdin_terminal).lower() == "true":
+            import pty
+
+            terminal = pty.openpty()
+            stdin = terminal[1]
+        try:
+            done = subprocess.run(
+                [binary, *[str(a) for a in args]],
+                env=env,
+                stdin=stdin,
+                capture_output=True,
+                text=True,
+                timeout=float(timeout),
+            )
+        except subprocess.TimeoutExpired:
+            raise AssertionError(
+                f"{binary} {' '.join(args)} was still running after {timeout} s: it opened its window"
+            )
+        finally:
+            for fd in terminal or ():
+                os.close(fd)
+            left = os.listdir(home) if os.path.isdir(home) else []
+            shutil.rmtree(home, ignore_errors=True)
+        if left:
+            raise AssertionError(f"it wrote to its settings folder: {left}")
+        return {"rc": done.returncode, "stdout": done.stdout, "stderr": done.stderr}
 
     @staticmethod
     def _make_app_home():

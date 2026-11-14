@@ -88,12 +88,14 @@ Launch Mcp App
     ...    the suite, never meet on 7457) and, if asked, an access and whether it starts with the app. Sets
     ...    `${MCP_PORT}` for the case.
     [Arguments]    ${access}=${None}    ${start_with_app}=${None}    ${settings}=${None}    ${workspace}=${None}
-    ...    ${build}=${None}    ${always_allow}=${None}    ${answer_kb}=${None}
+    ...    ${build}=${None}    ${always_allow}=${None}    ${answer_kb}=${None}    ${args}=${None}    ${cwd}=${None}
+    ...    ${stdin_text}=${None}
     ${port}=    Free Port
     ${text}=    Mcp Json    port=${port}    access=${access}    start_with_app=${start_with_app}
     ...    always_allow=${always_allow}    answer_kb=${answer_kb}
     &{files}=    Create Dictionary    mcp.json=${text}
     Launch Jsonquery App    build=${build}    home_files=${files}    settings=${settings}    workspace=${workspace}
+    ...    args=${args}    cwd=${cwd}    stdin_text=${stdin_text}
     Set Test Variable    ${MCP_PORT}    ${port}
     IF    $start_with_app is not None and $start_with_app    Wait Until Mcp Server Answers    timeout=8
 
@@ -101,9 +103,9 @@ Launch Mcp App Serving
     [Documentation]    The app, which starts its MCP server with itself and allows `access`, and an
     ...    assistant that has made its handshake with it.
     [Arguments]    ${access}=edit    ${settings}=${None}    ${workspace}=${None}    ${always_allow}=${None}
-    ...    ${answer_kb}=${None}
+    ...    ${answer_kb}=${None}    ${args}=${None}    ${cwd}=${None}    ${stdin_text}=${None}
     Launch Mcp App    access=${access}    start_with_app=${True}    settings=${settings}    workspace=${workspace}
-    ...    always_allow=${always_allow}    answer_kb=${answer_kb}
+    ...    always_allow=${always_allow}    answer_kb=${answer_kb}    args=${args}    cwd=${cwd}    stdin_text=${stdin_text}
     Mcp Initialize    client=Robot assistant
 
 Open Mcp Panel

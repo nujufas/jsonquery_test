@@ -508,3 +508,22 @@ non-obvious findings, worth reading before extending any suite:
   maximized only passes if the app asks again once it exists (TC-SET-024: without it the window is 1000 wide).
 - **Xvfb needs room in `/tmp`** even when everything else is on disk — see "Isolation" in
   [00_test_strategy.md](00_test_strategy.md).
+
+## Writing a case about the command line
+
+The app's command line ([27_command_line.md](27_command_line.md)): `Launch Jsonquery App` and `Launch Mcp App Serving`
+take the app's arguments, the folder it starts in and what is piped into it; what should print and open no window has a
+keyword of its own.
+
+| Keyword | What it does |
+|---|---|
+| `Launch Jsonquery App  args=${{ [$FILE, '--query', '.a'] }}` | the app started with that command line (a list) |
+| `…  cwd=${DIR}` | started in that folder, with `$PWD` set to it, as a shell that is there starts it |
+| `…  stdin_text=${text}` | with that text piped in (written, then the pipe closed, as `echo … \|` does) |
+| `Run Jsonquery Command Line  --version  build=nomcp  stdin_terminal=${True}` | runs it where printing is all it should do; gives `rc`, `stdout`, `stderr`; fails the case if it is still running after 10 s (it opened its window) or wrote to its settings folder |
+
+- What the main window has after a start is read best through the MCP server (`get_state`): the document's `source` and
+  `from`, `kept_on_disk`, the query's `text`, `language` and `language_chosen`, its results' `count`, `load_error`.
+  `in_front` names a tool only when the Tools are docked: with their window open it is always `Json Query`.
+- A path the app makes whole is the folder's as `$PWD` has it, links and all: compare it with the path the case made,
+  not with the one the system resolves (the results folder may be on a link).

@@ -52,15 +52,17 @@ log() { echo "[run.sh] $*"; }
 
 log "App checkout: $APP_DIR; binary under test: ${JQ_TEST_BINARY:-$APP_DIR/target/debug/jsonquery_gui}"
 
-# Does the run take in the suites of the MCP server? A path of suites/mcp, or a folder that has it
-# (the whole suite).
+# Does the run take in a suite that runs the build without the MCP server: the server's own
+# (suites/mcp) or the command line's (suites/command_line, its --version)? A path of one, or a
+# folder that has one (the whole suite).
 runs_mcp() {
     local arg
     for arg in "${@:-$TEST_DIR/suites}"; do
         case "$arg" in
             mcp | mcp/* | */mcp | */mcp/ | */mcp/*) return 0 ;;
+            command_line | command_line/* | */command_line | */command_line/ | */command_line/*) return 0 ;;
         esac
-        if [ -d "$arg/mcp" ]; then return 0; fi
+        if [ -d "$arg/mcp" ] || [ -d "$arg/command_line" ]; then return 0; fi
     done
     return 1
 }

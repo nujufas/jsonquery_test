@@ -6,7 +6,7 @@ browsing and querying large JSON files with jq, JSON Pointer, JSONPath and JMESP
 The suite starts the real application, clicks and types into it the way a person would, and reads the
 screen back with OCR, pixel checks and the clipboard. It is written with
 [Robot Framework](https://robotframework.org) and runs on a virtual X display of its own, so it never
-touches your desktop. Status (November 2026): **1271 test cases in 31 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
+touches your desktop. Status (November 2026): **1296 test cases in 32 suites**, run with the app's Tools in a window of their own and again with them docked in the main window.
 
 Beside the GUI suite is [performance/](performance/README.md), which does not use a display: it measures how fast the
 app's functions are, and how much memory they take, on files of up to a gigabyte at any revision of the app, and keeps the
@@ -147,7 +147,7 @@ All optional; unset, nothing changes.
 | `JQ_TEST_NO_BUILD` | unset | Set it (to anything) to skip `cargo build`. |
 | `JQ_TEST_DISPLAY` | `:99` | The X display to start (or to reuse, if an Xvfb is already running there). |
 | `JQ_TEST_RESULTS` | `results/` | Where Robot writes its output. Keep its path short: `run_parallel.sh` gives each lane a temporary folder under it, and a case that types the path of a file made there (`Type And Submit Source`) reads the file's name back from the Source field, which a path much longer than `results/parallel/tmp/lane1/` pushes out of sight. |
-| `JQ_TEST_NOMCP_BINARY` | `$JQ_APP_DIR/target/nomcp/debug/jsonquery_gui` | The build without the MCP server, for TC-MCP-038 (`Launch Jsonquery App  build=nomcp`); run.sh builds it when the run takes `suites/mcp/` in. |
+| `JQ_TEST_NOMCP_BINARY` | `$JQ_APP_DIR/target/nomcp/debug/jsonquery_gui` | The build without the MCP server, for TC-MCP-038 and TC-CLI-002 (`Launch Jsonquery App  build=nomcp`); run.sh builds it when the run takes `suites/mcp/` or `suites/command_line/` in. |
 | `JQ_TEST_APP_LOG` | unset | File that receives the app's stderr (the tracing of a debug build). |
 | `JQ_TEST_HOME_ROOT` | `/tmp` | Where each launch's settings folder is made (a short path matters: the Settings window wraps a long one). |
 | `JQ_PARALLEL_DISPLAY_BASE` | `120` | `run_parallel.sh` only: the first display; lane *n* uses base + *n* - 1. |
@@ -254,6 +254,8 @@ One directory per area of the app under `suites/`, each specified by a document 
 | `workflows` | whole journeys: a file chosen in the dialog, a lesson, a query, rows or JSON saved to disk | [20](docs/20_workflows.md) |
 | `settings` | the ⚙ Settings window (the limit on keeping a file on disk, the other eight under Advanced, the explanations as tooltips) and what the app keeps for the next start: the theme, 💡, the size of the window and of the panes | [21](docs/21_settings.md) |
 | `website` | the 🌐 button between the ⓘ and the ⚙: where it is, its two-line hover, what a click hands to the browser (a stand-in that writes it down); the About window's Website row and link are in `satellites` | [23](docs/23_website.md) |
+| `mcp` | the MCP server: the plug and its panel, the token and the address, Read and Edit, the questions, every tool over HTTP and through `jsonquery-mcp`, what a model gives taken as it means it, and a document too big for a page given as a snippet (seven files) | [26](docs/26_mcp_server.md) |
+| `command_line` | what the app opens as it starts: a file, a web address, a `file://` address or what is piped in, a query run on it once it has loaded (`--query`, `--lang`, `--pointer`, a file of a query), several documents for Merge's list, a tool's page filled and run (`--diff` and the five others); `--help`, `--version` and what cannot be done print and open no window | [27](docs/27_command_line.md) |
 | `workspace` | the button at the left end of the status bar and the pane at the left: the list (folders, tags, filter, chips, folding, width), the pictures of its buttons read as pixels, opening, renaming, copying and deleting an item, saving the query box, a schema, a patch or the Source, moving by dragging a row or by Move to, a query carried onto the Query pane, a query file dropped on the window (the language by the end of its name, the outline while it is held over, the errors), new folder, export, import and another folder, the buttons of Validate and Patch, the ids and SHA-256s that the workspace keeps and what is done to its folder behind the app's back, web addresses (`.url` items: their tag and chip, the address under the list, loading it from a server of the case's own, the Save window's fifth choice, the shapes of a shortcut that other programs write, and that they never have a sample), the light theme, other window sizes and wrong settings, a pane in a window of its own, the Tools docked (fourteen files) | [25](docs/25_workspace.md) |
 
 [11_error_and_edge_cases.md](docs/11_error_and_edge_cases.md) cross-references every error string in the app.

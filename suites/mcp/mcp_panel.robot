@@ -594,7 +594,9 @@ TC-MCP-035 Hovering The Green Button Says That An Assistant Is Working With The 
     Sleep    1.5s
     Wait Until Keyword Succeeds    6x    0.5s
     ...    Region Should Contain Text    @{WORKING_TIP}    is working with the app
-    Region Should Contain Text    @{WORKING_TIP}    127.0.0.1:${MCP_PORT}/mcp
+    # The address up to its port: OCR reads the /mcp: after some ports as /mcep: (the same address, whole, is
+    # read in the panel in TC-MCP-005).
+    Region Should Contain Text    @{WORKING_TIP}    127.0.0.1:${MCP_PORT}/m
     Region Should Contain Text    @{WORKING_TIP}    click for its settings
     Region Should Not Contain Text    @{MCP_ABOVE_TIP}    MCP
 

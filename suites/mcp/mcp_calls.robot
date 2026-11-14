@@ -16,8 +16,6 @@ Test Teardown     Close Jsonquery App
 *** Variables ***
 # The status line, short of the 🔌 and of the spinner at its left (an icon in a region makes OCR misread the text beside it).
 @{MCP_STATUS_TEXT}        36     705    1020    95
-# A query that keeps the worker busy for some seconds (a debug build), with little memory.
-${LONG_QUERY}             reduce range(12000000) as $i (0; . + $i)
 
 *** Test Cases ***
 TC-MCP-040 get_state Says What The Window Shows: The Document, The Query And Its Results
@@ -158,12 +156,13 @@ TC-MCP-051 The User's Own Query Runs While The Assistant's Long Query Runs
     ...    the assistant's answer is whole when it comes.
     [Tags]    p2
     Load Fixture Via Paste    ${{ open($PEOPLE_FIXTURE).read() }}
-    ${call}=    Start Mcp Call    run_query    {"query": "${LONG_QUERY}", "timeout_ms": 120000}
+    ${long}=    Long Query
+    ${call}=    Start Mcp Call    run_query    {"query": "${long}", "timeout_ms": 120000}
     Sleep    0.5s
     Run Query    .[2].name
     Wait Until Region Contains Text    @{RESULTS_PANEL}    Carol    timeout=5
     ${out}=    Evaluate    $call.thread.is_alive()
-    Should Be True    ${out}    msg=The assistant's query was over before the user's ran: make LONG_QUERY longer
+    Should Be True    ${out}    msg=The assistant's query was over before the user's ran: make Long Query longer
     ${result}=    Wait For Mcp Call    ${call}    timeout=150
     Should Not Be True    ${result}[error]    msg=${result}[text]
     Should Be True    ${result}[value][complete]
@@ -225,6 +224,18 @@ TC-MCP-056 A Long Answer Comes A Page At A Time
     Should Be Equal    ${second}[items]    ${{ [5, 6, 7, 8, 9] }}
 
 *** Keywords ***
+Long Query
+    [Documentation]    A jq query that keeps the worker busy for about ${seconds} s with little memory, on the build
+    ...    under test: a release build runs it ten times as fast as a debug one (twelve million steps took 10 s in
+    ...    a debug build and under 3 s in the release build of 0.6.0), so a million steps are timed first.
+    [Arguments]    ${seconds}=10
+    ${start}=    Evaluate    time.monotonic()    modules=time
+    Mcp Tool Should Succeed    run_query    {"query": "reduce range(1000000) as $i (0; . + $i)"}
+    ${took}=    Evaluate    time.monotonic() - ${start}    modules=time
+    ${steps}=    Evaluate    max(1000000, int(1000000 * ${seconds} / max(${took}, 0.01)))
+    Log    A million steps took ${took} s: ${steps} steps for ${seconds} s.
+    RETURN    reduce range(${steps}) as $i (0; . + $i)
+
 Launch With A Web Address
     ${served}=    Make Folder With Files    served    ${{ {"people.json": open($PEOPLE_FIXTURE).read()} }}
     ${base}=    Start Fixture Server    ${served}

@@ -34,12 +34,14 @@ confirmed environment findings that shaped this):
 """
 
 import collections
+import difflib
 import functools
 import glob
 import http.server
 import json
 import os
 import re
+import shlex
 import shutil
 import signal
 import subprocess
@@ -1901,6 +1903,92 @@ class AppLibrary:
                 (int(x) + (min(xs) + max(xs)) / 2, self._suite_y_in(y, height, (top + bottom) / 2))
             )
         return found
+
+    @keyword("Shell Words")
+    def shell_words(self, command):
+        """The words a POSIX shell makes of `command`, its quotes taken off, each pipe (`|`) that is
+        not quoted a word of its own: a command written for a terminal (the tutorial's help has
+        them, to copy) as the program and arguments it starts."""
+        lex = shlex.shlex(str(command), posix=True, punctuation_chars=True)
+        lex.whitespace_split = True
+        return list(lex)
+
+    @keyword("Words Not Read")
+    def words_not_read(self, words, text, likeness=0.92):
+        """Those of `words` that the OCR'd `text` does not have: none of its words, nor two of them
+        joined by `_` (an underscore read as a space), is `likeness` alike or more (difflib's
+        ratio, letter case aside). 0.92 forgives OCR a stray letter in a long word
+        ("workspace_lList") and still tells workspace_move from workspace_open (0.86)."""
+        read = [w.strip(".,;:()[]{}*'\"‘’“”").lower() for w in re.split(r"\s+", str(text))]
+        read = [w for w in read if w]
+        read += [a + "_" + b for a, b in zip(read, read[1:])]
+        want = float(likeness)
+        return [
+            w for w in words
+            if not any(difflib.SequenceMatcher(None, str(w).lower(), r).ratio() >= want for r in read)
+        ]
+
+    @staticmethod
+    def _bright_runs(img, min_height, share, brightness):
+        """The runs of rows of `img` (top, bottom; its own rows) in which `share` of the pixels or
+        more are bright: see `Find Bright Blocks`."""
+        w, h = img.size
+        px = img.load()
+        least, enough = int(brightness), float(share) * w
+        runs, start = [], None
+        for yy in range(h + 1):
+            bright = yy < h and sum(1 for xx in range(w) if min(px[xx, yy]) >= least) >= enough
+            if bright and start is None:
+                start = yy
+            elif not bright and start is not None:
+                if yy - start >= int(min_height):
+                    runs.append((start, yy - 1))
+                start = None
+        return runs
+
+    @keyword("Find Bright Blocks")
+    def find_bright_blocks(self, x, y, width, height, min_height=100, share=0.5, brightness=200):
+        """Where pictures are on a dark window: every run of at least `min_height` rows of the
+        region in which `share` of the pixels or more are bright (each channel `brightness` or
+        more), as (top, bottom), app-relative, top to bottom. A line of text, white as it may
+        be, never fills half a row; a picture of a light window does, row after row (its own
+        dark title bar, if it has one, parts it in two)."""
+        img = self.screenshot_region(x, y, width, height, label="bright-blocks").convert("RGB")
+        runs = self._bright_runs(img, min_height, share, brightness)
+        return [(int(y) + top, int(y) + bottom) for top, bottom in runs]
+
+    @keyword("Picture Caption Should Be Read")
+    def picture_caption_should_be_read(self, x, y, width, height, caption, min_height=100):
+        """Passes when, under a picture in the region (`Find Bright Blocks`), the first line of text
+        reads `caption` (a part of it). The line is found by its pixels: after the picture's
+        foot and the frame under it, the first rows with ink on the window, down to the next bare
+        row; it is read alone, with a margin of window around it. (OCR of a region with a picture
+        in it misses the lines beside it, and a caption's weak text is dim: about 95 on 27.)"""
+        img = self.screenshot_region(x, y, width, height, label="captions").convert("RGB")
+        w, h = img.size
+        px = img.load()
+        dark = collections.Counter(p for p in img.getdata() if max(p) < 80).most_common(1)
+        window = dark[0][0] if dark else (27, 27, 27)
+        inked = lambda yy: any(max(abs(a - b) for a, b in zip(px[xx, yy], window)) > 25 for xx in range(w))
+        read = []
+        for _, bottom in self._bright_runs(img, min_height, 0.5, 200):
+            yy = bottom + 1
+            while yy < h and inked(yy):  # the picture's frame
+                yy += 1
+            while yy < h and not inked(yy):  # the window between the picture and its caption
+                yy += 1
+            first = yy
+            while yy < h and inked(yy):
+                yy += 1
+            if first >= h or yy >= h:
+                continue  # no line under it, or one cut by the region's foot
+            line = img.crop((0, max(0, first - 4), w, min(h, yy + 8)))
+            big = line.resize((line.width * 5, line.height * 5), Image.LANCZOS)
+            text = pytesseract.image_to_string(big, config="--psm 6").strip()
+            read.append(text)
+            if self._text_contains(text, caption):
+                return
+        raise AssertionError(f"No picture with {caption!r} under it; the lines under the pictures read {read}")
 
     @keyword("First Block Below")
     def first_block_below(self, blocks, y):

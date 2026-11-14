@@ -12,8 +12,8 @@
 #   JQ_TEST_BINARY=/copy/of/jsonquery_gui JQ_TEST_NO_BUILD=1 ./run.sh ...
 # The app is built with jsonquery-mcp, the program of its MCP server, which the cases of
 # suites/mcp/ take from beside the app (beside JQ_TEST_BINARY, if that is set). When the run
-# takes suites/mcp/ in, the build without the server is made too, into target/nomcp
-# (JQ_TEST_NOMCP_BINARY), for the case that it has none.
+# takes suites/mcp/, suites/command_line/ or suites/tutorial_pages/ in, the build without the
+# server is made too, into target/nomcp (JQ_TEST_NOMCP_BINARY), for the cases of that build.
 # The app is its own repository (https://github.com/nujufas/jsonquery_gui). It is
 # taken from JQ_APP_DIR if that is set, else from ../jsonquery_gui (where `git clone`
 # puts it beside this repository), else from ../jsonquery.
@@ -53,16 +53,18 @@ log() { echo "[run.sh] $*"; }
 log "App checkout: $APP_DIR; binary under test: ${JQ_TEST_BINARY:-$APP_DIR/target/debug/jsonquery_gui}"
 
 # Does the run take in a suite that runs the build without the MCP server: the server's own
-# (suites/mcp) or the command line's (suites/command_line, its --version)? A path of one, or a
-# folder that has one (the whole suite).
+# (suites/mcp), the command line's (suites/command_line, its --version) or the tutorial's
+# (suites/tutorial_pages, which has no AI assistants tab there)? A path of one, or a folder that
+# has one (the whole suite).
 runs_mcp() {
     local arg
     for arg in "${@:-$TEST_DIR/suites}"; do
         case "$arg" in
             mcp | mcp/* | */mcp | */mcp/ | */mcp/*) return 0 ;;
             command_line | command_line/* | */command_line | */command_line/ | */command_line/*) return 0 ;;
+            tutorial_pages | tutorial_pages/* | */tutorial_pages | */tutorial_pages/ | */tutorial_pages/*) return 0 ;;
         esac
-        if [ -d "$arg/mcp" ] || [ -d "$arg/command_line" ]; then return 0; fi
+        if [ -d "$arg/mcp" ] || [ -d "$arg/command_line" ] || [ -d "$arg/tutorial_pages" ]; then return 0; fi
     done
     return 1
 }

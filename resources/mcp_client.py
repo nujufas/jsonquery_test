@@ -370,6 +370,18 @@ class mcp_client:
             raise AssertionError(f"tools/list: {reply['error']}")
         return [tool["name"] for tool in reply["result"]["tools"]]
 
+    @keyword("Mcp Characters Before A Question")
+    def mcp_characters_before_a_question(self, port=None, token=None):
+        """What an assistant is given by the server before anything is asked of it, in characters:
+        the instructions of the handshake and the list of the tools (as the JSON it comes in). It
+        takes that much room in a model's context before the first question."""
+        result = self.mcp_initialize(port=port, token=token)
+        reply = self._request("tools/list", {}, port=port, token=token)
+        if "error" in reply:
+            raise AssertionError(f"tools/list: {reply['error']}")
+        tools = json.dumps(reply["result"]["tools"], ensure_ascii=False)
+        return len(result.get("instructions", "")) + len(tools)
+
     @keyword("Call Mcp Tool")
     def call_mcp_tool(self, name, arguments=None, port=None, token=None, timeout=60):
         """Calls the tool `name` with `arguments` (a dictionary, or JSON text). Returns a

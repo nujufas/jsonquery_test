@@ -300,6 +300,29 @@ Call Row Should Not Be Red
     ${y}=    Evaluate    ${MCP_FIRST_CALL_Y} + 18 * (int(${n}) - 1)
     Region Should Not Contain Color    712    ${y}    394    20    @{MCP_ERROR_COLOR}    tolerance=30
 
+State When Loaded
+    [Documentation]    get_state, once the document has loaded (an app started with one: the command line's
+    ...    suite and the tutorial's help).
+    ${state}=    Wait Until Keyword Succeeds    20x    0.5s    State With A Document
+    RETURN    ${state}
+
+State With A Document
+    ${state}=    Mcp Tool Should Succeed    get_state
+    Should Not Be Equal    ${state}[document]    ${None}    msg=no document yet: ${state}
+    Should Not Be True    ${state}[loading]
+    RETURN    ${state}
+
+State With Results
+    [Documentation]    get_state, once the document has loaded and the query has run on it.
+    ${state}=    Wait Until Keyword Succeeds    20x    0.5s    State With Its Results
+    RETURN    ${state}
+
+State With Its Results
+    ${state}=    State With A Document
+    Should Not Be Equal    ${state}[query][results]    ${None}    msg=no results yet: ${state}
+    Should Not Be True    ${state}[query][running]
+    RETURN    ${state}
+
 Fixture Path
     [Arguments]    ${name}
     ${path}=    Normalize Path    ${CURDIR}/fixtures/${name}

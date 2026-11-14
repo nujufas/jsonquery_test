@@ -286,28 +286,6 @@ Command Line Should Fail With
     Should Contain    ${run}[stderr]    See jsonquery_gui --help.
     Should Be Empty    ${run}[stdout]
 
-State When Loaded
-    [Documentation]    get_state, once the document has loaded.
-    ${state}=    Wait Until Keyword Succeeds    20x    0.5s    State With A Document
-    RETURN    ${state}
-
-State With A Document
-    ${state}=    Mcp Tool Should Succeed    get_state
-    Should Not Be Equal    ${state}[document]    ${None}    msg=no document yet: ${state}
-    Should Not Be True    ${state}[loading]
-    RETURN    ${state}
-
-State With Results
-    [Documentation]    get_state, once the document has loaded and the query has run on it.
-    ${state}=    Wait Until Keyword Succeeds    20x    0.5s    State With Its Results
-    RETURN    ${state}
-
-State With Its Results
-    ${state}=    State With A Document
-    Should Not Be Equal    ${state}[query][results]    ${None}    msg=no results yet: ${state}
-    Should Not Be True    ${state}[query][running]
-    RETURN    ${state}
-
 State With A Load Error
     ${state}=    Mcp Tool Should Succeed    get_state
     Should Not Be Equal    ${state}[load_error]    ${None}    msg=no error yet: ${state}

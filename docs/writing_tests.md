@@ -527,3 +527,31 @@ keyword of its own.
   `in_front` names a tool only when the Tools are docked: with their window open it is always `Json Query`.
 - A path the app makes whole is the folder's as `$PWD` has it, links and all: compare it with the path the case made,
   not with the one the system resolves (the results folder may be on a link).
+
+## Writing a case about the tutorial's help
+
+The help tabs ([19_tutorial_pages.md](19_tutorial_pages.md), "The help tabs") are words, commands with a Copy button,
+links and pictures. A case does what they say and checks it against the app, so it needs a few keywords besides
+`tutorial.resource`'s (the suite takes `mcp.resource` in too; `tools.resource` cannot be, beside it: both have a
+`${TAB_Y}`).
+
+| Keyword | What it does |
+|---|---|
+| `Shell Words  ${command}` | the words a POSIX shell makes of a command: its quotes taken off, a `\|` that is not quoted a word of its own |
+| `State When Loaded`, `State With Results` (`mcp.resource`) | `get_state`, once the document has loaded (and its query has run): for an app started with a command line |
+| `Mcp Characters Before A Question` | how much the server gives an assistant before it is asked anything: its instructions and the list of its tools, in characters |
+| `Words Not Read  ${names}  ${text}` | those of `names` that no word (or two, for an underscore read as a space) of an OCR'd text is 0.92 alike to |
+| `Find Bright Blocks  x  y  w  h  min_height=120` | where pictures are on the dark window: runs of rows at least half bright |
+| `Picture Caption Should Be Read  x  y  w  h  ${caption}` | a picture in the region has the caption under it: its first line of text, found by its pixels and read alone |
+
+- A command copied from the help is run as the app is: the app's words are those after the last unquoted pipe, and the
+  app under test takes the place of `jsonquery_gui`. Never run another program (git) to start the app: the app is
+  started with nothing on its PATH but the stand-in for the browser, and a program that started it would hand it its
+  own.
+- OCR reads little of the text beside a picture: read the part of the lesson above it, or the line under it alone.
+  A caption's weak text is dim (about 95 on 27) and is not read in a strip that has the picture's frame, or the next
+  picture's edge, in it.
+- OCR reads "QuickAI" as "QuickAl", "General" (at 720 wide) as "Generel", an italic "9B" as "98": look for a part of
+  the word, or let the pattern take both.
+- The server's icon (in the AI assistants tab's status line and in *Start the server*) is a plug with "AI" that OCR
+  cannot read: look for ink where it is, and for the words it replaces nowhere.
